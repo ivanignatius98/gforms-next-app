@@ -20,63 +20,20 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
       tipRef.current.style.opacity = "0";
     }
   }
-  const orientations = {
-    right: 'right',
-    top: 'top',
-    left: 'left',
-    bottom: 'bottom',
+  const containerPosition = {
+    right: 'top-[25%] left-full ml-2',
+    left: 'top-[25%] right-full mr-2',
+    top: 'bottom-[85%] left-[50%] translate-x-[-50%] -translate-y-2',
+    bottom: 'top-[85%] left-[50%] translate-x-[-50%] translate-y-2',
   }
-  const setContainerPosition = (orientation: string) => {
-    let classnames
-    switch (orientation) {
-      case orientations.right:
-        classnames = 'top-0 left-full ml-4'
-        break
-      case orientations.left:
-        classnames = 'top-0 right-full mr-4'
-        break
-      case orientations.top:
-        classnames = 'bottom-[85%] left-[50%] translate-x-[-50%] -translate-y-2'
-        break
-      case orientations.bottom:
-        classnames = 'top-[85%] left-[50%] translate-x-[-50%] translate-y-2'
-        break
-      default:
-        break
-    }
-    return classnames
+  const pointerPosition = {
+    right: 'left-[-6px]',
+    left: 'right-[-6px]',
+    top: 'top-full left-[50%] translate-x-[-50%] -translate-y-2',
+    bottom: 'bottom-full left-[50%] translate-x-[-50%] translate-y-2'
   }
-
-  const setPointerPosition = (orientation: string) => {
-    let classnames
-    switch (orientation) {
-      case orientations.right:
-        classnames = 'left-[-6px]'
-        break
-      case orientations.left:
-        classnames = 'right-[-6px]'
-        break
-      case orientations.top:
-        classnames = 'top-full left-[50%] translate-x-[-50%] -translate-y-2'
-        break
-      case orientations.bottom:
-        classnames = 'bottom-full left-[50%] translate-x-[-50%] translate-y-2'
-        break
-
-      default:
-        break
-    }
-
-    return classnames
-  }
-  const classContainer = `w-max absolute z-10 ${setContainerPosition(
-    orientation
-  )} bg-gray-600 text-white text-xs px-2 py-1 rounded flex items-center transition-all duration-150 pointer-events-none`
-
-  const pointerClasses = `bg-gray-600 h-3 w-3 absolute z-10 ${setPointerPosition(
-    orientation
-  )} rotate-45 pointer-events-none`
-
+  const classContainer = `w-max absolute z-10 ${containerPosition[orientation as keyof typeof containerPosition]} bg-gray-600 text-white text-xs px-2 py-1 rounded flex items-center transition-all duration-150 pointer-events-none`
+  const pointerClasses = `bg-gray-600 h-3 w-3 absolute z-10 ${pointerPosition[orientation as keyof typeof pointerPosition]} rotate-45 pointer-events-none`
 
   return (
     <div
@@ -84,6 +41,8 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
+      {children}
+
       <div
         className={classContainer}
         style={{ opacity: 0 }}
@@ -92,7 +51,6 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
         {showPointer ? <div className={pointerClasses} /> : null}
         {tooltipText}
       </div>
-      {children}
     </div>
   );
 }

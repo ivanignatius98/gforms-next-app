@@ -1,7 +1,7 @@
 import AppProps from 'next/app';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { GrDocumentText } from 'react-icons/gr';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import Tooltip from './Tooltip'
@@ -14,7 +14,7 @@ type Props = {
 const MenuIcon = ({ icon, title, additionalClass = "" }: Props) => {
   return (
     <>
-      <Tooltip tooltipText={title} showPointer={false}>
+      <Tooltip tooltipText={title} orientation="right" showPointer={false}>
         <button className={`${additionalClass} w-12 p-2 flex rounded-lg items-center justify-center`}>
           {icon}
         </button>
@@ -22,58 +22,44 @@ const MenuIcon = ({ icon, title, additionalClass = "" }: Props) => {
     </>
   )
 }
-interface MenuItem {
-  children: JSX.Element,
-}
-const menuItemData: MenuItem[] = [
-  {
-    children:
-      <MenuIcon
-        title="Customize Theme"
-        icon={<GiHamburgerMenu size={24} />}
-      />,
-  },
-  {
-    children:
-      <MenuIcon
-        title="Preview"
-        additionalClass='hidden md:flex'
-        icon={<GiHamburgerMenu size={24} />}
-      />,
-  },
-  {
-    children:
-      <MenuIcon
-        title="Undo"
-        icon={<GiHamburgerMenu size={24} />}
-      />,
-  },
-  {
-    children:
-      <MenuIcon
-        title="Redo"
-        additionalClass='hidden md:flex'
-        icon={<GiHamburgerMenu size={24} />}
-      />,
-  },
-  {
-    children:
-      <>
-        <div className='hidden md:flex items-center justify-center mx-2'>
-          <button className="h-9 px-5 rounded-md text-white bg-fuchsia-500 shadow-lg text-xs">
-            Send
-          </button>
-        </div>
-        <MenuIcon
-          title="Send"
-          additionalClass='flex md:hidden'
-          icon={<GiHamburgerMenu size={24} />}
-        />
-      </>
-  },
+// interface MenuItem {
+//   children: JSX.Element,
+// }
+const menuItemData: JSX.Element[] = [
+  <MenuIcon
+    title="Customize Theme"
+    icon={<GiHamburgerMenu size={24} />}
+  />,
+  <MenuIcon
+    title="Preview"
+    additionalClass='hidden md:flex'
+    icon={<GiHamburgerMenu size={24} />}
+  />,
+  <MenuIcon
+    title="Undo"
+    icon={<GiHamburgerMenu size={24} />}
+  />,
+  <MenuIcon
+    title="Redo"
+    additionalClass='hidden md:flex'
+    icon={<GiHamburgerMenu size={24} />}
+  />,
+  <>
+    <div className='hidden md:flex items-center justify-center mx-2'>
+      <button className="h-9 px-5 rounded-md text-white bg-fuchsia-500 shadow-lg text-xs">
+        Send
+      </button>
+    </div>
+    <MenuIcon
+      title="Send"
+      additionalClass='flex md:hidden'
+      icon={<GiHamburgerMenu size={24} />}
+    />
+  </>
 ];
 const MenuItems = () => {
-  return <>{menuItemData.map(({ children }: MenuItem) => (children))}</>
+  return <>{menuItemData.map((row: JSX.Element, i) => (<React.Fragment key={i}>{row}</React.Fragment>))
+  }</>
 }
 
 const Navbar: React.FC = () => {
