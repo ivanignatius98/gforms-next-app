@@ -4,10 +4,12 @@ type Props = {
   children: JSX.Element,
   tooltipText: string,
   orientation?: string,
-  showPointer?: boolean
+  showPointer?: boolean,
+  show?: boolean,
+  additionalContainerClass?: string
 };
 
-const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom", showPointer = true }) => {
+const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom", showPointer = true, additionalContainerClass = "", show = true }) => {
   const tipRef = useRef<HTMLInputElement>(null);
 
   const handleMouseEnter = () => {
@@ -32,25 +34,26 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
     top: 'top-full left-[50%] translate-x-[-50%] -translate-y-2',
     bottom: 'bottom-full left-[50%] translate-x-[-50%] translate-y-2'
   }
-  const classContainer = `w-max absolute z-10 ${containerPosition[orientation as keyof typeof containerPosition]} bg-gray-600 text-white text-xs px-2 py-1 rounded flex items-center transition-all duration-150 pointer-events-none`
+  const classContainer = `w-max absolute z-10 ${containerPosition[orientation as keyof typeof containerPosition]} bg-gray-600 text-white text-[10px] px-2 py-1 rounded flex items-center transition-all duration-150 pointer-events-none`
   const pointerClasses = `bg-gray-600 h-3 w-3 absolute z-10 ${pointerPosition[orientation as keyof typeof pointerPosition]} rotate-45 pointer-events-none`
 
   return (
     <div
-      className="relative flex items-center"
+      className={`relative flex items-center ${additionalContainerClass}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
       {children}
-
-      <div
-        className={classContainer}
-        style={{ opacity: 0 }}
-        ref={tipRef}
-      >
-        {showPointer ? <div className={pointerClasses} /> : null}
-        {tooltipText}
-      </div>
+      {show ?
+        <div
+          className={classContainer}
+          style={{ opacity: 0 }}
+          ref={tipRef}
+        >
+          {showPointer ? <div className={pointerClasses} /> : null}
+          {tooltipText}
+        </div>
+        : null}
     </div>
   );
 }

@@ -10,7 +10,6 @@ const Layout: React.FC<ComponentPropsWithRef<'div'>> = ({ children }) => {
         <div className="flex flex-col items-center justify-center">
           <div className="w-screen max-w-[72rem]">{children}</div>
         </div>
-        <Footer />
       </main>
     </>
   );

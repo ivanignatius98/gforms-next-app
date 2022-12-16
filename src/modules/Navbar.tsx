@@ -1,69 +1,88 @@
 import AppProps from 'next/app';
 import Image from 'next/image';
 import Link from 'next/link';
-import React, { useState } from 'react';
-import { GrDocumentText } from 'react-icons/gr';
+import React, { useState, useRef, useEffect } from 'react';
+
+import { IconContext } from 'react-icons';
+
+import { IoDocumentText } from 'react-icons/io5';
 import { GiHamburgerMenu } from 'react-icons/gi';
+import { BiUndo, BiRedo, BiDotsVerticalRounded } from 'react-icons/bi';
+import { MdOutlinePalette, MdOutlineRemoveRedEye, MdFolderOpen, MdStarOutline } from 'react-icons/md'
 import Tooltip from './Tooltip'
+import Dropdown from './Dropdown';
 
 type Props = {
   icon: JSX.Element,
   title: string,
+  smallContainer?: boolean,
   additionalClass?: string,
 };
-const MenuIcon = ({ icon, title, additionalClass = "" }: Props) => {
+const MenuIcon = ({ icon, title, additionalClass = "", smallContainer = false }: Props) => {
   return (
     <>
-      <Tooltip tooltipText={title} orientation="right" showPointer={false}>
-        <button className={`${additionalClass} w-12 p-2 flex rounded-lg items-center justify-center`}>
-          {icon}
-        </button>
+      <Tooltip tooltipText={title} orientation="bottom" showPointer={false} additionalContainerClass={""}>
+        <IconContext.Provider value={{ color: '#5f6368', size: '24px' }}>
+          <button className={`${additionalClass} ${smallContainer ? "w-7 h-7" : "w-12 h-12 p-2"} flex items-center justify-center z-10 hover:bg-slate-100 rounded-full`}>
+            {icon}
+          </button>
+        </IconContext.Provider>
       </Tooltip>
     </>
   )
 }
-// interface MenuItem {
-//   children: JSX.Element,
-// }
 const menuItemData: JSX.Element[] = [
   <MenuIcon
     title="Customize Theme"
-    icon={<GiHamburgerMenu size={24} />}
+    icon={<MdOutlinePalette />}
   />,
   <MenuIcon
     title="Preview"
     additionalClass='hidden md:flex'
-    icon={<GiHamburgerMenu size={24} />}
+    icon={<MdOutlineRemoveRedEye />}
   />,
   <MenuIcon
     title="Undo"
-    icon={<GiHamburgerMenu size={24} />}
+    icon={<BiUndo />}
   />,
   <MenuIcon
     title="Redo"
     additionalClass='hidden md:flex'
-    icon={<GiHamburgerMenu size={24} />}
+    icon={<BiRedo />}
   />,
   <>
     <div className='hidden md:flex items-center justify-center mx-2'>
-      <button className="h-9 px-5 rounded-md text-white bg-fuchsia-500 shadow-lg text-xs">
+      <button className="h-9 px-6 rounded-md text-white bg-fuchsia-500 hover:bg-fuchsia-400 shadow-sm text-sm">
         Send
       </button>
     </div>
     <MenuIcon
       title="Send"
       additionalClass='flex md:hidden'
-      icon={<GiHamburgerMenu size={24} />}
+      icon={<GiHamburgerMenu />}
     />
   </>
 ];
 const MenuItems = () => {
-  return <>{menuItemData.map((row: JSX.Element, i) => (<React.Fragment key={i}>{row}</React.Fragment>))
-  }</>
+  return <>{menuItemData.map((row: JSX.Element, i) => (<React.Fragment key={i}>{row}</React.Fragment>))}</>
 }
 
 const Navbar: React.FC = () => {
   const [showSidebar, setShowSidebar] = useState(false);
+
+  const dropdown = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!showSidebar) return;
+    const handleClick = ({ target }: MouseEvent) => {
+      if (dropdown.current && !dropdown.current.contains(target as HTMLElement)) {
+        setShowSidebar(false)
+      }
+    }
+    window.addEventListener("click", handleClick);
+    return () => window.removeEventListener("click", handleClick);
+  }, [showSidebar]);
+
   return (
     <nav className="bg-white border-gray-200 px-2 sm:px-4 pt-2.5 rounded dark:bg-gray-900 sticky top-0 z-10">
       <div className="flex flex-wrap justify-between items-center ">
@@ -71,40 +90,30 @@ const Navbar: React.FC = () => {
           <div className="flex flex-row h-12">
             <div className="w-12 p-2 flex rounded-lg items-center justify-center">
               <button>
-                <GrDocumentText size={24} />
+                <IoDocumentText size={40} color="#d946ef" />
               </button>
             </div>
-            <a href="#" className="hidden sm:flex items-center">
-              <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Test Form</span>
+            <a href="#" className="hidden sm:flex items-center ml-2">
+              <span className="self-center text-lg whitespace-nowrap dark:text-white">Untitled Form</span>
             </a>
+            <MenuIcon
+              title="Move to Folder"
+              icon={<MdFolderOpen />}
+              smallContainer={true}
+              additionalClass="mx-3"
+            />
+            <MenuIcon
+              title="Star"
+              icon={<MdStarOutline />}
+              smallContainer={true}
+            />
           </div>
         </div>
+
         <div className={"p-0 m-0 static block w-auto"} id="navbar-default">
-          <div className="flex flex-row h-12">
+          <div className="flex flex-row ">
             <MenuItems />
-            <div className="w-12 flex rounded-lg items-center justify-center">
-              <div className="h-6 relative inline-block">
-                <button onClick={() => { setShowSidebar(!showSidebar) }}>
-                  <GiHamburgerMenu size={24} />
-                </button>
-                <div className={(showSidebar ? "block" : "hidden") + " absolute z-10 right-0 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700"}>
-                  <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
-                    <li>
-                      <a href="#" className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Dashboard</a>
-                    </li>
-                    <li>
-                      <a href="#" className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Settings</a>
-                    </li>
-                    <li>
-                      <a href="#" className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Earnings</a>
-                    </li>
-                    <li>
-                      <a href="#" className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sign out</a>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+            <Dropdown />
           </div>
         </div>
       </div>
