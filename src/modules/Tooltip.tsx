@@ -12,12 +12,12 @@ type Props = {
 const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom", showPointer = true, additionalContainerClass = "", show = true }) => {
   const tipRef = useRef<HTMLInputElement>(null);
 
-  const handleMouseEnter = () => {
+  const handleShow = () => {
     if (tipRef.current != null) {
       tipRef.current.style.opacity = "1";
     }
   }
-  const handleMouseLeave = () => {
+  const handleHide = () => {
     if (tipRef.current != null) {
       tipRef.current.style.opacity = "0";
     }
@@ -40,8 +40,9 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
   return (
     <div
       className={`relative flex items-center ${additionalContainerClass}`}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={handleShow}
+      onMouseLeave={handleHide}
+      onClick={handleHide}
     >
       {children}
       {show ?

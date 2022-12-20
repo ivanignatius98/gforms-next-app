@@ -1,68 +1,69 @@
-
-import { useRef, useState, useEffect } from 'react';
+import { Menu, Transition } from '@headlessui/react'
+import { Fragment, useEffect, useRef, useState, isValidElement } from 'react'
 import { BiUndo, BiRedo, BiDotsVerticalRounded } from 'react-icons/bi';
-import Tooltip from './Tooltip'
+
+interface ListItem {
+  onClick: Function;
+  content: string | { icon: JSX.Element, text: string };
+}
 type Props = {
   children?: JSX.Element,
+  dropdownItemData: ListItem[][],
   tooltipText?: string,
   orientation?: string,
   showPointer?: boolean,
   show?: boolean,
+  showTooltip?: boolean,
   additionalContainerClass?: string
 };
-
-const Dropdown: React.FC<Props> = ({ children, tooltipText, orientation = "bottom", showPointer = true, additionalContainerClass = "", show = true }) => {
-  const [showSidebar, setShowSidebar] = useState(false);
-
-  const dropdown = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!showSidebar) return;
-    const handleClick = ({ target }: MouseEvent) => {
-      if (dropdown.current && !dropdown.current.contains(target as HTMLElement)) {
-        console.log("fired")
-        setShowSidebar(false)
-      }
-    }
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
-  }, [showSidebar]);
-
+export default function Dropdown({ children, dropdownItemData }: Props) {
   return (
-    <Tooltip
-      tooltipText="More"
-      orientation="bottom"
-      showPointer={false}
-      show={!showSidebar}
-    >
-      <div
-        className="relative inline-block"
-        ref={dropdown}
-      >
-        <div
-          className="w-12 h-12 cursor-pointer flex items-center justify-center hover:bg-slate-100 rounded-full"
-          onClick={() => { setShowSidebar(!showSidebar) }}
-        >
-          <BiDotsVerticalRounded size={24} color="#5f6368" />
-        </div>
-        <div className={(showSidebar ? "block" : "hidden") + " absolute z-10 right-0 bg-white rounded divide-y divide-gray-100 shadow dark:bg-gray-700"}>
-          <ul className="py-1 text-sm text-gray-700 dark:text-gray-200">
-            <li>
-              <a href="#" className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Dashboard</a>
-            </li>
-            <li>
-              <a href="#" className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Settings</a>
-            </li>
-            <li>
-              <a href="#" className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Earnings</a>
-            </li>
-            <li>
-              <a href="#" className="block py-2 px-4 hover:bg-gray-100 dark:hover:bg-gray-600 dark:hover:text-white">Sign out</a>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </Tooltip>
-  );
+    <Menu as="div" className="relative inline-block text-left">
+      {({ open }) => (
+        <>
+          {/* {JSON.stringify(open)} */}
+          <Menu.Button as={Fragment}>
+            {children}
+          </Menu.Button>
+          <Transition
+            as={Fragment}
+            enter="transition ease-out duration-100"
+            enterFrom="transform opacity-0 scale-95"
+            enterTo="transform opacity-100 scale-100"
+            leave="transition ease-in duration-75"
+            leaveFrom="transform opacity-100 scale-100"
+            leaveTo="transform opacity-0 scale-95"
+          >
+            <Menu.Items className="absolute py-1 right-0 w-48 origin-top-right divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 ">
+              {dropdownItemData.map((items: ListItem[], groupIndex) => (
+                <div className='py-2' key={groupIndex}>
+                  {items.map(({ onClick, content }: ListItem, i) => (
+                    <Menu.Item key={i}>
+                      {({ active }) => (
+                        <button className={`${active ? 'bg-gray-100 dark:bg-gray-600 dark:text-white' : ''} flex w-full items-center px-2 py-3 text-sm`}
+                          onClick={() => { onClick() }}
+                        >
+                          {typeof content == "string" ?
+                            <div className='pl-3'>
+                              {content}
+                            </div> :
+                            <>
+                              <div className="pl-2 pr-4">
+                                {content.icon}
+                              </div>
+                              {content.text}
+                            </>
+                          }
+                        </button>
+                      )}
+                    </Menu.Item>
+                  ))}
+                </div>
+              ))}
+            </Menu.Items>
+          </Transition>
+        </>
+      )}
+    </Menu >
+  )
 }
-export default Dropdown;

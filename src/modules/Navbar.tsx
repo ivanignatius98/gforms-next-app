@@ -4,11 +4,12 @@ import Link from 'next/link';
 import React, { useState, useRef, useEffect } from 'react';
 
 import { IconContext } from 'react-icons';
-
-import { IoDocumentText } from 'react-icons/io5';
+import { IoDocumentText, IoExtensionPuzzleOutline } from 'react-icons/io5';
 import { GiHamburgerMenu } from 'react-icons/gi';
 import { BiUndo, BiRedo, BiDotsVerticalRounded } from 'react-icons/bi';
-import { MdOutlinePalette, MdOutlineRemoveRedEye, MdFolderOpen, MdStarOutline } from 'react-icons/md'
+import { MdOutlinePalette, MdOutlineRemoveRedEye, MdFolderOpen, MdStarOutline, MdContentCopy, MdOutlineInsertLink, MdPrint, MdGroupAdd, MdCode } from 'react-icons/md'
+import { FiTrash2 } from 'react-icons/fi'
+
 import Tooltip from './Tooltip'
 import Dropdown from './Dropdown';
 
@@ -20,39 +21,45 @@ type Props = {
 };
 const MenuIcon = ({ icon, title, additionalClass = "", smallContainer = false }: Props) => {
   return (
-    <>
-      <Tooltip tooltipText={title} orientation="bottom" showPointer={false} additionalContainerClass={""}>
-        <IconContext.Provider value={{ color: '#5f6368', size: '24px' }}>
-          <button className={`${additionalClass} ${smallContainer ? "w-7 h-7" : "w-12 h-12 p-2"} flex items-center justify-center z-10 hover:bg-slate-100 rounded-full`}>
-            {icon}
-          </button>
-        </IconContext.Provider>
-      </Tooltip>
-    </>
+    <Tooltip tooltipText={title} orientation="bottom" showPointer={false}>
+      <IconContext.Provider value={{ color: '#5f6368', size: '24px' }}>
+        <button className={`${additionalClass} ${smallContainer ? "w-7 h-7" : "w-12 h-12 p-2"} flex items-center justify-center z-10 hover:bg-slate-100 active:bg-slate-200 rounded-full`}>
+          {icon}
+        </button>
+      </IconContext.Provider>
+    </Tooltip>
   )
 }
 const menuItemData: JSX.Element[] = [
-  <MenuIcon
-    title="Customize Theme"
-    icon={<MdOutlinePalette />}
-  />,
-  <MenuIcon
-    title="Preview"
-    additionalClass='hidden md:flex'
-    icon={<MdOutlineRemoveRedEye />}
-  />,
-  <MenuIcon
-    title="Undo"
-    icon={<BiUndo />}
-  />,
-  <MenuIcon
-    title="Redo"
-    additionalClass='hidden md:flex'
-    icon={<BiRedo />}
-  />,
+  <>
+    <MenuIcon
+      title="Customize Theme"
+      icon={<MdOutlinePalette />}
+    />
+  </>,
+  <>
+    <MenuIcon
+      title="Preview"
+      additionalClass='hidden md:flex'
+      icon={<MdOutlineRemoveRedEye />}
+    />
+  </>,
+  <>
+    <MenuIcon
+      title="Undo"
+      icon={<BiUndo />}
+    />
+  </>,
+  <>
+    <MenuIcon
+      title="Redo"
+      additionalClass='hidden md:flex'
+      icon={<BiRedo />}
+    />
+  </>,
   <>
     <div className='hidden md:flex items-center justify-center mx-2'>
-      <button className="h-9 px-6 rounded-md text-white bg-fuchsia-500 hover:bg-fuchsia-400 shadow-sm text-sm">
+      <button className="h-9 px-6 rounded-md text-white bg-fuchsia-500 hover:bg-fuchsia-400 active:bg-fuchsia-300 active:shadow shadow-sm text-sm">
         Send
       </button>
     </div>
@@ -67,22 +74,61 @@ const MenuItems = () => {
   return <>{menuItemData.map((row: JSX.Element, i) => (<React.Fragment key={i}>{row}</React.Fragment>))}</>
 }
 
-const Navbar: React.FC = () => {
-  const [showSidebar, setShowSidebar] = useState(false);
+interface ListItem {
+  onClick: Function;
+  content: string | { icon: JSX.Element, text: string };
+}
 
-  const dropdown = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    if (!showSidebar) return;
-    const handleClick = ({ target }: MouseEvent) => {
-      if (dropdown.current && !dropdown.current.contains(target as HTMLElement)) {
-        setShowSidebar(false)
-      }
+const dropdownItemData: ListItem[][] = [
+  [{
+    onClick: () => { console.log("TEST") },
+    content: {
+      icon: <MdContentCopy size={24} color="#5f6368" />,
+      text: "Make a copy"
     }
-    window.addEventListener("click", handleClick);
-    return () => window.removeEventListener("click", handleClick);
-  }, [showSidebar]);
+  }, {
+    onClick: () => { console.log("TEST2") },
+    content: {
+      icon: <FiTrash2 size={24} color="#5f6368" />,
+      text: "Move to trash"
+    }
+  }, {
+    onClick: () => { console.log("TEST3") },
+    content: {
+      icon: <MdOutlineInsertLink size={24} color="#5f6368" />,
+      text: "Get pre-filled link"
+    }
+  }, {
+    onClick: () => { console.log("TEST4") },
+    content: {
+      icon: <MdPrint size={24} color="#5f6368" />,
+      text: "Print"
+    }
+  }],
+  [{
+    onClick: () => { console.log("TEST4") },
+    content: {
+      icon: <MdGroupAdd size={24} color="#5f6368" />,
+      text: "Add collaborators"
+    }
+  }],
+  [{
+    onClick: () => { console.log("TEST4") },
+    content: {
+      icon: <MdCode size={24} color="#5f6368" />,
+      text: "Script editor"
+    }
+  }, {
+    onClick: () => { console.log("TEST4") },
+    content: {
+      icon: <IoExtensionPuzzleOutline size={24} color="#5f6368" />,
+      text: "Add ons"
+    }
+  }]
+]
 
+
+const Navbar: React.FC = () => {
   return (
     <nav className="bg-white border-gray-200 px-2 sm:px-4 pt-2.5 rounded dark:bg-gray-900 sticky top-0 z-10">
       <div className="flex flex-wrap justify-between items-center ">
@@ -113,7 +159,20 @@ const Navbar: React.FC = () => {
         <div className={"p-0 m-0 static block w-auto"} id="navbar-default">
           <div className="flex flex-row ">
             <MenuItems />
-            <Dropdown />
+            <React.Fragment>
+              <Tooltip
+                orientation="bottom"
+                showPointer={false}
+                // show={!showSidebar && showTooltip}
+                tooltipText="More"
+              >
+                <Dropdown {...{ dropdownItemData }}>
+                  <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
+                    <BiDotsVerticalRounded size={24} color="#5f6368" />
+                  </button>
+                </Dropdown>
+              </Tooltip>
+            </React.Fragment>
           </div>
         </div>
       </div>
