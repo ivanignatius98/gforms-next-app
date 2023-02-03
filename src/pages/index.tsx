@@ -1,8 +1,6 @@
 import type { NextPage } from 'next'
 import Head from 'next/head'
-import Navbar from '@modules/Navbar';
-import Layout from '@layouts/DefaultLayout';
-import About from '@pages/about';
+import Dashboard from '@pages/dashboard';
 
 const Home: NextPage = () => {
   return (
@@ -10,9 +8,7 @@ const Home: NextPage = () => {
       <Head>
         <title>App</title>
       </Head>
-      <Layout>
-        <About />
-      </Layout>
+        <Dashboard />
     </>
   )
 }

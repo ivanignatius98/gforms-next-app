@@ -12,6 +12,8 @@ import { FiTrash2 } from 'react-icons/fi'
 
 import Tooltip from './Tooltip'
 import Dropdown from './Dropdown';
+import Input from './Input';
+import GrowInput from './GrowInput';
 
 type Props = {
   icon: JSX.Element,
@@ -23,7 +25,7 @@ const MenuIcon = ({ icon, title, additionalClass = "", smallContainer = false }:
   return (
     <Tooltip tooltipText={title} orientation="bottom" showPointer={false}>
       <IconContext.Provider value={{ color: '#5f6368', size: '24px' }}>
-        <button className={`${additionalClass} ${smallContainer ? "w-7 h-7" : "w-12 h-12 p-2"} flex items-center justify-center z-10 hover:bg-slate-100 active:bg-slate-200 rounded-full`}>
+        <button className={`${additionalClass} ${smallContainer ? "w-6 h-6 " : "w-12 h-12 p-2 m-0"} flex items-center justify-center z-10 hover:bg-slate-100 active:bg-slate-200 rounded-full`}>
           {icon}
         </button>
       </IconContext.Provider>
@@ -40,7 +42,7 @@ const menuItemData: JSX.Element[] = [
   <>
     <MenuIcon
       title="Preview"
-      additionalClass='hidden md:flex'
+      additionalClass='hidden lg:flex'
       icon={<MdOutlineRemoveRedEye />}
     />
   </>,
@@ -53,19 +55,19 @@ const menuItemData: JSX.Element[] = [
   <>
     <MenuIcon
       title="Redo"
-      additionalClass='hidden md:flex'
+      additionalClass='hidden lg:flex'
       icon={<BiRedo />}
     />
   </>,
   <>
-    <div className='hidden md:flex items-center justify-center mx-2'>
+    <div className='hidden lg:flex items-center justify-center mx-2'>
       <button className="h-9 px-6 rounded-md text-white bg-fuchsia-500 hover:bg-fuchsia-400 active:bg-fuchsia-300 active:shadow shadow-sm text-sm">
         Send
       </button>
     </div>
     <MenuIcon
       title="Send"
-      additionalClass='flex md:hidden'
+      additionalClass='flex lg:hidden'
       icon={<GiHamburgerMenu />}
     />
   </>
@@ -129,35 +131,45 @@ const dropdownItemData: ListItem[][] = [
 
 
 const Navbar: React.FC = () => {
+  const [title, setTitle] = useState("aaaaaaaaaaaaa")
+
+  const handleTitleChange = (e: React.ChangeEvent<any>) => {
+    setTitle(e.target.value)
+  }
   return (
     <nav className="bg-white border-gray-200 px-2 sm:px-4 pt-2.5 rounded dark:bg-gray-900 sticky top-0 z-10">
       <div className="flex flex-wrap justify-between items-center ">
-        <div className={"p-0 m-0 static block w-auto"}>
-          <div className="flex flex-row h-12">
+        <div className={"p-0 m-0 static"}>
+          <div className="flex h-12 items-center">
             <div className="w-12 p-2 flex rounded-lg items-center justify-center">
               <button>
                 <IoDocumentText size={40} color="#d946ef" />
               </button>
             </div>
-            <a href="#" className="hidden sm:flex items-center ml-2">
-              <span className="self-center text-lg whitespace-nowrap dark:text-white">Untitled Form</span>
-            </a>
+            <div className='ml-2'>
+              <GrowInput
+                placeholder='Untitled Form'
+                value={title}
+                onChange={handleTitleChange}
+              />
+            </div>
             <MenuIcon
               title="Move to Folder"
               icon={<MdFolderOpen />}
               smallContainer={true}
-              additionalClass="mx-3"
+              additionalClass="mx-3 hidden lg:block "
             />
             <MenuIcon
               title="Star"
               icon={<MdStarOutline />}
               smallContainer={true}
+              additionalClass="hidden lg:block  "
             />
           </div>
         </div>
 
         <div className={"p-0 m-0 static block w-auto"} id="navbar-default">
-          <div className="flex flex-row ">
+          <div className="flex ">
             <MenuItems />
             <React.Fragment>
               <Tooltip
@@ -177,7 +189,12 @@ const Navbar: React.FC = () => {
         </div>
       </div>
       <a href="#" className="flex sm:hidden items-center">
-        <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Test Form</span>
+        {/* <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Test Form</span> */}
+
+        <Input
+          value={title}
+          onChange={(e: React.ChangeEvent<any>) => { setTitle(e.target.value) }}
+        />
       </a>
       <div className="border-b border-gray-200 dark:border-gray-700 mt-4">
         <ul className="flex flex-wrap -mb-px text-sm font-medium text-center sm:justify-center" >
