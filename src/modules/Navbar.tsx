@@ -14,6 +14,7 @@ import Tooltip from './Tooltip'
 import Dropdown from './Dropdown';
 import Input from './Input';
 import GrowInput from './GrowInput';
+import Tabs from './Tabs';
 
 type Props = {
   icon: JSX.Element,
@@ -24,8 +25,8 @@ type Props = {
 const MenuIcon = ({ icon, title, additionalClass = "", smallContainer = false }: Props) => {
   return (
     <Tooltip tooltipText={title} orientation="bottom" showPointer={false}>
-      <IconContext.Provider value={{ color: '#5f6368', size: '24px' }}>
-        <button className={`${additionalClass} ${smallContainer ? "w-6 h-6 " : "w-12 h-12 p-2 m-0"} flex items-center justify-center z-10 hover:bg-slate-100 active:bg-slate-200 rounded-full`}>
+      <IconContext.Provider value={{ color: '#5f6368', size: '23px' }}>
+        <button className={`${additionalClass} ${smallContainer ? "w-6 h-6" : "w-12 h-12 p-2 m-0"} flex items-center justify-center z-10 hover:bg-slate-100 active:bg-slate-200 rounded-full`}>
           {icon}
         </button>
       </IconContext.Provider>
@@ -130,15 +131,19 @@ const dropdownItemData: ListItem[][] = [
 ]
 
 
+const tabItemData = ["Questions", "Responses", "Settings"]
+
 const Navbar: React.FC = () => {
-  const [title, setTitle] = useState("aaaaaaaaaaaaa")
+  const [title, setTitle] = useState("Form Title")
+  const [currentTab, setCurrentTab] = useState("Questions")
 
   const handleTitleChange = (e: React.ChangeEvent<any>) => {
     setTitle(e.target.value)
   }
+
   return (
     <nav className="bg-white border-gray-200 px-2 sm:px-4 pt-2.5 rounded dark:bg-gray-900 sticky top-0 z-10">
-      <div className="flex flex-wrap justify-between items-center ">
+      <div className="flex flex-wrap justify-between items-center">
         <div className={"p-0 m-0 static"}>
           <div className="flex h-12 items-center">
             <div className="w-12 p-2 flex rounded-lg items-center justify-center">
@@ -157,19 +162,19 @@ const Navbar: React.FC = () => {
               title="Move to Folder"
               icon={<MdFolderOpen />}
               smallContainer={true}
-              additionalClass="mx-3 hidden lg:block "
+              additionalClass="mx-3 hidden lg:block"
             />
             <MenuIcon
               title="Star"
               icon={<MdStarOutline />}
               smallContainer={true}
-              additionalClass="hidden lg:block  "
+              additionalClass="hidden lg:block"
             />
           </div>
         </div>
 
         <div className={"p-0 m-0 static block w-auto"} id="navbar-default">
-          <div className="flex ">
+          <div className="flex">
             <MenuItems />
             <React.Fragment>
               <Tooltip
@@ -190,25 +195,16 @@ const Navbar: React.FC = () => {
       </div>
       <a href="#" className="flex sm:hidden items-center">
         {/* <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Test Form</span> */}
-
         <Input
           value={title}
           onChange={(e: React.ChangeEvent<any>) => { setTitle(e.target.value) }}
         />
       </a>
-      <div className="border-b border-gray-200 dark:border-gray-700 mt-4">
-        <ul className="flex flex-wrap -mb-px text-sm font-medium text-center sm:justify-center" >
-          <li className="mr-2">
-            <button className="inline-block p-2 rounded-t-lg border-b-4 border-indigo-600">Questions</button>
-          </li>
-          <li className="mr-2">
-            <button className="inline-block p-2 rounded-t-lg border-b-4 border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Responses</button>
-          </li>
-          <li className="mr-2">
-            <button className="inline-block p-2 rounded-t-lg border-b-4 border-transparent hover:text-gray-600 hover:border-gray-300 dark:hover:text-gray-300">Settings</button>
-          </li>
-        </ul>
-      </div>
+      <Tabs
+        tabItemData={tabItemData}
+        currentTab={currentTab}
+        setCurrentTab={setCurrentTab}
+      />
     </nav>
   );
 };

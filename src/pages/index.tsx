@@ -8,7 +8,7 @@ const Home: NextPage = () => {
       <Head>
         <title>App</title>
       </Head>
-        <Dashboard />
+      <Dashboard />
     </>
   )
 }
