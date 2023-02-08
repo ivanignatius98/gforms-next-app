@@ -135,8 +135,6 @@ const tabItemData = ["Questions", "Responses", "Settings"]
 
 const Navbar: React.FC = () => {
   const [title, setTitle] = useState("Form Title")
-  const [currentTab, setCurrentTab] = useState("Questions")
-
   const handleTitleChange = (e: React.ChangeEvent<any>) => {
     setTitle(e.target.value)
   }
@@ -200,11 +198,7 @@ const Navbar: React.FC = () => {
           onChange={(e: React.ChangeEvent<any>) => { setTitle(e.target.value) }}
         />
       </a>
-      <Tabs
-        tabItemData={tabItemData}
-        currentTab={currentTab}
-        setCurrentTab={setCurrentTab}
-      />
+      <Tabs tabItemData={tabItemData} />
     </nav>
   );
 };

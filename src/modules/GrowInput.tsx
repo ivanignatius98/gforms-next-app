@@ -28,7 +28,7 @@ const Input: React.FC<Props> = ({ minW = 18, maxW = 384, ...props }) => {
       }
       setWidth(newW)
     }
-  }, [props.value])
+  }, [props.value, minW, maxW])
 
   const handleAddSpace = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (width > minW && width < maxW && event.key == " " && props.value[props.value.length - 1] != " ") {

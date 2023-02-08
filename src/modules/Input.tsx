@@ -4,15 +4,22 @@ import { Transition } from '@headlessui/react'
 type Props = {
   children?: JSX.Element,
   value: string,
+  name?: string,
   onChange: (e: React.ChangeEvent<any>) => void,
   containerClass?: string,
+  placeholder?: string,
   label?: string,
-  alwaysHighlight?: boolean
-};
+  alwaysHighlight?: boolean,
+  className?: string
+}
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ')
+}
 const Input: React.FC<Props> = (props) => {
   const [isShowing, setIsShowing] = useState(false)
   return (
-    <div className="p-4">
+    <div>
       {props.label &&
         <label className="block text-sm font-medium text-gray-700">
           {props.label}
@@ -22,9 +29,9 @@ const Input: React.FC<Props> = (props) => {
         className={props.containerClass + ` bg-white`}
       >
         <input
-          {...props}
           spellCheck={false}
-          className='outline-none text-lg my-1 w-full'
+          placeholder={props.placeholder}
+          className={'outline-none my-1 w-full ' + props.className}
           onChange={(event) => {
             (props.onChange ? props.onChange(event) : () => { })
           }}
@@ -36,7 +43,7 @@ const Input: React.FC<Props> = (props) => {
           }}
           onBlur={() => setIsShowing(false)}
         />
-        <div className='h-0.5'>
+        <div className='h-0.5 pt-1' >
           <Transition
             as={Fragment}
             show={isShowing}
@@ -47,9 +54,10 @@ const Input: React.FC<Props> = (props) => {
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95 "
           >
-            <div className="h-0.5 w-full rounded-md bg-blue-500 shadow-lg overflow-hidden" />
+            <div className="h-0.5 w-fullrounded-md bg-blue-500 shadow-lg overflow-hidden" />
           </Transition>
         </div>
+        <div className=' h-[1px] w-full bg-slate-300'></div>
       </div>
     </div>
   )

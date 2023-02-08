@@ -18,10 +18,9 @@ type Props = {
 };
 export default function Dropdown({ children, dropdownItemData }: Props) {
   return (
-    <Menu as="div" className="relative inline-block text-left">
+    <Menu as="div" className="relative inline-block text-left z-20">
       {({ open }) => (
         <>
-          {/* {JSON.stringify(open)} */}
           <Menu.Button as={Fragment}>
             {children}
           </Menu.Button>
