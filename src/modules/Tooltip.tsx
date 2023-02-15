@@ -23,8 +23,8 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
     }
   }
   const containerPosition = {
-    right: 'top-[25%] left-full ml-2',
-    left: 'top-[25%] right-full mr-2',
+    right: 'top-0 left-full ml-2',
+    left: 'top-0 right-full mr-2',
     top: 'bottom-[85%] left-[50%] translate-x-[-50%] -translate-y-2',
     bottom: 'top-[85%] left-[50%] translate-x-[-50%] translate-y-2',
   }
