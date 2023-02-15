@@ -43,7 +43,7 @@ const Input: React.FC<Props> = (props) => {
           }}
           onBlur={() => setIsShowing(false)}
         />
-        <div className='h-0.5 pt-1' >
+        <div className='h-0.5' >
           <Transition
             as={Fragment}
             show={isShowing}
@@ -54,10 +54,10 @@ const Input: React.FC<Props> = (props) => {
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95 "
           >
-            <div className="h-0.5 w-fullrounded-md bg-blue-500 shadow-lg overflow-hidden" />
+            <div className="h-[1px] w-full rounded-md bg-blue-500 shadow-lg overflow-hidden" />
           </Transition>
+          <div className=' h-[1px] w-full bg-slate-300'></div>
         </div>
-        <div className=' h-[1px] w-full bg-slate-300'></div>
       </div>
     </div>
   )

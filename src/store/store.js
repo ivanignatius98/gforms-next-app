@@ -2,6 +2,7 @@ import { createStore, applyMiddleware, combineReducers } from 'redux'
 import { HYDRATE, createWrapper } from 'next-redux-wrapper'
 import thunkMiddleware from 'redux-thunk'
 import tab from './tab/reducer'
+import question from './question/reducer'
 
 import { configureStore, ThunkAction, Action } from '@reduxjs/toolkit'
 
@@ -14,11 +15,11 @@ const bindMiddleware = (middleware) => {
 }
 
 const combinedReducer = combineReducers({
-  tab,
+  tab, question
 })
 
 const reducer = (state, action) => {
-    return combinedReducer(state, action)
+  return combinedReducer(state, action)
 }
 
 const initStore = () => {
