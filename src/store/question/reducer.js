@@ -1,7 +1,7 @@
 import { questionActionTypes } from './action'
 
 const questionInitialState = {
-  questionIndex: 0,
+  questionIndex: -1,
   questions: []
 }
 const cardInitialState = {
@@ -15,10 +15,24 @@ export default function reducer(state = questionInitialState, action) {
       return Object.assign({}, state, {
         questionIndex: action.index,
       })
-    case questionActionTypes.ADD:
+    case questionActionTypes.ADD: {
+      const temp = [...state.questions]
+      if (action.index != undefined) {
+        temp.splice(action.index + 1, 0, cardInitialState)
+      } else {
+        temp.push(cardInitialState)
+      }
       return Object.assign({}, state, {
-        questions: [...state.questions, cardInitialState],
+        questions: temp,
       })
+    }
+    case questionActionTypes.SET_VALUE: {
+      state.questions[action.index] = { ...state.questions[action.index], ...action.payload }
+      console.log(action.index, action.payload)
+      return Object.assign({}, state, {
+        questions: [...state.questions],
+      })
+    }
     default:
       return state
   }

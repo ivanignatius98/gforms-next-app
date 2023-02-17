@@ -1,4 +1,4 @@
-import { useState, Fragment, useMemo } from 'react';
+import { useState, Fragment, useMemo, Ref } from 'react';
 import { Transition } from '@headlessui/react'
 
 type Props = {
@@ -10,7 +10,9 @@ type Props = {
   placeholder?: string,
   label?: string,
   alwaysHighlight?: boolean,
-  className?: string
+  className?: string,
+  autoFocus?: boolean,
+  inputRef?: Ref<HTMLInputElement>
 }
 
 function classNames(...classes: string[]) {
@@ -29,9 +31,12 @@ const Input: React.FC<Props> = (props) => {
         className={props.containerClass + ` bg-white`}
       >
         <input
+          ref={props.inputRef}
+          autoFocus={props.autoFocus}
           spellCheck={false}
           placeholder={props.placeholder}
           className={'outline-none my-1 w-full ' + props.className}
+          value={props.value}
           onChange={(event) => {
             (props.onChange ? props.onChange(event) : () => { })
           }}

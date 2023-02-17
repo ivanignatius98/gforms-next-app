@@ -28,7 +28,7 @@ const menuItemData: JSX.Element[] = [
   <>
     <MenuIcon
       title="Preview"
-      additionalClass='hidden lg:flex'
+      additionalClass='hidden form:flex'
       icon={<MdOutlineRemoveRedEye />}
     />
   </>,
@@ -41,19 +41,19 @@ const menuItemData: JSX.Element[] = [
   <>
     <MenuIcon
       title="Redo"
-      additionalClass='hidden lg:flex'
+      additionalClass='hidden form:flex'
       icon={<BiRedo />}
     />
   </>,
   <>
-    <div className='hidden lg:flex items-center justify-center mx-2'>
+    <div className='hidden form:flex items-center justify-center mx-2'>
       <button className="h-9 px-6 rounded-md text-white bg-fuchsia-500 hover:bg-fuchsia-400 active:bg-fuchsia-300 active:shadow shadow-sm text-sm">
         Send
       </button>
     </div>
     <MenuIcon
       title="Send"
-      additionalClass='flex lg:hidden'
+      additionalClass='flex form:hidden'
       icon={<GiHamburgerMenu />}
     />
   </>
@@ -134,7 +134,7 @@ const Navbar: React.FC = () => {
                 <IoDocumentText size={40} color="#d946ef" />
               </button>
             </div>
-            <div className='ml-2'>
+            <div className='ml-2 hidden sm:block'>
               <GrowInput
                 placeholder='Untitled Form'
                 value={title}
@@ -145,13 +145,13 @@ const Navbar: React.FC = () => {
               title="Move to Folder"
               icon={<MdFolderOpen />}
               smallContainer={true}
-              additionalClass="mx-3 hidden lg:block"
+              additionalClass="mx-3 hidden form:block"
             />
             <MenuIcon
               title="Star"
               icon={<MdStarOutline />}
               smallContainer={true}
-              additionalClass="hidden lg:block"
+              additionalClass="hidden form:block"
             />
           </div>
         </div>
@@ -176,13 +176,15 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
-      <a href="#" className="flex sm:hidden items-center">
+      <div className="flex sm:hidden items-center">
         {/* <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Test Form</span> */}
-        <Input
+        <GrowInput
+          underline
+          placeholder='Untitled Form'
           value={title}
-          onChange={(e: React.ChangeEvent<any>) => { setTitle(e.target.value) }}
+          onChange={handleTitleChange}
         />
-      </a>
+      </div>
       <Tabs tabItemData={tabItemData} />
     </nav>
   );

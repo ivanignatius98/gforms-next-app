@@ -21,8 +21,17 @@ const groupedOptions: readonly GroupedOption[] = [
     options: options,
   },
 ];
-
+const customStyles = {
+  control: (base: any) => ({
+    ...base,
+    height: 48,
+    minHeight: 48
+  })
+};
 const Component: React.FC = () => {
-  return <Select options={groupedOptions} />
+  return <Select
+    options={groupedOptions}
+    styles={customStyles}
+  />
 }
 export default Component

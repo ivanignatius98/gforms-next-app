@@ -8,7 +8,8 @@ type Props = {
   containerClass?: string,
   placeholder?: string,
   minW?: number,
-  maxW?: number
+  maxW?: number,
+  underline?: boolean,
 };
 
 const Input: React.FC<Props> = ({ minW = 18, maxW = 384, ...props }) => {
@@ -78,6 +79,7 @@ const Input: React.FC<Props> = ({ minW = 18, maxW = 384, ...props }) => {
           >
             <div className="h-full w-full rounded-md bg-blue-500 shadow-lg overflow-hidden" />
           </Transition>
+          {props.underline && <div className=' h-[1px] w-full bg-slate-300'></div>}
         </div>
       </div>
     ) :
