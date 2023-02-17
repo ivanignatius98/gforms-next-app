@@ -1,7 +1,5 @@
 import { useState, Fragment, Children, useRef, useEffect, Ref, useCallback } from 'react';
 import { connect } from 'react-redux'
-import { setQuestionIndex, setQuestionValue, addQuestion } from '@store/question/action'
-import { bindActionCreators } from 'redux'
 // import { Transition } from '@headlessui/react'
 import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
@@ -172,12 +170,12 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Add question",
       icon: <IoAddCircleOutline />,
-      // onClick: addQuestion
+      onClick: addQuestions
     },
     {
       title: "Import questions",
       icon: <TbFileImport />,
-      // onClick: logQuestion
+      onClick: () => console.log(questions)
     },
     {
       title: "Add title and description",
@@ -206,10 +204,9 @@ const Page: React.FC<Props> = (props) => {
               <div>
                 <div className='relative hidden form:block'>
                   <Toolbar
+                    menus={menus}
                     toolbarRef={toolbarRef}
                     sidebarY={sidebarY}
-                    addQuestion={addQuestions}
-                    logQuestion={() => console.log(questions)}
                   />
                 </div>
                 <CardContainer
@@ -264,7 +261,7 @@ const Page: React.FC<Props> = (props) => {
                           icon={<MdOutlineImage />}
                         />
                       </div>
-                      <div className=" w-60 ">
+                      <div className="w-60">
                         <Select />
                       </div>
                     </div>
@@ -273,18 +270,8 @@ const Page: React.FC<Props> = (props) => {
               </div>
             </div>
           </div>
-          <div className='form:hidden bg-white sticky items-center flex shadow-lg rounded-md z-10 bottom-0 mx-5'>
-            {menus.map((row, i) =>
-              <div key={i} className='justify-center flex flex-1 '>
-                <MenuIcon
-                  orientation="right"
-                  additionalClass="h-12 w-full m-0"
-                  title={row.title}
-                  icon={row.icon}
-                />
-              </div>
-            )}
-          </div>
+          <BottomToolbar menus={menus} />
+
         </div>
       )}
     </Layout>
@@ -292,45 +279,34 @@ const Page: React.FC<Props> = (props) => {
 }
 
 interface ToolbarProps {
-  toolbarRef: Ref<HTMLDivElement>,
-  sidebarY: number,
-  addQuestion: () => void,
-  logQuestion: () => void,
+  menus: any[],
+  toolbarRef?: Ref<HTMLDivElement>,
+  sidebarY?: number,
 };
-const Toolbar = ({ toolbarRef, sidebarY, addQuestion, logQuestion }: ToolbarProps) => {
-  const menus = [
-    {
-      title: "Add question",
-      icon: <IoAddCircleOutline />,
-      onClick: addQuestion
-    },
-    {
-      title: "Import questions",
-      icon: <TbFileImport />,
-      onClick: logQuestion
-    },
-    {
-      title: "Add title and description",
-      icon: <AiOutlineFontSize />,
-    },
-    {
-      title: "Add image",
-      icon: <MdOutlineImage />,
-    },
-    {
-      title: "Add video",
-      icon: <MdOutlineSmartDisplay />,
-    },
-    {
-      title: "Add section",
-      icon: <TiEqualsOutline />,
-    }
-  ]
+const BottomToolbar = ({ menus }: ToolbarProps) => {
+  return (
+    <div className='form:hidden bg-white sticky items-center flex shadow-lg rounded-md z-10 bottom-0 mx-5'>
+      {menus.map((row, i) =>
+        <div key={i} className='justify-center flex flex-1 '
+          onClick={row.bottomOnClick ? row.bottomOnClick : row.onClick}
+        >
+          <MenuIcon
+            orientation="right"
+            additionalClass="h-12 w-full m-0"
+            title={row.title}
+            icon={row.icon}
+          />
+        </div>
+      )}
+    </div>
+  )
+}
+const Toolbar = ({ toolbarRef, sidebarY, menus }: ToolbarProps) => {
   return (
     <div
       ref={toolbarRef}
       style={{ top: sidebarY }}
-      className='items-center transition-all duration-300 flex flex-col shadow-md bg-white rounded-md absolute z-0 -right-16 px-[2px] py-1'>
+      className='items-center transition-all duration-500 flex flex-col shadow-md bg-white rounded-md absolute z-0 -right-16 px-[2px] py-1'>
       {menus.map((row, i) =>
         <div key={i} className='m-1' onClick={row.onClick}>
           <MenuIcon
