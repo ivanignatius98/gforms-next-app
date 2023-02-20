@@ -29,7 +29,7 @@ interface ContainerProps {
   children?: JSX.Element,
   topHeader?: boolean,
   containerClass?: string,
-  onClick: () => void,
+  onClick: (e: React.MouseEvent<HTMLDivElement>) => void,
   selected: boolean,
   cardRef: Ref<HTMLDivElement>
 };
@@ -49,7 +49,10 @@ const Page: React.FC<Props> = (props) => {
   const [state, setState] = useState({
     title: "",
     description: "",
-    selectedIndex: -1
+    selectedIndex: -1,
+    reposition: true,
+    minHeight: "100vh",
+    divClick: true
   })
   const [questions, setQuestions] = useState([defaultQuestion]);
   const [sidebarY, setSidebarY] = useState(0)
@@ -87,47 +90,80 @@ const Page: React.FC<Props> = (props) => {
     }
     setSidebarY(finalPos)
   }, [])
-  const handleCardClick = (idx: number) => {
-    setState({ ...state, selectedIndex: idx })
+  const handleCardClick = (divClick: boolean, idx: number) => {
+    setState({ ...state, selectedIndex: idx, divClick })
   }
+
+  // selected index change
   useEffect(() => {
-    const getY = () => {
-      const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
-      return getRect(curr as HTMLDivElement)
+    if (state.reposition) {
+      const getY = () => {
+        const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
+        return getRect(curr as HTMLDivElement)
+      }
+      if (state.selectedIndex == -1) {
+        headerInputRef?.current?.focus()
+      } else {
+        inputRefs?.current[state.selectedIndex].focus()
+      }
+      repositionToolbar(getY())
+      // scroll behavior
+      const onScroll = () => {
+        const repositionToolbarDebounced = debounce(repositionToolbar, 50)
+        const y = getY()
+        repositionToolbarDebounced(y)
+      };
+      // clean up code
+      window.removeEventListener('scroll', onScroll);
+      window.addEventListener('scroll', onScroll, { passive: true });
+      return () => window.removeEventListener('scroll', onScroll);
     }
-    if (state.selectedIndex == -1) {
-      headerInputRef?.current?.focus()
-    } else {
-      inputRefs?.current[state.selectedIndex].focus()
-    }
-    repositionToolbar(getY())
-    // scroll behavior
-    const onScroll = () => {
-      const repositionToolbarDebounced = debounce(repositionToolbar, 50)
-      const y = getY()
-      repositionToolbarDebounced(y)
-    };
-    // clean up code
-    window.removeEventListener('scroll', onScroll);
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [state.selectedIndex, repositionToolbar])
+  }, [state.selectedIndex, state.reposition, state.divClick, repositionToolbar])
 
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, questions.length)
     inputRefs.current = inputRefs.current.slice(0, questions.length)
   }, [questions])
 
-  // const handleAdd = () => {
-  //   // const { questionIndex } = props.question
-  //   // props.addQuestion(questionIndex)
-  //   // props.setQuestionIndex(questionIndex + 1)
-  //   // setTimeout(() => {
-  //   //   repositionToolbar(getRect(cardRef?.current[questionIndex + 1] as HTMLDivElement))
-  //   // }, 100)
+  // resize behavior
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
 
-  //   setArr([2, 3, 4, 5, 1])
-  // }
+  const prevViewportWidthRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    prevViewportWidthRef.current = viewportWidth;
+  }, [viewportWidth]);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const newViewportWidth = window.innerWidth;
+      setViewportWidth(newViewportWidth);
+    };
+
+    handleResize();
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const containerMarginTop = 12
+    let navbarHeight = 105
+    let bottomToolbarHeight = 48
+    if (viewportWidth) {
+      if (viewportWidth < 640) {
+        navbarHeight = 151
+      } else if (viewportWidth > 930) {
+        bottomToolbarHeight = 0
+      }
+    }
+
+    setState(prevState => ({
+      ...prevState,
+      reposition: (viewportWidth ?? 0) > 930,
+      minHeight: `calc(100vh - ${navbarHeight + bottomToolbarHeight + containerMarginTop}px)`
+    }));
+  }, [viewportWidth]);
 
   interface questionParams {
     index: number,
@@ -197,10 +233,9 @@ const Page: React.FC<Props> = (props) => {
   return (
     <Layout>
       {props.tabIndex == 0 && (
-        <div className='overflow-x-clip'>
-          <div
-            className='flex justify-center mt-3 overflow-y-visible overflow-x-clip' ref={layoutRef}>
-            <div className='sm:w-[770px]' style={{ minHeight: "calc(100vh - 165px)" }}>
+        <>
+          <div className='flex justify-center mt-3' ref={layoutRef}>
+            <div className='sm:w-[770px] pb-16' style={{ minHeight: state.minHeight }}>
               <div>
                 <div className='relative hidden form:block'>
                   <Toolbar
@@ -212,7 +247,9 @@ const Page: React.FC<Props> = (props) => {
                 <CardContainer
                   cardRef={headerRef}
                   topHeader
-                  onClick={() => handleCardClick(-1)}
+                  onClick={(event) => {
+                    handleCardClick(event.target instanceof HTMLInputElement, -1)
+                  }}
                   selected={-1 == state.selectedIndex}
                 >
                   <div className='py-4 px-6'>
@@ -238,7 +275,9 @@ const Page: React.FC<Props> = (props) => {
                   <CardContainer
                     cardRef={(el: any) => cardRefs.current[i] = el}
                     selected={i == state.selectedIndex}
-                    onClick={() => { handleCardClick(i) }}
+                    onClick={(event) => {
+                      handleCardClick(event.target instanceof HTMLInputElement, i)
+                    }}
                     key={i}
                   >
                     <div className='py-4 px-6 flex flex-wrap items-start'>
@@ -271,8 +310,7 @@ const Page: React.FC<Props> = (props) => {
             </div>
           </div>
           <BottomToolbar menus={menus} />
-
-        </div>
+        </>
       )}
     </Layout>
   )
@@ -285,14 +323,14 @@ interface ToolbarProps {
 };
 const BottomToolbar = ({ menus }: ToolbarProps) => {
   return (
-    <div className='form:hidden bg-white sticky items-center flex shadow-lg rounded-md z-10 bottom-0 mx-5'>
+    <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md z-10 bottom-0 mx-5'>
       {menus.map((row, i) =>
-        <div key={i} className='justify-center flex flex-1 '
+        <div key={i} className='justify-center flex flex-1'
           onClick={row.bottomOnClick ? row.bottomOnClick : row.onClick}
         >
           <MenuIcon
             orientation="right"
-            additionalClass="h-12 w-full m-0"
+            additionalClass=""
             title={row.title}
             icon={row.icon}
           />
