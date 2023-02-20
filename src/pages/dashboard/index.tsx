@@ -6,10 +6,11 @@ import Input from '@modules/Input'
 import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
 import { MdOutlinePalette, MdOutlineSmartDisplay, MdOutlineImage } from 'react-icons/md'
-import { IoAddCircleOutline } from 'react-icons/io5'
+import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { TbFileImport } from 'react-icons/tb'
-import { AiOutlineFontSize } from 'react-icons/ai'
+import { AiOutlineFontSize, } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
+import { IconContext } from 'react-icons';
 
 import { defaultQuestion } from '@components/dashboard/defaults'
 import { debounce } from '@helpers'
@@ -34,13 +35,36 @@ interface ContainerProps {
   cardRef: Ref<HTMLDivElement>
 };
 const CardContainer = ({ children, cardRef, onClick, containerClass = "", selected = false, topHeader = false, ...props }: ContainerProps) => {
+  const [isHovered, setIsHovered] = useState(false);
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+  };
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+
+  function DoubleEllipsis() {
+    return (
+      <IconContext.Provider value={{ style: { display: 'flex' } }}>
+        <div>
+          <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
+          <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
+        </div>
+      </IconContext.Provider>
+    );
+  }
   return (
     <div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
       ref={cardRef}
       onClick={onClick}
       className={'bg-white w-full shadow-md rounded-md relative flex flex-col py-1 mb-4 ' + containerClass}
     >
       {topHeader && <div className=' bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-2 w-full'></div>}
+      <button style={{ display: isHovered || selected ? "block" : "none" }} className="cursor-move h-1 absolute top-0 left-1/2 transform -translate-x-1/2 ">
+        {DoubleEllipsis()}
+      </button>
       {selected && <div className={(topHeader ? "rounded-bl-md " : "rounded-bl-md rounded-tl-md ") + ' bg-blue-600 flex left-0 absolute bottom-0 w-[6px]'} style={{ height: `calc(100% ${topHeader ? "+ -8px" : ""})` }}></div>}
       {children}
     </div>)
@@ -101,10 +125,12 @@ const Page: React.FC<Props> = (props) => {
         const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
         return getRect(curr as HTMLDivElement)
       }
-      if (state.selectedIndex == -1) {
-        headerInputRef?.current?.focus()
-      } else {
-        inputRefs?.current[state.selectedIndex].focus()
+      if (state.divClick) {
+        if (state.selectedIndex == -1) {
+          headerInputRef?.current?.focus()
+        } else {
+          inputRefs?.current[state.selectedIndex].focus()
+        }
       }
       repositionToolbar(getY())
       // scroll behavior
@@ -248,7 +274,7 @@ const Page: React.FC<Props> = (props) => {
                   cardRef={headerRef}
                   topHeader
                   onClick={(event) => {
-                    handleCardClick(event.target instanceof HTMLInputElement, -1)
+                    handleCardClick(event.target instanceof HTMLDivElement, -1)
                   }}
                   selected={-1 == state.selectedIndex}
                 >
@@ -276,7 +302,7 @@ const Page: React.FC<Props> = (props) => {
                     cardRef={(el: any) => cardRefs.current[i] = el}
                     selected={i == state.selectedIndex}
                     onClick={(event) => {
-                      handleCardClick(event.target instanceof HTMLInputElement, i)
+                      handleCardClick(event.target instanceof HTMLDivElement, i)
                     }}
                     key={i}
                   >
