@@ -1,6 +1,6 @@
 import { useState, Fragment, Children, useRef, useEffect, Ref, useCallback } from 'react';
 import { connect } from 'react-redux'
-// import { Transition } from '@headlessui/react'
+// import { Transition } from'@headlessui/react'
 import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
 import Select from '@modules/Select'
@@ -30,11 +30,13 @@ interface ContainerProps {
   children?: JSX.Element,
   topHeader?: boolean,
   containerClass?: string,
-  onClick: (e: React.MouseEvent<HTMLDivElement>) => void,
+  onClick?: (e: React.MouseEvent<HTMLDivElement>) => void,
+  handleDragStart?: (e: any) => void,
   selected: boolean,
-  cardRef: Ref<HTMLDivElement>
+  currentlyDragged?: boolean,
+  cardRef?: Ref<HTMLDivElement>
 };
-const CardContainer = ({ children, cardRef, onClick, containerClass = "", selected = false, topHeader = false, ...props }: ContainerProps) => {
+const CardContainer = ({ children, currentlyDragged = false, handleDragStart, cardRef, onClick, containerClass = "", selected = false, topHeader = false, ...props }: ContainerProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -42,7 +44,6 @@ const CardContainer = ({ children, cardRef, onClick, containerClass = "", select
   const handleMouseLeave = () => {
     setIsHovered(false);
   };
-
   function DoubleEllipsis() {
     return (
       <IconContext.Provider value={{ style: { display: 'flex' } }}>
@@ -59,27 +60,60 @@ const CardContainer = ({ children, cardRef, onClick, containerClass = "", select
       onMouseLeave={handleMouseLeave}
       ref={cardRef}
       onClick={onClick}
-      className={'bg-white w-full shadow-md rounded-md relative flex flex-col py-1 mb-4 ' + containerClass}
+      style={{
+        opacity: currentlyDragged ? 0 : 1,
+      }}
+      className={'bg-white w-full shadow-md rounded-md relative flex flex-col py-1 mb-4' + containerClass}
     >
-      {topHeader && <div className=' bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-2 w-full'></div>}
-      <button style={{ display: isHovered || selected ? "block" : "none" }} className="cursor-move h-1 absolute top-0 left-1/2 transform -translate-x-1/2 ">
-        {DoubleEllipsis()}
-      </button>
-      {selected && <div className={(topHeader ? "rounded-bl-md " : "rounded-bl-md rounded-tl-md ") + ' bg-blue-600 flex left-0 absolute bottom-0 w-[6px]'} style={{ height: `calc(100% ${topHeader ? "+ -8px" : ""})` }}></div>}
+      {topHeader ?
+        <div className=' bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-[9px] w-full'></div> :
+        <button
+          className="absolute top-0 w-full justify-center items-center"
+          onMouseDown={handleDragStart}
+          style={{
+            cursor: currentlyDragged ? "grabbing" : "grab",
+            userSelect: "none",
+            display: isHovered || selected ? "flex" : "none"
+          }}
+        >
+          {DoubleEllipsis()}
+        </button>
+      }
+      {selected &&
+        <div
+          className={(topHeader ? "rounded-bl-md" : "rounded-bl-md rounded-tl-md") + ' bg-blue-600 flex left-0 absolute bottom-0 w-[6px]'}
+          style={{ height: `calc(100% ${topHeader ? " - 9px" : ""})` }}>
+        </div>}
       {children}
-    </div>)
+    </div >
+  )
+}
+interface State {
+  title: string,
+  description: string,
+  reposition: boolean,
+  minHeight: string,
+  divClick: boolean,
+  selectedIndex: number | null,
+  currentlyDragged: number | null,
+  currentSwapIndex: number | null,
+  navbarHeight: number
 }
 const Page: React.FC<Props> = (props) => {
-  const [state, setState] = useState({
+  const [state, setState] = useState<State>({
     title: "",
     description: "",
     selectedIndex: -1,
     reposition: true,
     minHeight: "100vh",
-    divClick: true
+    divClick: true,
+    currentSwapIndex: null,
+    currentlyDragged: null,
+    navbarHeight: 105
   })
   const [questions, setQuestions] = useState([defaultQuestion]);
   const [sidebarY, setSidebarY] = useState(0)
+  const [dragY, setDragY] = useState(0)
   const handleChange = (e: React.ChangeEvent<any>) => {
     setState((prevState) => {
       return { ...prevState, [e.target.name]: e.target.value }
@@ -120,11 +154,8 @@ const Page: React.FC<Props> = (props) => {
 
   // selected index change
   useEffect(() => {
-    if (state.reposition) {
-      const getY = () => {
-        const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
-        return getRect(curr as HTMLDivElement)
-      }
+    console.log(state.reposition)
+    if (state.selectedIndex != null) {
       if (state.divClick) {
         if (state.selectedIndex == -1) {
           headerInputRef?.current?.focus()
@@ -132,17 +163,26 @@ const Page: React.FC<Props> = (props) => {
           inputRefs?.current[state.selectedIndex].focus()
         }
       }
-      repositionToolbar(getY())
-      // scroll behavior
-      const onScroll = () => {
-        const repositionToolbarDebounced = debounce(repositionToolbar, 50)
-        const y = getY()
-        repositionToolbarDebounced(y)
-      };
-      // clean up code
-      window.removeEventListener('scroll', onScroll);
-      window.addEventListener('scroll', onScroll, { passive: true });
-      return () => window.removeEventListener('scroll', onScroll);
+      if (state.reposition) {
+        const getY = () => {
+          if (state.selectedIndex == null)
+            return 0
+
+          const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
+          return getRect(curr as HTMLDivElement)
+        }
+        repositionToolbar(getY())
+        // scroll behavior
+        const onScroll = () => {
+          const repositionToolbarDebounced = debounce(repositionToolbar, 50)
+          const y = getY()
+          repositionToolbarDebounced(y)
+        };
+        // clean up code
+        window.removeEventListener('scroll', onScroll);
+        window.addEventListener('scroll', onScroll, { passive: true });
+        return () => window.removeEventListener('scroll', onScroll);
+      }
     }
   }, [state.selectedIndex, state.reposition, state.divClick, repositionToolbar])
 
@@ -165,9 +205,7 @@ const Page: React.FC<Props> = (props) => {
       const newViewportWidth = window.innerWidth;
       setViewportWidth(newViewportWidth);
     };
-
     handleResize();
-
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -187,6 +225,7 @@ const Page: React.FC<Props> = (props) => {
     setState(prevState => ({
       ...prevState,
       reposition: (viewportWidth ?? 0) > 930,
+      navbarHeight,
       minHeight: `calc(100vh - ${navbarHeight + bottomToolbarHeight + containerMarginTop}px)`
     }));
   }, [viewportWidth]);
@@ -211,15 +250,16 @@ const Page: React.FC<Props> = (props) => {
       selectedIndex = temp.length - 1
     }
     setQuestions([...temp])
-    setState({ ...state, selectedIndex })
+    setState({ ...state, selectedIndex, divClick: true })
   }
+
   // const duplicateQuestion = () => {
   //   const temp = [...questions]
   //   temp.splice(state.selectedIndex + 1, 0, temp[state.selectedIndex])
   //   setQuestions([...temp])
   //   setState({ ...state, selectedIndex: state.selectedIndex + 1 })
   // }
-  // const removeQuestion = (index) => {
+  // const removeQuestion = (index:number) => {
   //   const temp = [...questions]
   //   if (temp[index].id != undefined) {
   //     setDeletedQuestionIds([...deletedQuestionIds, temp[index].id])
@@ -256,13 +296,124 @@ const Page: React.FC<Props> = (props) => {
       icon: <TiEqualsOutline />,
     }
   ]
+
+  const handleDragEnd = useCallback(() => {
+    setState((prevState) => {
+      return {
+        ...prevState,
+        selectedIndex: prevState.currentlyDragged,
+        currentlyDragged: null,
+        currentSwapIndex: null
+      }
+    })
+  }, [])
+
+  const handleDragging = useCallback((event: any) => {
+    const move = (index: number, direction: "up" | "down") => {
+      const nextIndex = direction === "up" ? index - 1 : index + 1
+      if (nextIndex >= 0 && nextIndex < questions.length && index !== state.currentSwapIndex) {
+        let temp = [...questions]
+        const swap = temp[nextIndex]
+        temp[nextIndex] = temp[index]
+        temp[index] = swap
+        setQuestions(temp)
+        setState((prevState) => ({
+          ...prevState,
+          currentlyDragged: nextIndex,
+          currentSwapIndex: index,
+        }))
+      }
+    }
+    if (state.currentlyDragged != null && state.currentlyDragged != state.currentSwapIndex) {
+      const isLastCard = state.currentlyDragged >= questions.length - 1
+      const isFirstCard = state.currentlyDragged === 0
+      const yCoordinate = event.clientY
+      if (yCoordinate <= 0) {
+        return
+      }
+      if (!isLastCard) {
+        const nextY = getRect(cardRefs.current[state.currentlyDragged + 1]) + 12
+        if (yCoordinate > nextY) {
+          move(state.currentlyDragged, "down")
+        }
+      }
+      if (!isFirstCard) {
+        const prevY = getRect(cardRefs.current[state.currentlyDragged - 1]) + 12
+        if (yCoordinate < prevY) {
+          move(state.currentlyDragged, "up")
+        }
+      }
+      setDragY(yCoordinate - (getRect(layoutRef.current as HTMLDivElement) ?? 0) - 16)
+    }
+  }, [state.currentlyDragged, questions, state.currentSwapIndex])
+
+  useEffect(() => {
+    if (state.currentlyDragged != null) {
+      window.addEventListener('mouseup', handleDragEnd)
+      window.addEventListener('mousemove', handleDragging, { passive: true })
+    }
+    return () => {
+      window.removeEventListener('mouseup', handleDragEnd)
+      window.removeEventListener('mousemove', handleDragging)
+    }
+  }, [state.currentlyDragged, handleDragEnd, handleDragging])
+
+  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+    if (state.currentlyDragged == null)
+      return
+    const y = event.clientY
+    const windowHeight = window.innerHeight
+    const offset = windowHeight - y
+    const bottomBreakpoint = 150
+    const getScrollSpeed = (yOffset: number) => {
+      const scrollSpeed = 20
+      if (yOffset < (bottomBreakpoint / 2)) { return 50 }
+      if (yOffset < scrollSpeed) { return 100 }
+      return scrollSpeed
+    }
+
+    if (y - offset < getRect(cardRefs.current[questions.length - 1]) && offset < bottomBreakpoint) {
+      window.scrollTo(0, window.pageYOffset + getScrollSpeed(offset))
+    } else if ((y) < bottomBreakpoint) {
+      window.scrollTo(0, window.pageYOffset - getScrollSpeed(y))
+    }
+  }
+
   return (
     <Layout>
       {props.tabIndex == 0 && (
         <>
           <div className='flex justify-center mt-3' ref={layoutRef}>
-            <div className='sm:w-[770px] pb-16' style={{ minHeight: state.minHeight }}>
+            <div className='sm:w-[770px] pb-16' style={{ minHeight: state.minHeight }} onMouseMove={handleMouseMove}>
               <div>
+                {state.currentlyDragged != null && (
+                  <div className='relative'>
+                    <div
+                      style={{ top: dragY }}
+                      className='absolute z-20 w-full opacity-50'
+                    >
+                      <CardContainer selected={true}>
+                        <div className='py-4 px-6 flex flex-wrap items-start'>
+                          <div className=" flex-grow max-w-full ml-2 mr-1">
+                            <Input
+                              value={questions[state.currentlyDragged].title}
+                              containerClass=' bg-gray-100'
+                              className=" text-base p-3 bg-gray-100"
+                            />
+                          </div>
+                          <div className='mx-1 z-0'>
+                            <MenuIcon
+                              icon={<MdOutlineImage />}
+                            />
+                          </div>
+                          <div className="w-60">
+                            <Select />
+                          </div>
+                        </div>
+                      </CardContainer>
+                    </div>
+                  </div>
+                )}
                 <div className='relative hidden form:block'>
                   <Toolbar
                     menus={menus}
@@ -305,9 +456,15 @@ const Page: React.FC<Props> = (props) => {
                       handleCardClick(event.target instanceof HTMLDivElement, i)
                     }}
                     key={i}
+                    currentlyDragged={state.currentlyDragged == i}
+                    handleDragStart={(event) => {
+                      event.preventDefault()
+                      setState({ ...state, currentlyDragged: i, selectedIndex: null })
+                    }}
+                  // handleDragging={(event) => handleDragging(event)}
                   >
                     <div className='py-4 px-6 flex flex-wrap items-start'>
-                      <div className=" flex-grow max-w-full ml-2 mr-1 ">
+                      <div className=" flex-grow max-w-full ml-2 mr-1">
                         <Input
                           alwaysHighlight
                           inputRef={(el: any) => inputRefs.current[i] = el}
@@ -346,7 +503,7 @@ interface ToolbarProps {
   menus: any[],
   toolbarRef?: Ref<HTMLDivElement>,
   sidebarY?: number,
-};
+}
 const BottomToolbar = ({ menus }: ToolbarProps) => {
   return (
     <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md z-10 bottom-0 mx-5'>

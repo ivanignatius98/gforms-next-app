@@ -5,7 +5,7 @@ type Props = {
   children?: JSX.Element,
   value: string,
   name?: string,
-  onChange: (e: React.ChangeEvent<any>) => void,
+  onChange?: (e: React.ChangeEvent<any>) => void,
   containerClass?: string,
   placeholder?: string,
   label?: string,
