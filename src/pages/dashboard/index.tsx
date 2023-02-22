@@ -68,10 +68,9 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
       {topHeader ?
         <div className=' bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-[9px] w-full'></div> :
         <button
-          className="absolute top-0 w-full justify-center items-center"
+          className="absolute top-0 w-full justify-center items-center cursor-move"
           onMouseDown={handleDragStart}
           style={{
-            cursor: currentlyDragged ? "grabbing" : "grab",
             userSelect: "none",
             display: isHovered || selected ? "flex" : "none"
           }}
@@ -359,22 +358,27 @@ const Page: React.FC<Props> = (props) => {
   }, [state.currentlyDragged, handleDragEnd, handleDragging])
 
   function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    if (state.currentlyDragged == null)
-      return
-    const y = event.clientY
-    const windowHeight = window.innerHeight
-    const offset = windowHeight - y
-    const bottomBreakpoint = 150
-    const getScrollSpeed = (yOffset: number) => {
-      const scrollSpeed = 20
-      if (yOffset < (bottomBreakpoint / 2)) { return 50 }
-      if (yOffset < scrollSpeed) { return 100 }
-      return scrollSpeed
+    if (state.currentlyDragged == null) {
+      return;
     }
-
-    if (y - offset < getRect(cardRefs.current[questions.length - 1]) && offset < bottomBreakpoint) {
+    const y = event.clientY;
+    const windowHeight = window.innerHeight;
+    const offset = windowHeight - y;
+    const bottomBreakpoint = 150;
+    const getScrollSpeed = (yOffset: number) => {
+      const scrollSpeed = 20;
+      if (yOffset < (bottomBreakpoint / 2)) {
+        return 50;
+      }
+      if (yOffset < scrollSpeed) {
+        return 100;
+      }
+      return scrollSpeed;
+    }
+    const lastCardRect = getRect(cardRefs.current[questions.length - 1])
+    if (y - offset < lastCardRect && offset < bottomBreakpoint) {
       window.scrollTo(0, window.pageYOffset + getScrollSpeed(offset))
-    } else if ((y) < bottomBreakpoint) {
+    } else if (y < bottomBreakpoint) {
       window.scrollTo(0, window.pageYOffset - getScrollSpeed(y))
     }
   }
@@ -384,112 +388,110 @@ const Page: React.FC<Props> = (props) => {
       {props.tabIndex == 0 && (
         <>
           <div className='flex justify-center mt-3' ref={layoutRef}>
-            <div className='sm:w-[770px] pb-16' style={{ minHeight: state.minHeight }} onMouseMove={handleMouseMove}>
-              <div>
-                {state.currentlyDragged != null && (
-                  <div className='relative'>
-                    <div
-                      style={{ top: dragY }}
-                      className='absolute z-20 w-full opacity-50'
-                    >
-                      <CardContainer selected={true}>
-                        <div className='py-4 px-6 flex flex-wrap items-start'>
-                          <div className=" flex-grow max-w-full ml-2 mr-1">
-                            <Input
-                              value={questions[state.currentlyDragged].title}
-                              containerClass=' bg-gray-100'
-                              className=" text-base p-3 bg-gray-100"
-                            />
-                          </div>
-                          <div className='mx-1 z-0'>
-                            <MenuIcon
-                              icon={<MdOutlineImage />}
-                            />
-                          </div>
-                          <div className="w-60">
-                            <Select />
-                          </div>
+            <div className='sm:w-[770px] pb-16'
+              style={{ minHeight: state.minHeight, cursor: state.currentlyDragged != null ? "move" : "auto" }}
+              onMouseMove={handleMouseMove}
+            >
+              {state.currentlyDragged != null && (
+                <div className='relative'>
+                  <div
+                    style={{ top: dragY }}
+                    className='absolute z-20 w-full opacity-50'
+                  >
+                    <CardContainer selected={true}>
+                      <div className='py-4 px-6 flex flex-wrap items-start'>
+                        <div className="flex-grow max-w-full ml-2 mr-1">
+                          <Input
+                            value={questions[state.currentlyDragged].title}
+                            containerClass=' bg-gray-100'
+                            className=" text-base p-3 bg-gray-100 cursor-move"
+                          />
                         </div>
-                      </CardContainer>
-                    </div>
+                        <div className='mx-1 z-0 cursor-move'>
+                          <MenuIcon
+                            icon={<MdOutlineImage />}
+                          />
+                        </div>
+                        <div className="w-60">
+                          <Select />
+                        </div>
+                      </div>
+                    </CardContainer>
                   </div>
-                )}
-                <div className='relative hidden form:block'>
-                  <Toolbar
-                    menus={menus}
-                    toolbarRef={toolbarRef}
-                    sidebarY={sidebarY}
+                </div>
+              )}
+              <div className='relative hidden form:block'>
+                <Toolbar
+                  menus={menus}
+                  toolbarRef={toolbarRef}
+                  sidebarY={sidebarY}
+                />
+              </div>
+              <CardContainer
+                cardRef={headerRef}
+                topHeader
+                onClick={(event) => {
+                  handleCardClick(event.target instanceof HTMLDivElement, -1)
+                }}
+                selected={-1 == state.selectedIndex}
+              >
+                <div className='py-4 px-6'>
+                  <Input
+                    inputRef={headerInputRef}
+                    className="text-3xl pb-1"
+                    name="title"
+                    value={state.title}
+                    onChange={handleChange}
+                    placeholder="Form title"
+                  />
+                  <Input
+                    containerClass='my-1'
+                    className="text-sm"
+                    name="description"
+                    value={state.description}
+                    onChange={handleChange}
+                    placeholder="Form description"
                   />
                 </div>
+              </CardContainer>
+              {questions.map((row: any, i: number) =>
                 <CardContainer
-                  cardRef={headerRef}
-                  topHeader
-                  onClick={(event) => {
-                    handleCardClick(event.target instanceof HTMLDivElement, -1)
+                  cardRef={(el: any) => cardRefs.current[i] = el}
+                  selected={i == state.selectedIndex}
+                  onClick={(event) => handleCardClick(event.target instanceof HTMLDivElement, i)}
+                  key={i}
+                  currentlyDragged={state.currentlyDragged == i}
+                  handleDragStart={(event) => {
+                    event.preventDefault()
+                    setState({ ...state, currentlyDragged: i, selectedIndex: null })
                   }}
-                  selected={-1 == state.selectedIndex}
                 >
-                  <div className='py-4 px-6'>
-                    <Input
-                      inputRef={headerInputRef}
-                      className="text-3xl pb-1"
-                      name="title"
-                      value={state.title}
-                      onChange={handleChange}
-                      placeholder="Form title"
-                    />
-                    <Input
-                      containerClass='my-1'
-                      className="text-sm"
-                      name="description"
-                      value={state.description}
-                      onChange={handleChange}
-                      placeholder="Form description"
-                    />
+                  <div className='py-4 px-6 flex flex-wrap items-start'>
+                    <div className="flex-grow max-w-full ml-2 mr-1">
+                      <Input
+                        alwaysHighlight
+                        inputRef={(el: any) => inputRefs.current[i] = el}
+                        containerClass=' bg-gray-100'
+                        className=" text-base p-3 bg-gray-100"
+                        name="question"
+                        value={row.title}
+                        onChange={(e) => {
+                          setQuestionValue({ index: i, payload: { title: e.target.value } })
+                        }}
+                        placeholder={`Question ${i + 1}`}
+                      />
+                    </div>
+                    <div className='mx-1 z-0'>
+                      <MenuIcon
+                        icon={<MdOutlineImage />}
+                      />
+                    </div>
+                    <div className="w-60">
+                      <Select />
+                    </div>
                   </div>
                 </CardContainer>
-                {questions.map((row: any, i: number) =>
-                  <CardContainer
-                    cardRef={(el: any) => cardRefs.current[i] = el}
-                    selected={i == state.selectedIndex}
-                    onClick={(event) => {
-                      handleCardClick(event.target instanceof HTMLDivElement, i)
-                    }}
-                    key={i}
-                    currentlyDragged={state.currentlyDragged == i}
-                    handleDragStart={(event) => {
-                      event.preventDefault()
-                      setState({ ...state, currentlyDragged: i, selectedIndex: null })
-                    }}
-                  // handleDragging={(event) => handleDragging(event)}
-                  >
-                    <div className='py-4 px-6 flex flex-wrap items-start'>
-                      <div className=" flex-grow max-w-full ml-2 mr-1">
-                        <Input
-                          alwaysHighlight
-                          inputRef={(el: any) => inputRefs.current[i] = el}
-                          containerClass=' bg-gray-100'
-                          className=" text-base p-3 bg-gray-100"
-                          name="question"
-                          value={row.title}
-                          onChange={(e) => {
-                            setQuestionValue({ index: i, payload: { title: e.target.value } })
-                          }}
-                          placeholder={`Question ${i + 1}`}
-                        />
-                      </div>
-                      <div className='mx-1 z-0'>
-                        <MenuIcon
-                          icon={<MdOutlineImage />}
-                        />
-                      </div>
-                      <div className="w-60">
-                        <Select />
-                      </div>
-                    </div>
-                  </CardContainer>
-                )}
-              </div>
+              )}
             </div>
           </div>
           <BottomToolbar menus={menus} />
