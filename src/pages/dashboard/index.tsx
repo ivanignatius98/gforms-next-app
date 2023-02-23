@@ -1,6 +1,6 @@
 import { useState, Fragment, Children, useRef, useEffect, Ref, useCallback } from 'react';
 import { connect } from 'react-redux'
-// import { Transition } from'@headlessui/react'
+import { Menu } from '@headlessui/react'
 import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
 import Select from '@modules/Select'
@@ -10,7 +10,9 @@ import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { TbFileImport } from 'react-icons/tb'
 import { AiOutlineFontSize, } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
+import Dropdown from '@modules/Dropdown';
 import { IconContext } from 'react-icons';
+import { VscTriangleDown } from 'react-icons/vsc';
 
 import { defaultQuestion } from '@components/dashboard/defaults'
 import { debounce } from '@helpers'
@@ -382,7 +384,37 @@ const Page: React.FC<Props> = (props) => {
       window.scrollTo(0, window.pageYOffset - getScrollSpeed(y))
     }
   }
+  interface ListItem {
+    onClick: Function;
+    content: string | { icon: JSX.Element, text: string };
+  }
 
+  const dropdownItemData: ListItem[][] = [
+    [{
+      onClick: () => { console.log("TEST") },
+      content: "Make a copy"
+    }, {
+      onClick: () => { console.log("TEST2") },
+      content: "Move to trash"
+    }, {
+      onClick: () => { console.log("TEST3") },
+      content: "Get pre-filled link"
+    }, {
+      onClick: () => { console.log("TEST4") },
+      content: "Print"
+    }],
+    [{
+      onClick: () => { console.log("TEST4") },
+      content: "Add collaborators"
+    }],
+    [{
+      onClick: () => { console.log("TEST4") },
+      content: "Script editor"
+    }, {
+      onClick: () => { console.log("TEST4") },
+      content: "Add ons"
+    }]
+  ]
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -467,7 +499,7 @@ const Page: React.FC<Props> = (props) => {
                   }}
                 >
                   <div className='py-4 px-6 flex flex-wrap items-start'>
-                    <div className="flex-grow max-w-full ml-2 mr-1">
+                    <div className="flex-grow max-w-full ml-2">
                       <Input
                         alwaysHighlight
                         inputRef={(el: any) => inputRefs.current[i] = el}
@@ -481,13 +513,28 @@ const Page: React.FC<Props> = (props) => {
                         placeholder={`Question ${i + 1}`}
                       />
                     </div>
-                    <div className='mx-1 z-0'>
+                    <div className='mx-3 z-0'>
                       <MenuIcon
                         icon={<MdOutlineImage />}
                       />
                     </div>
                     <div className="w-60">
-                      <Select />
+                      <Dropdown
+                        buttonClassName='w-full relative inline-block text-left '
+                        containerClassName="absolute z-40 py-1 w-full divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                        {...{ dropdownItemData }}
+                      >
+                        <button className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full active:bg-slate-200'>
+                          <div className='mx-2'>
+                            <MdOutlineImage size={24} color="#5f6368" />
+                          </div>
+                          Multiple Choice
+                          <div className='absolute right-2'>
+                            <VscTriangleDown size={12} color="#5f6368" />
+                          </div>
+                        </button>
+                      </Dropdown>
+                      {/* <Select /> */}
                     </div>
                   </div>
                 </CardContainer>
@@ -496,8 +543,9 @@ const Page: React.FC<Props> = (props) => {
           </div>
           <BottomToolbar menus={menus} />
         </>
-      )}
-    </Layout>
+      )
+      }
+    </Layout >
   )
 }
 
