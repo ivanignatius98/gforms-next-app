@@ -1,5 +1,5 @@
 import { Menu, Transition } from '@headlessui/react'
-import { Fragment, useEffect, useRef, useState, isValidElement } from 'react'
+import React, { Fragment, useEffect, useRef, useState, isValidElement } from 'react'
 import { BiUndo, BiRedo, BiDotsVerticalRounded } from 'react-icons/bi';
 
 interface ListItem {
@@ -15,9 +15,10 @@ type Props = {
   show?: boolean,
   showTooltip?: boolean,
   containerClassName?: string,
-  buttonClassName?: string
+  buttonClassName?: string,
+  containerStyle?: object
 };
-export default function Dropdown({ children, dropdownItemData, containerClassName, buttonClassName }: Props) {
+export default function Dropdown({ children, containerStyle = {}, dropdownItemData, containerClassName, buttonClassName }: Props) {
   return (
     <Menu as="div" className={buttonClassName || "relative inline-block text-left z-10"}>
       {({ open }) => (
@@ -35,8 +36,8 @@ export default function Dropdown({ children, dropdownItemData, containerClassNam
             leaveTo="transform opacity-0 scale-95"
           >
             <Menu.Items
+              style={containerStyle}
               // className="fixed z-10 w-64 p-2 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none"
-              style={{ transform: 'translate(0, -50%)' }}
               className={containerClassName || "absolute z-30 py-1 right-0 w-48 origin-top-right divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 "}
             >
               {dropdownItemData.map((items: ListItem[], groupIndex) => (

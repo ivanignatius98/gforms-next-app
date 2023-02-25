@@ -10,12 +10,10 @@ import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { TbFileImport } from 'react-icons/tb'
 import { AiOutlineFontSize, } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
-import Dropdown from '@modules/Dropdown';
 import { IconContext } from 'react-icons';
-import { VscTriangleDown } from 'react-icons/vsc';
 
 import { defaultQuestion } from '@components/dashboard/defaults'
-import { debounce } from '@helpers'
+import { debounce, getLayoutY } from '@helpers'
 interface questionParams {
   index: number,
   payload: any
@@ -120,10 +118,6 @@ const Page: React.FC<Props> = (props) => {
       return { ...prevState, [e.target.name]: e.target.value }
     })
   }
-
-  const getRect = (curr: HTMLDivElement) => {
-    return curr.getBoundingClientRect().y ?? 0
-  }
   const layoutRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<HTMLDivElement[]>([])
@@ -135,7 +129,7 @@ const Page: React.FC<Props> = (props) => {
     const { innerHeight } = window;
     const navSize = 105
     const toolbarHeight = toolbarRef.current?.getBoundingClientRect().height ?? 0
-    const layoutY = getRect(layoutRef.current as HTMLDivElement) ?? 0
+    const layoutY = getLayoutY(layoutRef.current as HTMLDivElement) ?? 0
     const topPosition = navSize + 16 - layoutY
     const bottomPosition = (layoutY * -1) + (innerHeight - (toolbarHeight ?? 0) - 16)
 
@@ -170,7 +164,7 @@ const Page: React.FC<Props> = (props) => {
             return 0
 
           const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
-          return getRect(curr as HTMLDivElement)
+          return getLayoutY(curr as HTMLDivElement)
         }
         repositionToolbar(getY())
         // scroll behavior
@@ -333,18 +327,18 @@ const Page: React.FC<Props> = (props) => {
         return
       }
       if (!isLastCard) {
-        const nextY = getRect(cardRefs.current[state.currentlyDragged + 1]) + 12
+        const nextY = getLayoutY(cardRefs.current[state.currentlyDragged + 1]) + 12
         if (yCoordinate > nextY) {
           move(state.currentlyDragged, "down")
         }
       }
       if (!isFirstCard) {
-        const prevY = getRect(cardRefs.current[state.currentlyDragged - 1]) + 12
+        const prevY = getLayoutY(cardRefs.current[state.currentlyDragged - 1]) + 12
         if (yCoordinate < prevY) {
           move(state.currentlyDragged, "up")
         }
       }
-      setDragY(yCoordinate - (getRect(layoutRef.current as HTMLDivElement) ?? 0) - 16)
+      setDragY(yCoordinate - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
     }
   }, [state.currentlyDragged, questions, state.currentSwapIndex])
 
@@ -377,44 +371,48 @@ const Page: React.FC<Props> = (props) => {
       }
       return scrollSpeed;
     }
-    const lastCardRect = getRect(cardRefs.current[questions.length - 1])
+    const lastCardRect = getLayoutY(cardRefs.current[questions.length - 1])
     if (y - offset < lastCardRect && offset < bottomBreakpoint) {
       window.scrollTo(0, window.pageYOffset + getScrollSpeed(offset))
     } else if (y < bottomBreakpoint) {
       window.scrollTo(0, window.pageYOffset - getScrollSpeed(y))
     }
   }
-  interface ListItem {
-    onClick: Function;
+  interface Item {
     content: string | { icon: JSX.Element, text: string };
   }
 
-  const dropdownItemData: ListItem[][] = [
+  const choicesData: Item[][] = [
     [{
-      onClick: () => { console.log("TEST") },
-      content: "Make a copy"
+      content: {
+        icon: <MdOutlineImage size={24} color="#5f6368" />,
+        text: "Short answer"
+      }
     }, {
-      onClick: () => { console.log("TEST2") },
-      content: "Move to trash"
-    }, {
-      onClick: () => { console.log("TEST3") },
-      content: "Get pre-filled link"
-    }, {
-      onClick: () => { console.log("TEST4") },
-      content: "Print"
+      content: {
+        icon: <MdOutlineImage size={24} color="#5f6368" />,
+        text: "Paragraph"
+      }
     }],
     [{
-      onClick: () => { console.log("TEST4") },
-      content: "Add collaborators"
-    }],
-    [{
-      onClick: () => { console.log("TEST4") },
-      content: "Script editor"
+      content: {
+        icon: <MdOutlineImage size={24} color="#5f6368" />,
+        text: "Multiple Choices"
+      }
     }, {
-      onClick: () => { console.log("TEST4") },
-      content: "Add ons"
-    }]
+      content: {
+        icon: <MdOutlineImage size={24} color="#5f6368" />,
+        text: "Checkboxes"
+      }
+    }, {
+      content: {
+        icon: <MdOutlineImage size={24} color="#5f6368" />,
+        text: "Dropdown"
+      }
+    }
+    ],
   ]
+
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -445,7 +443,7 @@ const Page: React.FC<Props> = (props) => {
                           />
                         </div>
                         <div className="w-60">
-                          <Select />
+                          {/* <Select /> */}
                         </div>
                       </div>
                     </CardContainer>
@@ -519,22 +517,7 @@ const Page: React.FC<Props> = (props) => {
                       />
                     </div>
                     <div className="w-60">
-                      <Dropdown
-                        buttonClassName='w-full relative inline-block text-left '
-                        containerClassName="absolute z-40 py-1 w-full divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-                        {...{ dropdownItemData }}
-                      >
-                        <button className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full active:bg-slate-200'>
-                          <div className='mx-2'>
-                            <MdOutlineImage size={24} color="#5f6368" />
-                          </div>
-                          Multiple Choice
-                          <div className='absolute right-2'>
-                            <VscTriangleDown size={12} color="#5f6368" />
-                          </div>
-                        </button>
-                      </Dropdown>
-                      {/* <Select /> */}
+                      <Select cardRef={cardRefs.current[i]} options={choicesData} />
                     </div>
                   </div>
                 </CardContainer>

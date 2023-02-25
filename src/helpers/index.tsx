@@ -11,3 +11,7 @@ export const debounce = (func: Function, wait: number) => {
     if (!timeout) func.apply(context, args)
   }
 }
+
+export const getLayoutY = (curr: HTMLDivElement) => {
+  return curr.getBoundingClientRect().y ?? 0
+}
