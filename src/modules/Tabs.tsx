@@ -13,7 +13,7 @@ function classNames(...classes: string[]) {
 }
 function Tabs({ tabItemData, ...props }: Props) {
   return (
-    <div className="relative pb-5 border-b border-gray-200 sm:pb-0 z-0">
+    <div className="relative pb-5  sm:pb-0 z-0">
       <div className="mt-4">
         <nav className=" flex space-x-4 justify-center">
           {tabItemData?.map((tab, i) => (

@@ -1,18 +1,17 @@
-import { useState, Fragment, Children, useRef, useEffect, Ref, useCallback } from 'react';
+import { useState, useRef, useEffect, Ref, useCallback } from 'react';
 import { connect } from 'react-redux'
-import { Menu } from '@headlessui/react'
 import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
 import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
-import { MdOutlinePalette, MdOutlineSmartDisplay, MdOutlineImage } from 'react-icons/md'
+import { MdOutlineSmartDisplay, MdOutlineImage, MdOutlineShortText } from 'react-icons/md'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { TbFileImport } from 'react-icons/tb'
-import { AiOutlineFontSize, } from 'react-icons/ai'
+import { AiOutlineFontSize } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
 
-import { defaultQuestion } from '@components/dashboard/defaults'
+import { defaultQuestion, choicesData } from '@components/dashboard/defaults'
 import { debounce, getLayoutY } from '@helpers'
 interface questionParams {
   index: number,
@@ -147,6 +146,9 @@ const Page: React.FC<Props> = (props) => {
     setState({ ...state, selectedIndex: idx, divClick })
   }
 
+  const resizeScrollbar = useCallback(() => {
+    setHasScrollbar((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - state.navbarHeight));
+  }, [state.navbarHeight])
   // selected index change
   useEffect(() => {
     console.log(state.reposition)
@@ -179,7 +181,8 @@ const Page: React.FC<Props> = (props) => {
         return () => window.removeEventListener('scroll', onScroll);
       }
     }
-  }, [state.selectedIndex, state.reposition, state.divClick, repositionToolbar])
+    resizeScrollbar()
+  }, [state.selectedIndex, state.reposition, state.divClick, resizeScrollbar, repositionToolbar])
 
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, questions.length)
@@ -195,15 +198,18 @@ const Page: React.FC<Props> = (props) => {
     prevViewportWidthRef.current = viewportWidth;
   }, [viewportWidth]);
 
+
   useEffect(() => {
+    resizeScrollbar()
     const handleResize = () => {
       const newViewportWidth = window.innerWidth;
       setViewportWidth(newViewportWidth);
+      resizeScrollbar()
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [resizeScrollbar]);
 
   useEffect(() => {
     const containerMarginTop = 12
@@ -378,46 +384,20 @@ const Page: React.FC<Props> = (props) => {
       window.scrollTo(0, window.pageYOffset - getScrollSpeed(y))
     }
   }
-  interface Item {
-    content: string | { icon: JSX.Element, text: string };
-  }
 
-  const choicesData: Item[][] = [
-    [{
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Short answer"
-      }
-    }, {
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Paragraph"
-      }
-    }],
-    [{
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Multiple Choices"
-      }
-    }, {
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Checkboxes"
-      }
-    }, {
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Dropdown"
-      }
-    }
-    ],
-  ]
-
+  const [hasScrollbar, setHasScrollbar] = useState(false);
   return (
     <Layout>
       {props.tabIndex == 0 && (
         <>
-          <div className='flex justify-center mt-3' ref={layoutRef}>
+          <div
+            className="flex justify-center mt-3"
+            ref={layoutRef}
+            style={{
+              paddingRight: hasScrollbar ? 8 : 0,
+              paddingLeft: hasScrollbar ? 8 : 0
+            }}
+          >
             <div className='sm:w-[770px] pb-16'
               style={{ minHeight: state.minHeight, cursor: state.currentlyDragged != null ? "move" : "auto" }}
               onMouseMove={handleMouseMove}
@@ -497,7 +477,7 @@ const Page: React.FC<Props> = (props) => {
                   }}
                 >
                   <div className='py-4 px-6 flex flex-wrap items-start'>
-                    <div className="flex-grow max-w-full ml-2">
+                    <div className="flex-grow w-[300px] max-w-full">
                       <Input
                         alwaysHighlight
                         inputRef={(el: any) => inputRefs.current[i] = el}
@@ -517,7 +497,12 @@ const Page: React.FC<Props> = (props) => {
                       />
                     </div>
                     <div className="w-60">
-                      <Select cardRef={cardRefs.current[i]} options={choicesData} />
+                      <Select
+                        initialOption={choicesData[1][0]}
+                        onChange={(e) => setQuestionValue({ index: i, payload: { type: e } })}
+                        cardRef={cardRefs.current[i]}
+                        options={choicesData}
+                      />
                     </div>
                   </div>
                 </CardContainer>

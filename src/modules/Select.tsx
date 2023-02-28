@@ -4,20 +4,25 @@ import { MdOutlinePalette, MdOutlineSmartDisplay, MdOutlineImage } from 'react-i
 import { VscTriangleDown } from 'react-icons/vsc';
 import { getLayoutY } from '@helpers'
 interface Item {
-  content: string | { icon: JSX.Element, text: string };
+  icon?: JSX.Element
+  label: string
+  value: string
 }
-interface DropdownItem extends Item {
+interface DropdownItem {
   onClick: () => void;
+  content: Item
 }
 
 type Props = {
   options: Item[][],
-  cardRef: any
+  onChange: (val: Item) => void,
+  initialOption?: Item,
+  cardRef: any,
 };
 
-function Select({ options, cardRef }: Props) {
+function Select({ options, initialOption, onChange, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
-  const [selected, setSelected] = useState<Item>(options[0][0])
+  const [selected, setSelected] = useState<Item>(initialOption ?? options[0][0])
   const [mappedOptions, setMappedOptions] = useState<DropdownItem[][]>([])
   useEffect(() => {
     const mappedArr = []
@@ -26,22 +31,22 @@ function Select({ options, cardRef }: Props) {
       for (let i = 0; i < group.length; i++) {
         arrGroup.push({
           onClick: () => setSelected(group[i]),
-          content: group[i].content
+          content: group[i]
         });
       }
       mappedArr.push(arrGroup)
     }
     setMappedOptions(mappedArr)
   }, [options])
+
+  useEffect(() => onChange(selected), [selected])
+
   function contentPlaceholder(content: any) {
-    <div className='mx-2'>
-      <MdOutlineImage size={24} color="#5f6368" />
-    </div>
     return typeof content === 'object' ? (<>
       <div className='mx-2'>
-        <MdOutlineImage size={24} color="#5f6368" />
+        {content.icon}
       </div>
-      {content.text}
+      {content.label}
     </>)
       : null;
   }
@@ -52,13 +57,14 @@ function Select({ options, cardRef }: Props) {
       buttonClassName='w-full relative inline-block'
       containerClassName="fixed z-10 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-1 divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
       dropdownItemData={mappedOptions}
+      selected={selected.label}
     >
       <button
         onClick={() => setSelectY(getLayoutY(cardRef))}
         className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full active:bg-slate-200'>
-        {/* placeholder */}
+        {/* value preview */}
         {selected && (<>
-          {contentPlaceholder(selected.content)}
+          {contentPlaceholder(selected)}
           <div className='absolute right-2'>
             <VscTriangleDown size={12} color="#5f6368" />
           </div>
