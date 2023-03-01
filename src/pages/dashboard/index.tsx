@@ -117,6 +117,10 @@ const Page: React.FC<Props> = (props) => {
       return { ...prevState, [e.target.name]: e.target.value }
     })
   }
+  const handleCardClick = (divClick: boolean, idx: number) => {
+    setState({ ...state, selectedIndex: idx, divClick })
+  }
+
   const layoutRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<HTMLDivElement[]>([])
@@ -142,16 +146,12 @@ const Page: React.FC<Props> = (props) => {
     }
     setSidebarY(finalPos)
   }, [])
-  const handleCardClick = (divClick: boolean, idx: number) => {
-    setState({ ...state, selectedIndex: idx, divClick })
-  }
 
   const resizeScrollbar = useCallback(() => {
     setHasScrollbar((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - state.navbarHeight));
   }, [state.navbarHeight])
   // selected index change
   useEffect(() => {
-    console.log(state.reposition)
     if (state.selectedIndex != null) {
       if (state.divClick) {
         if (state.selectedIndex == -1) {
@@ -189,15 +189,8 @@ const Page: React.FC<Props> = (props) => {
     inputRefs.current = inputRefs.current.slice(0, questions.length)
   }, [questions])
 
-  // resize behavior
+  //#region resize behavior
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
-
-  const prevViewportWidthRef = useRef<number | null>(null);
-
-  useEffect(() => {
-    prevViewportWidthRef.current = viewportWidth;
-  }, [viewportWidth]);
-
 
   useEffect(() => {
     resizeScrollbar()
@@ -231,6 +224,10 @@ const Page: React.FC<Props> = (props) => {
     }));
   }, [viewportWidth]);
 
+  const [hasScrollbar, setHasScrollbar] = useState(false);
+  //#endregion
+
+  //#region question
   interface questionParams {
     index: number,
     payload: any
@@ -269,6 +266,8 @@ const Page: React.FC<Props> = (props) => {
   //   setQuestions([...temp])
   //   setState({ ...state, selectedIndex: index - 1 })
   // }
+  //#endregion
+
   const menus = [
     {
       title: "Add question",
@@ -298,6 +297,7 @@ const Page: React.FC<Props> = (props) => {
     }
   ]
 
+  //#region dragging behavior
   const handleDragEnd = useCallback(() => {
     setState((prevState) => {
       return {
@@ -384,8 +384,8 @@ const Page: React.FC<Props> = (props) => {
       window.scrollTo(0, window.pageYOffset - getScrollSpeed(y))
     }
   }
+  //#endregion
 
-  const [hasScrollbar, setHasScrollbar] = useState(false);
   return (
     <Layout>
       {props.tabIndex == 0 && (

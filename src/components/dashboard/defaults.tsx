@@ -18,10 +18,11 @@ export const defaultQuestion = {
   requireEachRow: false
 }
 
-import { MdOutlineSmartDisplay, MdCheckBox, MdOutlineImage, MdOutlineShortText } from 'react-icons/md'
+import { MdLinearScale, MdCheckBox, MdOutlineImage, MdOutlineShortText } from 'react-icons/md'
 import { AiOutlineAlignLeft } from 'react-icons/ai'
-import { BsCircleFill } from 'react-icons/bs'
+import { BsCircleFill, BsFillGrid3X3GapFill, BsGrid3X3GapFill } from 'react-icons/bs'
 import { VscTriangleDown } from 'react-icons/vsc';
+import { IoMdCloudUpload, IoMdTime, IoMdCalendar } from 'react-icons/io';
 
 interface Item {
   icon: JSX.Element
@@ -60,4 +61,31 @@ export const choicesData: Item[][] = [
     value: "dropdown",
     label: "Dropdown"
   }],
+  [{
+    icon: <IoMdCloudUpload size={24} color="#5f6368" />,
+    value: "file_upload",
+    label: "File upload"
+  }],
+  [{
+    icon: <MdLinearScale size={24} color="#5f6368" />,
+    value: "linear_scale",
+    label: "Linear scale"
+  }, {
+    icon: <BsFillGrid3X3GapFill size={24} color="#5f6368" />,
+    value: "multiple_choice_grid",
+    label: "Multiple choice grid"
+  }, {
+    icon: <BsGrid3X3GapFill size={24} color="#5f6368" />,
+    value: "checkbox_grid",
+    label: "Checkbox grid"
+  }],
+  [{
+    icon: <IoMdCalendar size={24} color="#5f6368" />,
+    value: "date",
+    label: "Date"
+  }, {
+    icon: <IoMdTime size={24} color="#5f6368" />,
+    value: "time",
+    label: "Time"
+  }]
 ]
