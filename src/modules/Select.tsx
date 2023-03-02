@@ -27,7 +27,7 @@ interface ItemCoordinates {
 interface ItemMap {
   [key: string]: ItemCoordinates;
 }
-function Select({ options, initialOption, onChange, cardRef }: Props) {
+function Select({ options, layoutY, initialOption, onChange, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [selected, setSelected] = useState<Item>(initialOption ?? options[0][0])
   const [mappedOptions, setMappedOptions] = useState<DropdownItem[][]>([])
@@ -62,27 +62,23 @@ function Select({ options, initialOption, onChange, cardRef }: Props) {
 
   const repositionCenter = () => {
     const { innerHeight } = window;
-    const optionHeight = 620
-    const topPosition = 24
-    const bottomPosition = innerHeight - optionHeight - 32
     const currY = getLayoutY(cardRef)
-
     const { groupIndex, index } = valuesMap[selected.value]
 
     const [groupDividerHeight, eachOptionHeight] = [16, 48]
+    const optionHeight = groupDividerHeight * options.length + eachOptionHeight * Object.keys(valuesMap).length
+    const topPosition = 24
+    const bottomPosition = innerHeight - optionHeight - 24
     let sidePosition = currY - (groupIndex * groupDividerHeight) - (index * eachOptionHeight)
-
-    console.log(groupIndex, index)
-    console.log({ sidePosition, bottomPosition, topPosition })
     let finalPos = sidePosition
-
+    console.log(optionHeight)
     if (window.innerHeight < optionHeight || sidePosition <= topPosition) {
       finalPos = topPosition
     } else if (bottomPosition < sidePosition) {
       finalPos = bottomPosition
     }
+    setYScrollOffset((sidePosition - 24) * -1)
     setSelectY(finalPos)
-    setYScrollOffset(1000)
   }
   const contentPlaceholder = (content: any) => {
     return typeof content === 'object' ? (<>
@@ -97,7 +93,7 @@ function Select({ options, initialOption, onChange, cardRef }: Props) {
   return (
     <Dropdown
       scrollOffset={yScrollOffset}
-      containerStyle={{ top: selectY, overflowY: "auto", maxHeight: window.innerHeight - 48 }}
+      containerStyle={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 10px)" }}
       buttonClassName='w-full relative inline-block'
       containerClassName=" fixed z-10 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-1 divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
       dropdownItemData={mappedOptions}
@@ -114,7 +110,7 @@ function Select({ options, initialOption, onChange, cardRef }: Props) {
           </div>
         </>)}
       </button>
-    </Dropdown>
+    </Dropdown >
   )
 }
 
