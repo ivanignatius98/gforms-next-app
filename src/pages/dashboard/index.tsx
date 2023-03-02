@@ -1,18 +1,18 @@
-import { useState, Fragment, Children, useRef, useEffect, Ref, useCallback } from 'react';
+import { useState, useRef, useEffect, Ref, useCallback } from 'react';
 import { connect } from 'react-redux'
-import { Menu } from '@headlessui/react'
 import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
 import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
-import { MdOutlinePalette, MdOutlineSmartDisplay, MdOutlineImage } from 'react-icons/md'
+import Toggle from '@modules/Toggle'
+import { MdOutlineSmartDisplay, MdOutlineImage, MdOutlineShortText } from 'react-icons/md'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { TbFileImport } from 'react-icons/tb'
-import { AiOutlineFontSize, } from 'react-icons/ai'
+import { AiOutlineFontSize } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
 
-import { defaultQuestion } from '@components/dashboard/defaults'
+import { defaultQuestion, choicesData } from '@components/dashboard/defaults'
 import { debounce, getLayoutY } from '@helpers'
 interface questionParams {
   index: number,
@@ -118,6 +118,10 @@ const Page: React.FC<Props> = (props) => {
       return { ...prevState, [e.target.name]: e.target.value }
     })
   }
+  const handleCardClick = (divClick: boolean, idx: number) => {
+    setState({ ...state, selectedIndex: idx, divClick })
+  }
+
   const layoutRef = useRef<HTMLDivElement>(null)
   const toolbarRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<HTMLDivElement[]>([])
@@ -143,13 +147,12 @@ const Page: React.FC<Props> = (props) => {
     }
     setSidebarY(finalPos)
   }, [])
-  const handleCardClick = (divClick: boolean, idx: number) => {
-    setState({ ...state, selectedIndex: idx, divClick })
-  }
 
+  const resizeScrollbar = useCallback(() => {
+    setHasScrollbar((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - state.navbarHeight));
+  }, [state.navbarHeight])
   // selected index change
   useEffect(() => {
-    console.log(state.reposition)
     if (state.selectedIndex != null) {
       if (state.divClick) {
         if (state.selectedIndex == -1) {
@@ -179,31 +182,28 @@ const Page: React.FC<Props> = (props) => {
         return () => window.removeEventListener('scroll', onScroll);
       }
     }
-  }, [state.selectedIndex, state.reposition, state.divClick, repositionToolbar])
+    resizeScrollbar()
+  }, [state.selectedIndex, state.reposition, state.divClick, resizeScrollbar, repositionToolbar])
 
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, questions.length)
     inputRefs.current = inputRefs.current.slice(0, questions.length)
   }, [questions])
 
-  // resize behavior
+  //#region resize behavior
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
 
-  const prevViewportWidthRef = useRef<number | null>(null);
-
   useEffect(() => {
-    prevViewportWidthRef.current = viewportWidth;
-  }, [viewportWidth]);
-
-  useEffect(() => {
+    resizeScrollbar()
     const handleResize = () => {
       const newViewportWidth = window.innerWidth;
       setViewportWidth(newViewportWidth);
+      resizeScrollbar()
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [resizeScrollbar]);
 
   useEffect(() => {
     const containerMarginTop = 12
@@ -225,6 +225,10 @@ const Page: React.FC<Props> = (props) => {
     }));
   }, [viewportWidth]);
 
+  const [hasScrollbar, setHasScrollbar] = useState(false);
+  //#endregion
+
+  //#region question
   interface questionParams {
     index: number,
     payload: any
@@ -263,6 +267,8 @@ const Page: React.FC<Props> = (props) => {
   //   setQuestions([...temp])
   //   setState({ ...state, selectedIndex: index - 1 })
   // }
+  //#endregion
+
   const menus = [
     {
       title: "Add question",
@@ -292,6 +298,7 @@ const Page: React.FC<Props> = (props) => {
     }
   ]
 
+  //#region dragging behavior
   const handleDragEnd = useCallback(() => {
     setState((prevState) => {
       return {
@@ -378,46 +385,20 @@ const Page: React.FC<Props> = (props) => {
       window.scrollTo(0, window.pageYOffset - getScrollSpeed(y))
     }
   }
-  interface Item {
-    content: string | { icon: JSX.Element, text: string };
-  }
-
-  const choicesData: Item[][] = [
-    [{
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Short answer"
-      }
-    }, {
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Paragraph"
-      }
-    }],
-    [{
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Multiple Choices"
-      }
-    }, {
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Checkboxes"
-      }
-    }, {
-      content: {
-        icon: <MdOutlineImage size={24} color="#5f6368" />,
-        text: "Dropdown"
-      }
-    }
-    ],
-  ]
+  //#endregion
 
   return (
     <Layout>
       {props.tabIndex == 0 && (
         <>
-          <div className='flex justify-center mt-3' ref={layoutRef}>
+          <div
+            className="flex justify-center mt-3"
+            ref={layoutRef}
+            style={{
+              paddingRight: hasScrollbar ? 8 : 0,
+              paddingLeft: hasScrollbar ? 8 : 0
+            }}
+          >
             <div className='sm:w-[770px] pb-16'
               style={{ minHeight: state.minHeight, cursor: state.currentlyDragged != null ? "move" : "auto" }}
               onMouseMove={handleMouseMove}
@@ -496,28 +477,58 @@ const Page: React.FC<Props> = (props) => {
                     setState({ ...state, currentlyDragged: i, selectedIndex: null })
                   }}
                 >
-                  <div className='py-4 px-6 flex flex-wrap items-start'>
-                    <div className="flex-grow max-w-full ml-2">
-                      <Input
-                        alwaysHighlight
-                        inputRef={(el: any) => inputRefs.current[i] = el}
-                        containerClass=' bg-gray-100'
-                        className=" text-base p-3 bg-gray-100"
-                        name="question"
-                        value={row.title}
-                        onChange={(e) => {
-                          setQuestionValue({ index: i, payload: { title: e.target.value } })
-                        }}
-                        placeholder={`Question ${i + 1}`}
-                      />
+                  <div className='py-4 px-6 '>
+                    <div className='flex flex-wrap items-start'>
+                      <div className="flex-grow w-[300px] max-w-full">
+                        <Input
+                          alwaysHighlight
+                          inputRef={(el: any) => inputRefs.current[i] = el}
+                          containerClass=' bg-gray-100'
+                          className=" text-base p-3 bg-gray-100"
+                          name="question"
+                          value={row.title}
+                          onChange={(e) => {
+                            setQuestionValue({ index: i, payload: { title: e.target.value } })
+                          }}
+                          placeholder={`Question ${i + 1}`}
+                        />
+                      </div>
+                      <div className='mx-3 z-0'>
+                        <MenuIcon
+                          icon={<MdOutlineImage />}
+                        />
+                      </div>
+                      <div className="w-60">
+                        <Select
+                          value={row.type}
+                          onChange={(e) => setQuestionValue({ index: i, payload: { type: e } })}
+                          cardRef={cardRefs.current[i]}
+                          options={choicesData}
+                        />
+                      </div>
                     </div>
-                    <div className='mx-3 z-0'>
+                    <div className='flex justify-end items-center border-t-[1.5px] my-4'>
                       <MenuIcon
+                        additionalClass='mx-[1px]'
                         icon={<MdOutlineImage />}
                       />
-                    </div>
-                    <div className="w-60">
-                      <Select cardRef={cardRefs.current[i]} options={choicesData} />
+                      <MenuIcon
+                        additionalClass='mx-[1px]'
+                        icon={<MdOutlineImage />}
+                      />
+                      <MenuIcon
+                        additionalClass='mx-[1px]'
+                        icon={<MdOutlineImage />}
+                      />
+                      <div className=' border-l-[1.5px] h-8 mx-2'></div>
+                      <span className='text-sm mx-2'>Required</span>
+                      <div className='mx-2'>
+                        <Toggle />
+                      </div>
+                      <MenuIcon
+                        additionalClass='mx-[1px]'
+                        icon={<MdOutlineImage />}
+                      />
                     </div>
                   </div>
                 </CardContainer>
@@ -539,7 +550,7 @@ interface ToolbarProps {
 }
 const BottomToolbar = ({ menus }: ToolbarProps) => {
   return (
-    <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md z-10 bottom-0 mx-5'>
+    <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md bottom-0 mx-5'>
       {menus.map((row, i) =>
         <div key={i} className='justify-center flex flex-1'
           onClick={row.bottomOnClick ? row.bottomOnClick : row.onClick}

@@ -64,7 +64,7 @@ const MenuItems = () => {
 
 interface ListItem {
   onClick: Function;
-  content: string | { icon: JSX.Element, text: string };
+  content: { icon?: JSX.Element, label: string };
 }
 
 const dropdownItemData: ListItem[][] = [
@@ -72,45 +72,45 @@ const dropdownItemData: ListItem[][] = [
     onClick: () => { console.log("TEST") },
     content: {
       icon: <MdContentCopy size={24} color="#5f6368" />,
-      text: "Make a copy"
+      label: "Make a copy"
     }
   }, {
     onClick: () => { console.log("TEST2") },
     content: {
       icon: <FiTrash2 size={24} color="#5f6368" />,
-      text: "Move to trash"
+      label: "Move to trash"
     }
   }, {
     onClick: () => { console.log("TEST3") },
     content: {
       icon: <MdOutlineInsertLink size={24} color="#5f6368" />,
-      text: "Get pre-filled link"
+      label: "Get pre-filled link"
     }
   }, {
     onClick: () => { console.log("TEST4") },
     content: {
       icon: <MdPrint size={24} color="#5f6368" />,
-      text: "Print"
+      label: "Print"
     }
   }],
   [{
     onClick: () => { console.log("TEST4") },
     content: {
       icon: <MdGroupAdd size={24} color="#5f6368" />,
-      text: "Add collaborators"
+      label: "Add collaborators"
     }
   }],
   [{
     onClick: () => { console.log("TEST4") },
     content: {
       icon: <MdCode size={24} color="#5f6368" />,
-      text: "Script editor"
+      label: "Script editor"
     }
   }, {
     onClick: () => { console.log("TEST4") },
     content: {
       icon: <IoExtensionPuzzleOutline size={24} color="#5f6368" />,
-      text: "Add ons"
+      label: "Add ons"
     }
   }]
 ]
@@ -120,12 +120,13 @@ const tabItemData = ["Questions", "Responses", "Settings"]
 
 const Navbar: React.FC = () => {
   const [title, setTitle] = useState("Form Title")
+  const [showTooltip, setShowTooltip] = useState(true)
   const handleTitleChange = (e: React.ChangeEvent<any>) => {
     setTitle(e.target.value)
   }
 
   return (
-    <nav className="bg-white border-gray-200 px-2 sm:px-4 pt-2.5 rounded dark:bg-gray-900 sticky top-0 z-10">
+    <nav className="bg-white border-b border-gray-200 px-2 sm:px-4 pt-2.5 rounded dark:bg-gray-900 sticky top-0 z-10">
       <div className="flex flex-wrap justify-between items-center">
         <div className={"p-0 m-0 static"}>
           <div className="flex h-12 items-center">
@@ -163,10 +164,10 @@ const Navbar: React.FC = () => {
               <Tooltip
                 orientation="bottom"
                 showPointer={false}
-                // show={!showSidebar && showTooltip}
+                show={showTooltip}
                 tooltipText="More"
               >
-                <Dropdown {...{ dropdownItemData }}>
+                <Dropdown {...{ dropdownItemData }} setOpen={(val) => setShowTooltip(!val)}>
                   <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
                     <BiDotsVerticalRounded size={24} color="#5f6368" />
                   </button>
