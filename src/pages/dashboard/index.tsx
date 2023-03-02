@@ -4,6 +4,7 @@ import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
 import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
+import Toggle from '@modules/Toggle'
 import { MdOutlineSmartDisplay, MdOutlineImage, MdOutlineShortText } from 'react-icons/md'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { TbFileImport } from 'react-icons/tb'
@@ -476,32 +477,57 @@ const Page: React.FC<Props> = (props) => {
                     setState({ ...state, currentlyDragged: i, selectedIndex: null })
                   }}
                 >
-                  <div className='py-4 px-6 flex flex-wrap items-start'>
-                    <div className="flex-grow w-[300px] max-w-full">
-                      <Input
-                        alwaysHighlight
-                        inputRef={(el: any) => inputRefs.current[i] = el}
-                        containerClass=' bg-gray-100'
-                        className=" text-base p-3 bg-gray-100"
-                        name="question"
-                        value={row.title}
-                        onChange={(e) => {
-                          setQuestionValue({ index: i, payload: { title: e.target.value } })
-                        }}
-                        placeholder={`Question ${i + 1}`}
-                      />
+                  <div className='py-4 px-6 '>
+                    <div className='flex flex-wrap items-start'>
+                      <div className="flex-grow w-[300px] max-w-full">
+                        <Input
+                          alwaysHighlight
+                          inputRef={(el: any) => inputRefs.current[i] = el}
+                          containerClass=' bg-gray-100'
+                          className=" text-base p-3 bg-gray-100"
+                          name="question"
+                          value={row.title}
+                          onChange={(e) => {
+                            setQuestionValue({ index: i, payload: { title: e.target.value } })
+                          }}
+                          placeholder={`Question ${i + 1}`}
+                        />
+                      </div>
+                      <div className='mx-3 z-0'>
+                        <MenuIcon
+                          icon={<MdOutlineImage />}
+                        />
+                      </div>
+                      <div className="w-60">
+                        <Select
+                          value={row.type}
+                          onChange={(e) => setQuestionValue({ index: i, payload: { type: e } })}
+                          cardRef={cardRefs.current[i]}
+                          options={choicesData}
+                        />
+                      </div>
                     </div>
-                    <div className='mx-3 z-0'>
+                    <div className='flex justify-end items-center border-t-[1.5px] my-4'>
                       <MenuIcon
+                        additionalClass='mx-[1px]'
                         icon={<MdOutlineImage />}
                       />
-                    </div>
-                    <div className="w-60">
-                      <Select
-                        value={row.type}
-                        onChange={(e) => setQuestionValue({ index: i, payload: { type: e } })}
-                        cardRef={cardRefs.current[i]}
-                        options={choicesData}
+                      <MenuIcon
+                        additionalClass='mx-[1px]'
+                        icon={<MdOutlineImage />}
+                      />
+                      <MenuIcon
+                        additionalClass='mx-[1px]'
+                        icon={<MdOutlineImage />}
+                      />
+                      <div className=' border-l-[1.5px] h-8 mx-2'></div>
+                      <span className='text-sm mx-2'>Required</span>
+                      <div className='mx-2'>
+                        <Toggle />
+                      </div>
+                      <MenuIcon
+                        additionalClass='mx-[1px]'
+                        icon={<MdOutlineImage />}
                       />
                     </div>
                   </div>
