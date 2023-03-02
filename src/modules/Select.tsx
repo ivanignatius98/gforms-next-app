@@ -20,14 +20,10 @@ type Props = {
   cardRef: any,
 };
 
-interface ItemCoordinates {
-  groupIndex: number
-  index: number,
-}
 interface ItemMap {
-  [key: string]: ItemCoordinates;
+  [key: string]: [number, number];
 }
-function Select({ options, layoutY, initialOption, onChange, cardRef }: Props) {
+function Select({ options, initialOption, onChange, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [selected, setSelected] = useState<Item>(initialOption ?? options[0][0])
   const [mappedOptions, setMappedOptions] = useState<DropdownItem[][]>([])
@@ -35,8 +31,7 @@ function Select({ options, layoutY, initialOption, onChange, cardRef }: Props) {
   useEffect(() => {
     const mappedArr = []
     const map: ItemMap = {}
-    let groupIndex = 0
-    let idx = 0
+    let [groupIndex, idx] = [0, 0]
     for (let group of options) {
       const arrGroup: DropdownItem[] = [];
       for (let i = 0; i < group.length; i++) {
@@ -45,7 +40,7 @@ function Select({ options, layoutY, initialOption, onChange, cardRef }: Props) {
           content: group[i]
         });
         const { value } = group[i];
-        map[value] = { groupIndex, index: idx };
+        map[value] = [groupIndex, idx];
         idx++
       }
       mappedArr.push(arrGroup)
@@ -63,7 +58,7 @@ function Select({ options, layoutY, initialOption, onChange, cardRef }: Props) {
   const repositionCenter = () => {
     const { innerHeight } = window;
     const currY = getLayoutY(cardRef)
-    const { groupIndex, index } = valuesMap[selected.value]
+    const [groupIndex, index] = valuesMap[selected.value]
 
     const [groupDividerHeight, eachOptionHeight] = [16, 48]
     const optionHeight = groupDividerHeight * options.length + eachOptionHeight * Object.keys(valuesMap).length

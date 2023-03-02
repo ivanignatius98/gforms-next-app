@@ -498,7 +498,6 @@ const Page: React.FC<Props> = (props) => {
                     </div>
                     <div className="w-60">
                       <Select
-                        layoutY={getLayoutY(layoutRef.current as HTMLDivElement) ?? 0}
                         initialOption={choicesData[1][0]}
                         onChange={(e) => setQuestionValue({ index: i, payload: { type: e } })}
                         cardRef={cardRefs.current[i]}
