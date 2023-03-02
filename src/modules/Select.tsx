@@ -14,18 +14,18 @@ interface DropdownItem {
 }
 
 type Props = {
-  options: Item[][],
-  onChange: (val: Item) => void,
-  initialOption?: Item,
-  cardRef: any,
+  options: Item[][]
+  onChange: (val: Item) => void
+  value?: Item
+  cardRef: any
 };
 
 interface ItemMap {
   [key: string]: [number, number];
 }
-function Select({ options, initialOption, onChange, cardRef }: Props) {
+function Select({ options, value, onChange, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
-  const [selected, setSelected] = useState<Item>(initialOption ?? options[0][0])
+  const [selected, setSelected] = useState<Item>(value ?? options[0][0])
   const [mappedOptions, setMappedOptions] = useState<DropdownItem[][]>([])
   const [valuesMap, setValuesMap] = useState<ItemMap>({})
   useEffect(() => {
@@ -50,9 +50,7 @@ function Select({ options, initialOption, onChange, cardRef }: Props) {
     setMappedOptions(mappedArr)
   }, [options])
 
-  useEffect(() => {
-    onChange(selected)
-  }, [selected])
+  useEffect(() => onChange(selected), [selected])
   const [yScrollOffset, setYScrollOffset] = useState(0)
 
   const repositionCenter = () => {
@@ -66,7 +64,6 @@ function Select({ options, initialOption, onChange, cardRef }: Props) {
     const bottomPosition = innerHeight - optionHeight - 24
     let sidePosition = currY - (groupIndex * groupDividerHeight) - (index * eachOptionHeight)
     let finalPos = sidePosition
-    console.log(optionHeight)
     if (window.innerHeight < optionHeight || sidePosition <= topPosition) {
       finalPos = topPosition
     } else if (bottomPosition < sidePosition) {
@@ -92,14 +89,14 @@ function Select({ options, initialOption, onChange, cardRef }: Props) {
       buttonClassName='w-full relative inline-block'
       containerClassName=" fixed z-10 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-1 divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
       dropdownItemData={mappedOptions}
-      selected={selected.label}
+      selected={value?.label || ""}
     >
       <button
         onClick={() => repositionCenter()}
         className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full active:bg-slate-200'>
         {/* value preview */}
-        {selected && (<>
-          {contentPlaceholder(selected)}
+        {value && (<>
+          {contentPlaceholder(value)}
           <div className='absolute right-2'>
             <VscTriangleDown size={12} color="#5f6368" />
           </div>

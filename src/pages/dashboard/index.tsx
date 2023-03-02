@@ -498,7 +498,7 @@ const Page: React.FC<Props> = (props) => {
                     </div>
                     <div className="w-60">
                       <Select
-                        initialOption={choicesData[1][0]}
+                        value={row.type}
                         onChange={(e) => setQuestionValue({ index: i, payload: { type: e } })}
                         cardRef={cardRefs.current[i]}
                         options={choicesData}
