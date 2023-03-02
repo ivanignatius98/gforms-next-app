@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Dropdown from '@modules/Dropdown';
 import { MdOutlinePalette, MdOutlineSmartDisplay, MdOutlineImage } from 'react-icons/md'
 import { VscTriangleDown } from 'react-icons/vsc';
@@ -20,12 +20,23 @@ type Props = {
   cardRef: any,
 };
 
+interface ItemCoordinates {
+  groupIndex: number
+  index: number,
+}
+interface ItemMap {
+  [key: string]: ItemCoordinates;
+}
 function Select({ options, initialOption, onChange, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [selected, setSelected] = useState<Item>(initialOption ?? options[0][0])
   const [mappedOptions, setMappedOptions] = useState<DropdownItem[][]>([])
+  const [valuesMap, setValuesMap] = useState<ItemMap>({})
   useEffect(() => {
     const mappedArr = []
+    const map: ItemMap = {}
+    let groupIndex = 0
+    let idx = 0
     for (let group of options) {
       const arrGroup: DropdownItem[] = [];
       for (let i = 0; i < group.length; i++) {
@@ -33,15 +44,47 @@ function Select({ options, initialOption, onChange, cardRef }: Props) {
           onClick: () => setSelected(group[i]),
           content: group[i]
         });
+        const { value } = group[i];
+        map[value] = { groupIndex, index: idx };
+        idx++
       }
       mappedArr.push(arrGroup)
+      groupIndex++
     }
+    setValuesMap(map)
     setMappedOptions(mappedArr)
   }, [options])
 
-  useEffect(() => onChange(selected), [selected])
+  useEffect(() => {
+    onChange(selected)
+  }, [selected])
+  const [yScrollOffset, setYScrollOffset] = useState(0)
 
-  function contentPlaceholder(content: any) {
+  const repositionCenter = () => {
+    const { innerHeight } = window;
+    const optionHeight = 620
+    const topPosition = 24
+    const bottomPosition = innerHeight - optionHeight - 32
+    const currY = getLayoutY(cardRef)
+
+    const { groupIndex, index } = valuesMap[selected.value]
+
+    const [groupDividerHeight, eachOptionHeight] = [16, 48]
+    let sidePosition = currY - (groupIndex * groupDividerHeight) - (index * eachOptionHeight)
+
+    console.log(groupIndex, index)
+    console.log({ sidePosition, bottomPosition, topPosition })
+    let finalPos = sidePosition
+
+    if (window.innerHeight < optionHeight || sidePosition <= topPosition) {
+      finalPos = topPosition
+    } else if (bottomPosition < sidePosition) {
+      finalPos = bottomPosition
+    }
+    setSelectY(finalPos)
+    setYScrollOffset(1000)
+  }
+  const contentPlaceholder = (content: any) => {
     return typeof content === 'object' ? (<>
       <div className='mx-2'>
         {content.icon}
@@ -53,14 +96,15 @@ function Select({ options, initialOption, onChange, cardRef }: Props) {
 
   return (
     <Dropdown
-      containerStyle={{ top: selectY }}
+      scrollOffset={yScrollOffset}
+      containerStyle={{ top: selectY, overflowY: "auto", maxHeight: window.innerHeight - 48 }}
       buttonClassName='w-full relative inline-block'
-      containerClassName="fixed z-10 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-1 divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+      containerClassName=" fixed z-10 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-1 divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
       dropdownItemData={mappedOptions}
       selected={selected.label}
     >
       <button
-        onClick={() => setSelectY(getLayoutY(cardRef))}
+        onClick={() => repositionCenter()}
         className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full active:bg-slate-200'>
         {/* value preview */}
         {selected && (<>

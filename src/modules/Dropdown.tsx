@@ -22,14 +22,16 @@ type Props = {
   buttonClassName?: string,
   containerStyle?: object,
   selected?: string,
-  setOpen?: (val: boolean) => void
+  setOpen?: (val: boolean) => void,
+  scrollOffset?: number,
 };
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
-export default function Dropdown({ children, setOpen, selected, containerStyle = {}, dropdownItemData, containerClassName, buttonClassName }: Props) {
+export default function Dropdown({ children, scrollOffset, setOpen, selected, containerStyle = {}, dropdownItemData, containerClassName, buttonClassName }: Props) {
   const [lastActive, setLastActive] = useState([-1, -1])
+  const [yScrollOffset, setYScrollOffset] = useState(0)
   interface OptionParams {
     active: boolean
     content: Content
@@ -54,7 +56,7 @@ export default function Dropdown({ children, setOpen, selected, containerStyle =
       "flex w-full items-center px-2 py-3 text-sm"
     )
   }
-
+  const ref = useRef(null)
   return (
     <Menu as="div" className={buttonClassName || "relative inline-block text-left z-10"}>
       {<>
@@ -63,8 +65,16 @@ export default function Dropdown({ children, setOpen, selected, containerStyle =
         </Menu.Button>
         <Transition
           as={Fragment}
+          beforeEnter={() => {
+            // if (scrollOffset && ref.current && (ref.current as HTMLElement).scrollTop) {
+            (ref.current as unknown as { scrollTop: number }).scrollTop = scrollOffset ?? 0;
+            // }
+          }}
           afterEnter={() => setOpen?.(true)}
-          afterLeave={() => setOpen?.(false)}
+          afterLeave={() => {
+            setOpen?.(false)
+            setLastActive([-1, -1])
+          }}
           enter="transition ease-out duration-100"
           enterFrom="transform opacity-0 scale-95"
           enterTo="transform opacity-100 scale-100"
@@ -73,6 +83,7 @@ export default function Dropdown({ children, setOpen, selected, containerStyle =
           leaveTo="transform opacity-0 scale-95"
         >
           <Menu.Items
+            ref={ref}
             style={containerStyle}
             className={containerClassName || "absolute z-30 py-1 right-0 w-48 origin-top-right divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 "}
           >

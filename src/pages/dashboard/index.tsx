@@ -524,7 +524,7 @@ interface ToolbarProps {
 }
 const BottomToolbar = ({ menus }: ToolbarProps) => {
   return (
-    <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md z-10 bottom-0 mx-5'>
+    <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md bottom-0 mx-5'>
       {menus.map((row, i) =>
         <div key={i} className='justify-center flex flex-1'
           onClick={row.bottomOnClick ? row.bottomOnClick : row.onClick}
