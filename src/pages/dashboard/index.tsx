@@ -91,6 +91,18 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
     </div >
   )
 }
+
+interface Item {
+  icon?: JSX.Element
+  label: string
+  value: string
+  group?: number
+}
+
+interface DropdownItem {
+  onClick: () => void;
+  content: Item
+}
 interface State {
   title: string,
   description: string,
@@ -102,11 +114,26 @@ interface State {
   currentSwapIndex: number | null,
   navbarHeight: number
 }
+interface Question {
+  title: string
+  type: Item
+  answerOptions: any[]
+  gridRowOptions: any[]
+  gridColumnOptions: any[]
+  linearValueOptions: any
+  image: string
+  previewImage: string
+  imageAlignment: string
+  otherOption: boolean
+  shuffleOption: boolean
+  requireEachRow: boolean,
+  [key: string]: any;
+}
 const Page: React.FC<Props> = (props) => {
   const [state, setState] = useState<State>({
     title: "",
     description: "",
-    selectedIndex: -1,
+    selectedIndex: 0,
     reposition: true,
     minHeight: "100vh",
     divClick: true,
@@ -114,7 +141,7 @@ const Page: React.FC<Props> = (props) => {
     currentlyDragged: null,
     navbarHeight: 105
   })
-  const [questions, setQuestions] = useState([defaultQuestion]);
+  const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
 
   const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
@@ -239,9 +266,14 @@ const Page: React.FC<Props> = (props) => {
     payload: any
   }
   const setQuestionValue = ({ index, payload }: questionParams) => {
-    const temp = [...questions]
-    temp[index] = { ...temp[index], ...payload }
-    setQuestions(temp)
+    setQuestions(prevState => {
+      const temp = [...prevState]
+      temp[index] = { ...temp[index], ...payload }
+      return temp;
+    })
+    // const temp = [...questions]
+    // temp[index] = { ...temp[index], ...payload }
+    // setQuestions(temp)
   }
   const addQuestions = () => {
     const temp = [...questions]
@@ -402,6 +434,71 @@ const Page: React.FC<Props> = (props) => {
   }
   //#endregion
 
+  //#region map more options
+
+  // interface DropdownItem {
+  //   onClick: () => void;
+  //   content: Item
+  // }
+  // interface ItemMap {
+  //   [key: string]: [number, number];
+  // }
+  const [moreOptions, setMoreOptions] = useState<Item[]>([])
+
+  // const [valuesMap, setValuesMap] = useState<ItemMap>({})
+  // useEffect(() => {
+  //   const temp = {}
+  //   for (let key in additionalOptionsMap) {
+
+  //   }
+  // }, [])
+  const moreOptionsArr: Item[] = [
+    {
+      icon: <MdOutlineImage size={24} color="#5f6368" />,
+      value: "response_validation",
+      label: "Response validation",
+      group: 0
+    },
+    {
+      icon: <MdOutlineImage size={24} color="#5f6368" />,
+      value: "go_to_section",
+      label: "Go to section",
+      group: 0
+    },
+    {
+      icon: <MdOutlineImage size={24} color="#5f6368" />,
+      value: "shuffle_options",
+      label: "Shuffle Options",
+      group: 1
+    }
+  ]
+
+  const toggleQuestionOptions = ({ index, payload }: questionParams) => {
+    const currQ = questions[index]
+    setQuestionValue({
+      index,
+      payload: {
+        [payload]: payload in currQ ? !currQ[payload] : true
+      }
+    })
+  }
+  const handleTypeChange = (event: Item, index: number) => {
+    const validOptions = additionalOptionsMap[event.value]
+    const arrGroup: DropdownItem[][] = []
+    const tempArr: Item[] = moreOptionsArr.filter((item) => validOptions.includes(item.value))
+    tempArr.forEach(({ group = 0, ...item }) => {
+      const itemObject = {
+        onClick: () => toggleQuestionOptions({ index, payload: item.value }),
+        content: item
+      }
+      if (!arrGroup[group]) {
+        arrGroup[group] = [itemObject];
+      } else {
+        arrGroup[group].push(itemObject);
+      }
+    })
+    setQuestionValue({ index, payload: { type: event, moreOptions: arrGroup } })
+  }
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -519,7 +616,9 @@ const Page: React.FC<Props> = (props) => {
                       <div className="w-60">
                         <Select
                           value={row.type}
-                          onChange={(e) => setQuestionValue({ index: i, payload: { type: e } })}
+                          onChange={(e) => {
+                            handleTypeChange(e, i)
+                          }}
                           cardRef={cardRefs.current[i]}
                           options={choicesData}
                         />
@@ -549,7 +648,7 @@ const Page: React.FC<Props> = (props) => {
                         additionalClass='mx-[1px]'
                         icon={<BiDotsVerticalRounded />}
                       /> */}
-                      {/* <DropdownButton /> */}
+                      <DropdownButton dropdownItemData={row.moreOptions ?? []} />
                     </div>
                   </div>
                 </CardContainer>
@@ -593,7 +692,7 @@ const Toolbar = ({ toolbarRef, sidebarY, menus, viewportWidth = 100 }: ToolbarPr
     <div
       ref={toolbarRef}
       style={{ top: sidebarY }}
-      className='items-center transition-all duration-500 flex flex-col shadow-md bg-white rounded-md absolute z-10 -right-16 px-[2px] py-1'>
+      className='items-center transition-all duration-500 flex flex-col shadow-md bg-white rounded-md absolute -right-16 px-[2px] py-1'>
       {menus.map((row, i) =>
         <div key={i} className='m-[6px]' onClick={row.onClick}>
           <MenuIcon

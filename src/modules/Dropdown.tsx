@@ -19,8 +19,8 @@ type Props = {
   show?: boolean,
   showTooltip?: boolean,
   containerClassName?: string,
-  buttonClassName?: string,
-  containerStyle?: object,
+  optionContainerClassName?: string,
+  optionContainerStyle?: object,
   selected?: string,
   setOpen?: (val: boolean) => void,
   scrollOffset?: number,
@@ -29,7 +29,7 @@ type Props = {
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
-export default function Dropdown({ children, scrollOffset, setOpen, selected, containerStyle = {}, dropdownItemData, containerClassName, buttonClassName }: Props) {
+export default function Dropdown({ children, scrollOffset, setOpen, selected, optionContainerStyle = {}, dropdownItemData, containerClassName, optionContainerClassName }: Props) {
   const [lastActive, setLastActive] = useState([-1, -1])
   const [yScrollOffset, setYScrollOffset] = useState(0)
   interface OptionParams {
@@ -58,7 +58,7 @@ export default function Dropdown({ children, scrollOffset, setOpen, selected, co
   }
   const ref = useRef(null)
   return (
-    <Menu as="div" className={buttonClassName || "relative inline-block text-left z-10"}>
+    <Menu as="div" className={containerClassName || "relative inline-block text-left z-10"}>
       {<>
         <Menu.Button as={Fragment}>
           {children}
@@ -82,8 +82,8 @@ export default function Dropdown({ children, scrollOffset, setOpen, selected, co
         >
           <Menu.Items
             ref={ref}
-            style={containerStyle}
-            className={containerClassName || "absolute z-30 py-1 right-0 w-48 origin-top-right divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 "}
+            style={optionContainerStyle}
+            className={optionContainerClassName || "absolute z-30 py-1 right-0 w-48 origin-top-right divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 "}
           >
             {dropdownItemData.map((items: ListItem[], groupIndex) => (
               <div className='py-2' key={groupIndex}>

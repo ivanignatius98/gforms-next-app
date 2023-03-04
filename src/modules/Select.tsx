@@ -6,7 +6,8 @@ import { getLayoutY } from '@helpers'
 interface Item {
   icon?: JSX.Element
   label: string
-  value: string
+  value: string,
+  group?: number
 }
 interface DropdownItem {
   onClick: () => void;
@@ -14,7 +15,7 @@ interface DropdownItem {
 }
 
 type Props = {
-  options: Item[][]
+  options: Item[]
   onChange: (val: Item) => void
   value?: Item
   cardRef: any
@@ -25,29 +26,26 @@ interface ItemMap {
 }
 function Select({ options, value, onChange, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
-  const [selected, setSelected] = useState<Item>(value ?? options[0][0])
+  const [selected, setSelected] = useState<Item>(value ?? options[0])
   const [mappedOptions, setMappedOptions] = useState<DropdownItem[][]>([])
   const [valuesMap, setValuesMap] = useState<ItemMap>({})
   useEffect(() => {
-    const mappedArr = []
     const map: ItemMap = {}
-    let [groupIndex, idx] = [0, 0]
-    for (let group of options) {
-      const arrGroup: DropdownItem[] = [];
-      for (let i = 0; i < group.length; i++) {
-        arrGroup.push({
-          onClick: () => setSelected(group[i]),
-          content: group[i]
-        });
-        const { value } = group[i];
-        map[value] = [groupIndex, idx];
-        idx++
+    const arrGroup: DropdownItem[][] = [];
+    options.forEach(({ group = 0, ...itemWithoutGroup }, index) => {
+      const itemObject = {
+        onClick: () => setSelected(itemWithoutGroup),
+        content: itemWithoutGroup
       }
-      mappedArr.push(arrGroup)
-      groupIndex++
-    }
+      if (!arrGroup[group]) {
+        arrGroup[group] = [itemObject];
+      } else {
+        arrGroup[group].push(itemObject);
+      }
+      map[itemWithoutGroup.value] = [group, index];
+    })
     setValuesMap(map)
-    setMappedOptions(mappedArr)
+    setMappedOptions(arrGroup)
   }, [options])
 
   useEffect(() => onChange(selected), [selected])
@@ -85,9 +83,9 @@ function Select({ options, value, onChange, cardRef }: Props) {
   return (
     <Dropdown
       scrollOffset={yScrollOffset}
-      containerStyle={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
-      buttonClassName='w-full relative inline-block'
-      containerClassName=" fixed z-30 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+      optionContainerStyle={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
+      containerClassName='w-full relative inline-block'
+      optionContainerClassName=" fixed z-30 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
       dropdownItemData={mappedOptions}
       selected={value?.label || ""}
     >
