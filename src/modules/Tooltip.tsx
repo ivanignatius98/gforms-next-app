@@ -34,8 +34,8 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
     top: 'top-full left-[50%] translate-x-[-50%] -translate-y-2',
     bottom: 'bottom-full left-[50%] translate-x-[-50%] translate-y-2'
   }
-  const classContainer = `w-max absolute z-10 ${containerPosition[orientation as keyof typeof containerPosition]} bg-gray-600 text-white text-[10px] px-2 py-1 rounded flex items-center transition-all duration-150 pointer-events-none`
-  const pointerClasses = `bg-gray-600 h-3 w-3 absolute z-10 ${pointerPosition[orientation as keyof typeof pointerPosition]} rotate-45 pointer-events-none`
+  const classContainer = `w-max absolute ${containerPosition[orientation as keyof typeof containerPosition]} bg-gray-600 text-white text-[10px] px-2 py-1 rounded flex items-center transition-all duration-250 pointer-events-none`
+  const pointerClasses = `bg-gray-600 h-3 w-3 absolute ${pointerPosition[orientation as keyof typeof pointerPosition]} rotate-45 pointer-events-none`
 
   return (
     <div

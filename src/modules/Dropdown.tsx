@@ -66,9 +66,7 @@ export default function Dropdown({ children, scrollOffset, setOpen, selected, co
         <Transition
           as={Fragment}
           beforeEnter={() => {
-            // if (scrollOffset && ref.current && (ref.current as HTMLElement).scrollTop) {
             (ref.current as unknown as { scrollTop: number }).scrollTop = scrollOffset ?? 0;
-            // }
           }}
           afterEnter={() => setOpen?.(true)}
           afterLeave={() => {
@@ -91,7 +89,7 @@ export default function Dropdown({ children, scrollOffset, setOpen, selected, co
               <div className='py-2' key={groupIndex}>
                 {items.map(({ onClick, content }: ListItem, i) => (
                   <Menu.Item key={i}>
-                    {({ active }) => (
+                    {({ active, close }) => (
                       <button
                         onMouseEnter={() => { setLastActive([i, groupIndex]) }}
                         className={getOptionClass({ active, content, index: i, groupIndex })}

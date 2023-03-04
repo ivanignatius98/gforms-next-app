@@ -85,15 +85,15 @@ function Select({ options, value, onChange, cardRef }: Props) {
   return (
     <Dropdown
       scrollOffset={yScrollOffset}
-      containerStyle={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 10px)" }}
+      containerStyle={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
       buttonClassName='w-full relative inline-block'
-      containerClassName=" fixed z-10 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-1 divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+      containerClassName=" fixed z-30 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
       dropdownItemData={mappedOptions}
       selected={value?.label || ""}
     >
       <button
         onClick={() => repositionCenter()}
-        className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full active:bg-slate-200'>
+        className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full transition-colors ease-in-out duration-200  active:bg-slate-200'>
         {/* value preview */}
         {value && (<>
           {contentPlaceholder(value)}

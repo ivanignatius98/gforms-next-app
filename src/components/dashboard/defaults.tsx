@@ -11,6 +11,20 @@ interface Item {
   value: string
 }
 
+export const additionalOptionsMap = {
+  "short_answer": ["response_validation"],
+  "paragraph": ["response_validation"],
+  "multiple_choice": ["go_to_section", "shuffle_options"],
+  "checkboxes": ["response_validation", "shuffle_options"],
+  "dropdown": ["go_to_section", "shuffle_options"],
+  "file_upload": [],
+  "linear_scale": [],
+  "multiple_choice_grid": ["limit_per_columns", "shuffle_row"],
+  "checkbox_grid": ["limit_per_columns", "shuffle_row"],
+  "date": ["time", "year"],
+  "time": ["time", "duration"],
+}
+
 export const choicesData: Item[][] = [
   [{
     icon: <MdOutlineShortText size={24} color="#5f6368" />,
@@ -26,8 +40,8 @@ export const choicesData: Item[][] = [
       <div style={{ borderColor: "#5f6368" }} className='m-[2px] border-[2.5px] rounded-full p-[3px]'>
         <BsCircleFill size={10} color="#5f6368" />
       </div>,
-    value: "multiple_choices",
-    label: "Multiple Choices"
+    value: "multiple_choice",
+    label: "Multiple Choice"
 
   }, {
     icon: <MdCheckBox size={24} color="#5f6368" />,

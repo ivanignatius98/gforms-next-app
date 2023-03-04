@@ -4,15 +4,19 @@ import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
 import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
+import DropdownButton from '@modules/DropdownButton'
 import Toggle from '@modules/Toggle'
-import { MdOutlineSmartDisplay, MdOutlineImage, MdOutlineShortText } from 'react-icons/md'
+
+import { MdOutlineSmartDisplay, MdOutlineImage, MdContentCopy, } from 'react-icons/md'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { TbFileImport } from 'react-icons/tb'
 import { AiOutlineFontSize } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
+import { FiTrash2 } from 'react-icons/fi'
+import { BiDotsVerticalRounded } from 'react-icons/bi';
 
-import { defaultQuestion, choicesData } from '@components/dashboard/defaults'
+import { defaultQuestion, choicesData, additionalOptionsMap } from '@components/dashboard/defaults'
 import { debounce, getLayoutY } from '@helpers'
 interface questionParams {
   index: number,
@@ -61,9 +65,9 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
       ref={cardRef}
       onClick={onClick}
       style={{
-        opacity: currentlyDragged ? 0 : 1,
+        opacity: currentlyDragged ? 0.5 : 1,
       }}
-      className={'bg-white w-full shadow-md rounded-md relative flex flex-col py-1 mb-4' + containerClass}
+      className={'bg-white w-full shadow-md rounded-md relative flex flex-col mb-4' + containerClass}
     >
       {topHeader ?
         <div className=' bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-[9px] w-full'></div> :
@@ -111,6 +115,7 @@ const Page: React.FC<Props> = (props) => {
     navbarHeight: 105
   })
   const [questions, setQuestions] = useState([defaultQuestion]);
+
   const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
   const handleChange = (e: React.ChangeEvent<any>) => {
@@ -252,21 +257,30 @@ const Page: React.FC<Props> = (props) => {
     setState({ ...state, selectedIndex, divClick: true })
   }
 
-  // const duplicateQuestion = () => {
-  //   const temp = [...questions]
-  //   temp.splice(state.selectedIndex + 1, 0, temp[state.selectedIndex])
-  //   setQuestions([...temp])
-  //   setState({ ...state, selectedIndex: state.selectedIndex + 1 })
-  // }
-  // const removeQuestion = (index:number) => {
-  //   const temp = [...questions]
-  //   if (temp[index].id != undefined) {
-  //     setDeletedQuestionIds([...deletedQuestionIds, temp[index].id])
-  //   }
-  //   temp.splice(index, 1)
-  //   setQuestions([...temp])
-  //   setState({ ...state, selectedIndex: index - 1 })
-  // }
+  const duplicateQuestion = (index: number) => {
+    const temp = [...questions]
+
+    let selectedIndex = index
+    if (index != undefined) {
+      temp.splice(index + 1, 0, temp[index])
+      selectedIndex = index + 1
+    }
+    setTimeout(() => {
+      setState({ ...state, selectedIndex, divClick: true })
+      setQuestions([...temp])
+    }, 50)
+  }
+  const removeQuestion = (index: number) => {
+    const temp = [...questions]
+    // if (temp[index].id != undefined) {
+    // setDeletedQuestionIds([...deletedQuestionIds, temp[index].id])
+    // }
+    temp.splice(index, 1)
+    setTimeout(() => {
+      setQuestions([...temp])
+      setState({ ...state, selectedIndex: index == 0 && questions.length > 1 ? index : index - 1 })
+    }, 50)
+  }
   //#endregion
 
   const menus = [
@@ -283,6 +297,7 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Add title and description",
       icon: <AiOutlineFontSize />,
+      onClick: () => console.log(state)
     },
     {
       title: "Add image",
@@ -410,7 +425,7 @@ const Page: React.FC<Props> = (props) => {
                     className='absolute z-20 w-full opacity-50'
                   >
                     <CardContainer selected={true}>
-                      <div className='py-4 px-6 flex flex-wrap items-start'>
+                      <div className='pt-6 pb-2 px-6 flex flex-wrap items-start'>
                         <div className="flex-grow max-w-full ml-2 mr-1">
                           <Input
                             value={questions[state.currentlyDragged].title}
@@ -433,6 +448,7 @@ const Page: React.FC<Props> = (props) => {
               )}
               <div className='relative hidden form:block'>
                 <Toolbar
+                  viewportWidth={viewportWidth ?? 100}
                   menus={menus}
                   toolbarRef={toolbarRef}
                   sidebarY={sidebarY}
@@ -469,7 +485,9 @@ const Page: React.FC<Props> = (props) => {
                 <CardContainer
                   cardRef={(el: any) => cardRefs.current[i] = el}
                   selected={i == state.selectedIndex}
-                  onClick={(event) => handleCardClick(event.target instanceof HTMLDivElement, i)}
+                  onClick={(event) => {
+                    handleCardClick(event.target instanceof HTMLDivElement, i)
+                  }}
                   key={i}
                   currentlyDragged={state.currentlyDragged == i}
                   handleDragStart={(event) => {
@@ -477,7 +495,7 @@ const Page: React.FC<Props> = (props) => {
                     setState({ ...state, currentlyDragged: i, selectedIndex: null })
                   }}
                 >
-                  <div className='py-4 px-6 '>
+                  <div className='pt-6 pb-2 px-6 '>
                     <div className='flex flex-wrap items-start'>
                       <div className="flex-grow w-[300px] max-w-full">
                         <Input
@@ -507,28 +525,31 @@ const Page: React.FC<Props> = (props) => {
                         />
                       </div>
                     </div>
-                    <div className='flex justify-end items-center border-t-[1.5px] my-4'>
+                    <div style={{ display: state.selectedIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
                       <MenuIcon
+                        title="Duplicate"
+                        onClick={() => { duplicateQuestion(i) }}
                         additionalClass='mx-[1px]'
-                        icon={<MdOutlineImage />}
+                        icon={<MdContentCopy />}
                       />
                       <MenuIcon
+                        title="Delete"
+                        onClick={() => removeQuestion(i)}
                         additionalClass='mx-[1px]'
-                        icon={<MdOutlineImage />}
-                      />
-                      <MenuIcon
-                        additionalClass='mx-[1px]'
-                        icon={<MdOutlineImage />}
+                        icon={<FiTrash2 />}
                       />
                       <div className=' border-l-[1.5px] h-8 mx-2'></div>
-                      <span className='text-sm mx-2'>Required</span>
-                      <div className='mx-2'>
-                        <Toggle />
-                      </div>
-                      <MenuIcon
-                        additionalClass='mx-[1px]'
-                        icon={<MdOutlineImage />}
+                      <span className='text-sm ml-2 mr-3'>Required</span>
+                      <Toggle
+                        value={row.required}
+                        handleChange={(checked: boolean) => setQuestionValue({ index: i, payload: { required: checked } })}
                       />
+                      {/* <MenuIcon
+                        title="More options"
+                        additionalClass='mx-[1px]'
+                        icon={<BiDotsVerticalRounded />}
+                      /> */}
+                      {/* <DropdownButton /> */}
                     </div>
                   </div>
                 </CardContainer>
@@ -547,6 +568,7 @@ interface ToolbarProps {
   menus: any[],
   toolbarRef?: Ref<HTMLDivElement>,
   sidebarY?: number,
+  viewportWidth?: number
 }
 const BottomToolbar = ({ menus }: ToolbarProps) => {
   return (
@@ -566,16 +588,20 @@ const BottomToolbar = ({ menus }: ToolbarProps) => {
     </div>
   )
 }
-const Toolbar = ({ toolbarRef, sidebarY, menus }: ToolbarProps) => {
+const Toolbar = ({ toolbarRef, sidebarY, menus, viewportWidth = 100 }: ToolbarProps) => {
   return (
     <div
       ref={toolbarRef}
       style={{ top: sidebarY }}
-      className='items-center transition-all duration-500 flex flex-col shadow-md bg-white rounded-md absolute z-0 -right-16 px-[2px] py-1'>
+      className='items-center transition-all duration-500 flex flex-col shadow-md bg-white rounded-md absolute z-10 -right-16 px-[2px] py-1'>
       {menus.map((row, i) =>
-        <div key={i} className='m-1' onClick={row.onClick}>
+        <div key={i} className='m-[6px]' onClick={row.onClick}>
           <MenuIcon
-            orientation="right"
+            orientation={
+              viewportWidth < 965 ? "left" :
+                viewportWidth < 1150 ? "bottom" :
+                  "right"
+            }
             additionalClass="w-8 h-8 p-1"
             title={row.title}
             icon={row.icon}
