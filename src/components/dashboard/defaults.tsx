@@ -6,7 +6,7 @@ import { VscTriangleDown } from 'react-icons/vsc';
 import { IoMdCloudUpload, IoMdTime, IoMdCalendar } from 'react-icons/io';
 
 interface Item {
-  icon: JSX.Element
+  icon?: JSX.Element
   label: string
   value: string
   group?: number
@@ -16,17 +16,17 @@ interface ItemMap {
   [key: string]: string[];
 }
 export const additionalOptionsMap: ItemMap = {
-  "short_answer": ["response_validation"],
-  "paragraph": ["response_validation"],
-  "multiple_choice": ["go_to_section", "shuffle_options"],
-  "checkboxes": ["response_validation", "shuffle_options"],
-  "dropdown": ["go_to_section", "shuffle_options"],
-  "file_upload": [],
-  "linear_scale": [],
-  "multiple_choice_grid": ["limit_per_columns", "shuffle_row"],
-  "checkbox_grid": ["limit_per_columns", "shuffle_row"],
-  "date": ["time", "year"],
-  "time": ["time", "duration"],
+  "short_answer": ["description", "response_validation"],
+  "paragraph": ["description", "response_validation"],
+  "multiple_choice": ["description", "go_to_section", "shuffle_options"],
+  "checkboxes": ["description", "response_validation", "shuffle_options"],
+  "dropdown": ["description", "go_to_section", "shuffle_options"],
+  "file_upload": ["description",],
+  "linear_scale": ["description",],
+  "multiple_choice_grid": ["description", "limit_per_columns", "shuffle_row"],
+  "checkbox_grid": ["description", "limit_per_columns", "shuffle_row"],
+  "date": ["description", "time", "year"],
+  "time": ["description", "time", "duration"],
 }
 
 export const choicesData: Item[] = [{
@@ -90,6 +90,54 @@ export const choicesData: Item[] = [{
   label: "Time",
   group: 4
 }]
+
+export const moreOptionsArr: Item[] = [
+  {
+    value: "description",
+    label: "Desription",
+    group: 0
+  },
+  {
+    value: "response_validation",
+    label: "Response validation",
+    group: 0
+  },
+  {
+    value: "go_to_section",
+    label: "Go to section based on answer",
+    group: 0
+  },
+  {
+    value: "shuffle_options",
+    label: "Shuffle option order",
+    group: 1
+  },
+  {
+    value: "limit_per_columns",
+    label: "Limit to one response per column",
+    group: 1
+  },
+  {
+    value: "shuffle_row",
+    label: "Shuffle row order",
+    group: 1
+  },
+  {
+    value: "time",
+    label: "Include time",
+    group: 1
+  },
+  {
+    value: "year",
+    label: "Include year",
+    group: 1
+  },
+  {
+    value: "duration",
+    label: "Duration",
+    group: 1
+  }
+]
 
 export const defaultQuestion = {
   title: '',

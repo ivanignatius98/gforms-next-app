@@ -15,16 +15,16 @@ interface DropdownItem {
 }
 
 type Props = {
-  options: Item[]
-  onChange: (val: Item) => void
+  options?: Item[]
+  onChange?: (val: Item) => void
   value?: Item
-  cardRef: any
+  cardRef?: any
 };
 
 interface ItemMap {
   [key: string]: [number, number];
 }
-function Select({ options, value, onChange, cardRef }: Props) {
+function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [selected, setSelected] = useState<Item>(value ?? options[0])
   const [mappedOptions, setMappedOptions] = useState<DropdownItem[][]>([])

@@ -15,8 +15,44 @@ type Props = {
   dropdownItemData: ListItem[][],
 };
 
-const DropdownButton = ({ dropdownItemData }: Props) => {
+const DropdownButton = ({ dropdownItemData, viewportHeight }: Props) => {
   const [showTooltip, setShowTooltip] = useState(true)
+
+  const [leftPosition, setLeftPosition] = useState(0);
+  const [topPosition, setTopPosition] = useState(48);
+
+  useEffect(() => {
+    const handleResize = () => {
+      const screenWidth = window.innerWidth;
+      const screenHeight = window.innerHeight;
+      const thresholdWidth = 1300;
+      const newPost = screenWidth - thresholdWidth + ((screenWidth - thresholdWidth) * -0.5)
+      const newHeight = screenHeight - thresholdWidth + ((screenWidth - thresholdWidth) * -0.5)
+
+      // setTopPosition(0)
+      // console.log(screenHeight - (viewportHeight + 230))
+      // if (screenHeight < viewportHeight + 230 ) {
+      //   setTopPosition(screenHeight - (viewportHeight + 230))
+      // } else {
+      //   setTopPosition(0)
+      // }
+
+      if (newPost <= -248) {
+        setLeftPosition(-248)
+      } else if (screenWidth < thresholdWidth) {
+        setLeftPosition(newPost);
+      } else {
+        setLeftPosition(0);
+      }
+    };
+    handleResize()
+
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, []);
   return (
     <Tooltip
       orientation="bottom"
@@ -27,10 +63,9 @@ const DropdownButton = ({ dropdownItemData }: Props) => {
       <Dropdown
         {...{ dropdownItemData }}
         setOpen={(val: boolean) => setShowTooltip(!val)}
-        // optionContainerStyle={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
-        // optionContainerClassName='w-full relative inline-block'
-        // containerClassName=" fixed z-30 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-
+        optionContainerStyle={{ left: leftPosition, top: topPosition }}
+        optionContainerClassName=' absolute text-left py-1 z-40 w-80 origin-top-left divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5'
+        containerClassName=" relative inline-block text-left"
       >
         <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
           <BiDotsVerticalRounded size={24} color="#5f6368" />

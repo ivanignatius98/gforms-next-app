@@ -67,9 +67,9 @@ export default function Toggle({ handleChange, value }: Props) {
         aria-hidden="true"
         style={{
           backgroundColor: value ? "rgb(79 70 229)" : "white",
-          boxShadow: glowStyle(),
+          boxShadow: glowStyle() || "none",
           borderWidth: value ? 0 : 1,
-          transitionProperty: "color, background-color, transform, opcaity",
+          transitionProperty: "color, background-color, transform, opacity",
           transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
           transitionDuration: "200ms",
         }}

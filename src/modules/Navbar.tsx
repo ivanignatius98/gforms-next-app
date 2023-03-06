@@ -162,6 +162,7 @@ const Navbar: React.FC = () => {
             <MenuItems />
             <React.Fragment>
               <Tooltip
+                additionalContainerClass=''
                 orientation="bottom"
                 showPointer={false}
                 show={showTooltip}

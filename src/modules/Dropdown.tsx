@@ -31,7 +31,7 @@ function classNames(...classes: string[]) {
 }
 export default function Dropdown({ children, scrollOffset, setOpen, selected, optionContainerStyle = {}, dropdownItemData, containerClassName, optionContainerClassName }: Props) {
   const [lastActive, setLastActive] = useState([-1, -1])
-  const [yScrollOffset, setYScrollOffset] = useState(0)
+
   interface OptionParams {
     active: boolean
     content: Content
@@ -58,7 +58,7 @@ export default function Dropdown({ children, scrollOffset, setOpen, selected, op
   }
   const ref = useRef(null)
   return (
-    <Menu as="div" className={containerClassName || "relative inline-block text-left z-10"}>
+    <Menu as="div" className={containerClassName || "relative inline-block text-left"} >
       {<>
         <Menu.Button as={Fragment}>
           {children}
@@ -83,16 +83,17 @@ export default function Dropdown({ children, scrollOffset, setOpen, selected, op
           <Menu.Items
             ref={ref}
             style={optionContainerStyle}
-            className={optionContainerClassName || "absolute z-30 py-1 right-0 w-48 origin-top-right divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 "}
+            className={optionContainerClassName || "absolute py-1 z-40 right-0 w-48 origin-top-right divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 "}
           >
             {dropdownItemData.map((items: ListItem[], groupIndex) => (
               <div className='py-2' key={groupIndex}>
+                <div className=' text-slate-600 text-sm px-4'> Show</div>
                 {items.map(({ onClick, content }: ListItem, i) => (
                   <Menu.Item key={i}>
                     {({ active, close }) => (
                       <button
                         onMouseEnter={() => { setLastActive([i, groupIndex]) }}
-                        className={getOptionClass({ active, content, index: i, groupIndex })}
+                        className={"text-left " + getOptionClass({ active, content, index: i, groupIndex })}
                         onClick={() => { onClick() }}
                       >
                         <div className="pl-2 pr-4">

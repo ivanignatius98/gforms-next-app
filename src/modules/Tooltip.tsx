@@ -39,7 +39,7 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
 
   return (
     <div
-      className={`relative flex items-center ${additionalContainerClass}`}
+      className={`relative  flex items-center ${additionalContainerClass}`}
       onMouseEnter={handleShow}
       onMouseLeave={handleHide}
       onClick={handleHide}
