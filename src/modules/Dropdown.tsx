@@ -23,13 +23,14 @@ type Props = {
   optionContainerStyle?: object,
   selected?: string,
   setOpen?: (val: boolean) => void,
+  setOptionsHeight?: (val: number) => void,
   scrollOffset?: number,
 };
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
-export default function Dropdown({ children, scrollOffset, setOpen, selected, optionContainerStyle = {}, dropdownItemData, containerClassName, optionContainerClassName }: Props) {
+export default function Dropdown({ children, scrollOffset, setOptionsHeight = () => { }, setOpen, selected, optionContainerStyle = {}, dropdownItemData, containerClassName, optionContainerClassName }: Props) {
   const [lastActive, setLastActive] = useState([-1, -1])
 
   interface OptionParams {
@@ -66,6 +67,7 @@ export default function Dropdown({ children, scrollOffset, setOpen, selected, op
         <Transition
           as={Fragment}
           beforeEnter={() => {
+            setOptionsHeight(ref.current.getBoundingClientRect().height);
             (ref.current as unknown as { scrollTop: number }).scrollTop = scrollOffset ?? 0;
           }}
           afterEnter={() => setOpen?.(true)}

@@ -46,7 +46,7 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
     })
     setValuesMap(map)
     setMappedOptions(arrGroup)
-  }, [options])
+  }, [])
 
   useEffect(() => onChange(selected), [selected])
   const [yScrollOffset, setYScrollOffset] = useState(0)

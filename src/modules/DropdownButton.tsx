@@ -15,28 +15,33 @@ type Props = {
   dropdownItemData: ListItem[][],
 };
 
-const DropdownButton = ({ dropdownItemData, viewportHeight }: Props) => {
+const DropdownButton = ({ dropdownItemData, cardRef, selected }: Props) => {
   const [showTooltip, setShowTooltip] = useState(true)
 
   const [leftPosition, setLeftPosition] = useState(0);
   const [topPosition, setTopPosition] = useState(48);
+  const [optionsHeight, setOptionsHeight] = useState(100);
 
   useEffect(() => {
-    const handleResize = () => {
+    const repositionOptions = () => {
       const screenWidth = window.innerWidth;
       const screenHeight = window.innerHeight;
       const thresholdWidth = 1300;
       const newPost = screenWidth - thresholdWidth + ((screenWidth - thresholdWidth) * -0.5)
-      const newHeight = screenHeight - thresholdWidth + ((screenWidth - thresholdWidth) * -0.5)
+      const newHeight = screenHeight - cardRef
 
       // setTopPosition(0)
-      // console.log(screenHeight - (viewportHeight + 230))
-      // if (screenHeight < viewportHeight + 230 ) {
-      //   setTopPosition(screenHeight - (viewportHeight + 230))
-      // } else {
-      //   setTopPosition(0)
-      // }
+      if (selected && cardRef != undefined) {
+        console.log(screenHeight, cardRef.getBoundingClientRect().bottom + optionsHeight, optionsHeight, selected)
+        if (screenHeight < (cardRef.getBoundingClientRect().bottom + optionsHeight)) {
+          // setTopPosition(screenHeight - (cardRef))
+          console.log("RESIZE")
+        } else {
+          // setTopPosition(48)
+          console.log("NO RESIZE")
 
+        }
+      }
       if (newPost <= -248) {
         setLeftPosition(-248)
       } else if (screenWidth < thresholdWidth) {
@@ -45,14 +50,14 @@ const DropdownButton = ({ dropdownItemData, viewportHeight }: Props) => {
         setLeftPosition(0);
       }
     };
-    handleResize()
+    repositionOptions()
 
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', repositionOptions);
 
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', repositionOptions);
     };
-  }, []);
+  }, [cardRef, selected, optionsHeight]);
   return (
     <Tooltip
       orientation="bottom"
@@ -62,6 +67,7 @@ const DropdownButton = ({ dropdownItemData, viewportHeight }: Props) => {
     >
       <Dropdown
         {...{ dropdownItemData }}
+        setOptionsHeight={(val: number) => { setOptionsHeight(val) }}
         setOpen={(val: boolean) => setShowTooltip(!val)}
         optionContainerStyle={{ left: leftPosition, top: topPosition }}
         optionContainerClassName=' absolute text-left py-1 z-40 w-80 origin-top-left divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5'

@@ -672,7 +672,9 @@ const Page: React.FC<Props> = (props) => {
                       /> */}
                       <DropdownButton
                         dropdownItemData={row.moreOptionsData ?? []}
-                        viewportHeight={layoutRef.current?.getBoundingClientRect().height}
+                        cardRef={cardRefs?.current[i]}
+                        selected={i == state.selectedIndex}
+                        lastRecord={i == questions.length}
                       />
                     </div>
                   </div>
