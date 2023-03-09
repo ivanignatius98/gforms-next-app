@@ -52,12 +52,13 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
   const [yScrollOffset, setYScrollOffset] = useState(0)
 
   const repositionCenter = () => {
-    const { innerHeight } = window;
     const currY = getLayoutY(cardRef)
+    const { innerHeight } = window
     const [groupIndex, index] = valuesMap[selected.value]
 
     const [groupDividerHeight, eachOptionHeight] = [16, 48]
-    const optionHeight = groupDividerHeight * options.length + eachOptionHeight * Object.keys(valuesMap).length
+    // const optionHeight = groupDividerHeight * options.length + eachOptionHeight * Object.keys(valuesMap).length
+    const optionHeight = 614
     const topPosition = 24
     const bottomPosition = innerHeight - optionHeight - 24
     let sidePosition = currY - (groupIndex * groupDividerHeight) - (index * eachOptionHeight)
@@ -68,8 +69,9 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
       finalPos = bottomPosition
     }
     setYScrollOffset((sidePosition - 24) * -1)
-    setSelectY(finalPos)
+    setSelectY(finalPos + 8)
   }
+
   const contentPlaceholder = (content: any) => {
     return typeof content === 'object' ? (<>
       <div className='mx-2'>
