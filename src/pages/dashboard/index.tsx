@@ -674,7 +674,6 @@ const Page: React.FC<Props> = (props) => {
                         dropdownItemData={row.moreOptionsData ?? []}
                         cardRef={cardRefs?.current[i]}
                         selected={i == state.selectedIndex}
-                        lastRecord={i == questions.length}
                       />
                     </div>
                   </div>

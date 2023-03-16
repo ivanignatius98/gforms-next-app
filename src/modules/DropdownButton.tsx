@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, Ref, useState } from 'react';
 import Tooltip from './Tooltip'
 import Dropdown from './Dropdown'
 import { BiDotsVerticalRounded } from 'react-icons/bi';
@@ -13,6 +13,9 @@ interface ListItem {
 }
 type Props = {
   dropdownItemData: ListItem[][],
+  cardRef?: HTMLDivElement,
+  selected?: boolean,
+
 };
 
 const DropdownButton = ({ dropdownItemData, cardRef, selected }: Props) => {
@@ -28,20 +31,17 @@ const DropdownButton = ({ dropdownItemData, cardRef, selected }: Props) => {
       const screenHeight = window.innerHeight;
       const thresholdWidth = 1300;
       const newPost = screenWidth - thresholdWidth + ((screenWidth - thresholdWidth) * -0.5)
-      const newHeight = screenHeight - cardRef
 
       // setTopPosition(0)
       if (selected && cardRef != undefined) {
-        console.log(screenHeight, cardRef.getBoundingClientRect().bottom + optionsHeight, optionsHeight, selected)
-        if (screenHeight < (cardRef.getBoundingClientRect().bottom + optionsHeight)) {
-          // setTopPosition(screenHeight - (cardRef))
-          console.log("RESIZE")
+        const currentY = cardRef.getBoundingClientRect().bottom + optionsHeight
+        if (screenHeight < (currentY + 24)) {
+          setTopPosition(screenHeight - (currentY - 24))
         } else {
-          // setTopPosition(48)
-          console.log("NO RESIZE")
-
+          setTopPosition(48)
         }
       }
+
       if (newPost <= -248) {
         setLeftPosition(-248)
       } else if (screenWidth < thresholdWidth) {

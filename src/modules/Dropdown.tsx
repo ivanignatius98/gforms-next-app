@@ -57,7 +57,7 @@ export default function Dropdown({ children, scrollOffset, setOptionsHeight = ()
       "flex w-full items-center px-2 py-3 text-sm"
     )
   }
-  const ref = useRef(null)
+  const ref = useRef<HTMLDivElement>(null)
   return (
     <Menu as="div" className={containerClassName || "relative inline-block text-left"} >
       {<>
@@ -67,7 +67,9 @@ export default function Dropdown({ children, scrollOffset, setOptionsHeight = ()
         <Transition
           as={Fragment}
           beforeEnter={() => {
-            setOptionsHeight(ref.current.getBoundingClientRect().height);
+            if (ref.current != undefined) {
+              setOptionsHeight(ref.current?.getBoundingClientRect().height);
+            }
             (ref.current as unknown as { scrollTop: number }).scrollTop = scrollOffset ?? 0;
           }}
           afterEnter={() => setOpen?.(true)}
@@ -89,7 +91,7 @@ export default function Dropdown({ children, scrollOffset, setOptionsHeight = ()
           >
             {dropdownItemData.map((items: ListItem[], groupIndex) => (
               <div className='py-2' key={groupIndex}>
-                <div className=' text-slate-600 text-sm px-4'> Show</div>
+                {/* <div className=' text-slate-600 text-sm px-4'> Show</div> */}
                 {items.map(({ onClick, content }: ListItem, i) => (
                   <Menu.Item key={i}>
                     {({ active, close }) => (
