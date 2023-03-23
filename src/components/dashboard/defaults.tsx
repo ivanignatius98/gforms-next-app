@@ -138,7 +138,6 @@ export const moreOptionsArr: Item[] = [
     group: 1
   }
 ]
-
 export const defaultQuestion = {
   title: '',
   type: choicesData[2],
@@ -154,7 +153,9 @@ export const defaultQuestion = {
   image: '',
   previewImage: '',
   imageAlignment: 'left',
-  otherOption: false,
-  shuffleOption: false,
-  requireEachRow: false
+  moreOptions: {
+    description: false,
+    go_to_section: false,
+    shuffle_options: false
+  },
 }

@@ -125,10 +125,8 @@ interface Question {
   image: string
   previewImage: string
   imageAlignment: string
-  otherOption: boolean
-  shuffleOption: boolean
-  requireEachRow: boolean,
-  [key: string]: any;
+  moreOptions: object
+  [key: string]: any
 }
 const Page: React.FC<Props> = (props) => {
   const [state, setState] = useState<State>({
@@ -277,9 +275,9 @@ const Page: React.FC<Props> = (props) => {
     const temp = [...questions]
     const tempOpt = [...moreOptQuestion]
 
-    let selectedIndex
+    let selectedIndex = 0
     if (state.selectedIndex != undefined) {
-      tempOpt.splice(state.selectedIndex + 1, 0, {})
+      tempOpt.splice(state.selectedIndex + 1, 0, defaultQuestion.moreOptions)
       temp.splice(state.selectedIndex + 1, 0, defaultQuestion)
       selectedIndex = state.selectedIndex + 1
     } else {
@@ -287,11 +285,10 @@ const Page: React.FC<Props> = (props) => {
       temp.push(defaultQuestion)
       selectedIndex = temp.length - 1
     }
+    setState({ ...state, selectedIndex, divClick: true })
     setQuestions(temp)
     setMoreOptQuestion(tempOpt)
-    setState({ ...state, selectedIndex, divClick: true })
   }
-
   const duplicateQuestion = (index: number) => {
     const temp = [...questions]
     const tempOpt = [...moreOptQuestion]
@@ -444,23 +441,6 @@ const Page: React.FC<Props> = (props) => {
   //#endregion
 
   //#region map more options
-
-  // interface DropdownItem {
-  //   onClick: () => void;
-  //   content: Item
-  // }
-  // interface ItemMap {
-  //   [key: string]: [number, number];
-  // }
-
-  // const [valuesMap, setValuesMap] = useState<ItemMap>({})
-  // useEffect(() => {
-  //   const temp = {}
-  //   for (let key in additionalOptionsMap) {
-
-  //   }
-  // }, [])
-
   const toggleQuestionOptions = ({ index, payload }: questionParams) => {
     setMoreOptQuestion(prevState => {
       const temp = [...prevState]
@@ -474,19 +454,8 @@ const Page: React.FC<Props> = (props) => {
   }
   const handleTypeChange = (event: Item, index: number) => {
     const validOptions = additionalOptionsMap[event.value]
-    const tempGroup: DropdownItem[][] = []
-    const tempArr: Item[] = moreOptionsArr.filter((item) => validOptions.includes(item.value))
-    tempArr.forEach(({ group = 0, ...item }) => {
-      const itemObject = {
-        onClick: () => toggleQuestionOptions({ index, payload: item.value }),
-        content: item
-      }
-      if (!tempGroup[group]) {
-        tempGroup[group] = [itemObject];
-      } else {
-        tempGroup[group].push(itemObject);
-      }
-    })
+
+    setQuestionValue({ index, payload: { type: event } })
     setMoreOptQuestion(prevState => {
       const temp = [...prevState]
       temp[index] = validOptions.reduce((acc: any, curr) => {
@@ -495,11 +464,11 @@ const Page: React.FC<Props> = (props) => {
       }, {})
       return temp;
     })
-    setQuestionValue({ index, payload: { type: event, moreOptionsData: tempGroup } })
   }
   useEffect(() => {
     if (state.selectedIndex != null && state.selectedIndex >= 0) {
       const curr = moreOptQuestion[state.selectedIndex] ?? {}
+      console.log(state.selectedIndex, curr)
       const tempArr: Item[] = []
       moreOptionsArr.forEach((item) => {
         if (curr[item.value] != undefined) {
@@ -520,7 +489,7 @@ const Page: React.FC<Props> = (props) => {
       })
       setQuestionValue({ index: state.selectedIndex, payload: { moreOptions: curr, moreOptionsData: tempGroup } })
     }
-  }, [moreOptQuestion])
+  }, [moreOptQuestion, state.selectedIndex])
   return (
     <Layout>
       {props.tabIndex == 0 && (
