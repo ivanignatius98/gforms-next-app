@@ -12,12 +12,16 @@ interface ListItem {
   content: Content
 }
 type Props = {
-  dropdownItemData: ListItem[][],
+  dropdownItemData: DropdownItemsList[],
   cardRef?: HTMLDivElement,
   selected?: boolean,
 
 };
 
+interface DropdownItemsList {
+  header?: string
+  items: ListItem[]
+}
 const DropdownButton = ({ dropdownItemData, cardRef, selected }: Props) => {
   const [showTooltip, setShowTooltip] = useState(true)
   const [leftPosition, setLeftPosition] = useState(0);

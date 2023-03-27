@@ -99,7 +99,10 @@ interface Item {
   value: string
   group?: number
 }
-
+interface DropdownItemsList {
+  header: string
+  items: DropdownItem[]
+}
 interface DropdownItem {
   onClick: () => void;
   content: Item
@@ -468,23 +471,26 @@ const Page: React.FC<Props> = (props) => {
   useEffect(() => {
     if (state.selectedIndex != null && state.selectedIndex >= 0) {
       const curr = moreOptQuestion[state.selectedIndex] ?? {}
-      console.log(state.selectedIndex, curr)
       const tempArr: Item[] = []
       moreOptionsArr.forEach((item) => {
         if (curr[item.value] != undefined) {
           tempArr.push({ ...item, icon: curr[item.value] ? <IoMdCheckmark size={24} color="#5f6368" /> : <div className='w-6'></div> })
         }
       })
-      const tempGroup: DropdownItem[][] = []
+      const tempGroup: DropdownItemsList[] = []
       tempArr.forEach(({ group = 0, ...item }) => {
         const itemObject = {
           onClick: () => toggleQuestionOptions({ index: state.selectedIndex ?? 0, payload: item.value }),
           content: item
         }
         if (!tempGroup[group]) {
-          tempGroup[group] = [itemObject];
+          tempGroup[group] = {
+            items: [itemObject],
+            header: group == 0 ? "Show" : ""
+          }
         } else {
-          tempGroup[group].push(itemObject);
+          tempGroup[group].items.push(itemObject);
+          tempGroup[group].header = group == 0 ? "Show" : ""
         }
       })
       setQuestionValue({ index: state.selectedIndex, payload: { moreOptions: curr, moreOptionsData: tempGroup } })

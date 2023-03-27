@@ -21,26 +21,32 @@ type Props = {
   cardRef?: any
 };
 
+
+interface DropdownItemsList {
+  header?: string
+  items: DropdownItem[]
+}
 interface ItemMap {
   [key: string]: [number, number];
 }
 function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [selected, setSelected] = useState<Item>(value ?? options[0])
-  const [mappedOptions, setMappedOptions] = useState<DropdownItem[][]>([])
+  const [mappedOptions, setMappedOptions] = useState<DropdownItemsList[]>([])
   const [valuesMap, setValuesMap] = useState<ItemMap>({})
   useEffect(() => {
     const map: ItemMap = {}
-    const arrGroup: DropdownItem[][] = [];
+    const arrGroup: DropdownItemsList[] = [];
+
     options.forEach(({ group = 0, ...itemWithoutGroup }, index) => {
       const itemObject = {
         onClick: () => setSelected(itemWithoutGroup),
         content: itemWithoutGroup
       }
       if (!arrGroup[group]) {
-        arrGroup[group] = [itemObject];
+        arrGroup[group] = { items: [itemObject] }
       } else {
-        arrGroup[group].push(itemObject);
+        arrGroup[group].items.push(itemObject);
       }
       map[itemWithoutGroup.value] = [group, index];
     })
