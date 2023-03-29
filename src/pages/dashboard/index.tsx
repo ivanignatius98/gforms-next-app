@@ -455,6 +455,7 @@ const Page: React.FC<Props> = (props) => {
       return temp;
     })
   }
+
   const handleTypeChange = (event: Item, index: number) => {
     const validOptions = additionalOptionsMap[event.value]
 
@@ -474,7 +475,12 @@ const Page: React.FC<Props> = (props) => {
       const tempArr: Item[] = []
       moreOptionsArr.forEach((item) => {
         if (curr[item.value] != undefined) {
-          tempArr.push({ ...item, icon: curr[item.value] ? <IoMdCheckmark size={24} color="#5f6368" /> : <div className='w-6'></div> })
+          tempArr.push({
+            ...item,
+            icon: curr[item.value] ?
+              <IoMdCheckmark size={24} color="#5f6368" /> :
+              <div className='w-6'></div>
+          })
         }
       })
       const tempGroup: DropdownItemsList[] = []
@@ -489,8 +495,7 @@ const Page: React.FC<Props> = (props) => {
             header: group == 0 ? "Show" : ""
           }
         } else {
-          tempGroup[group].items.push(itemObject);
-          tempGroup[group].header = group == 0 ? "Show" : ""
+          tempGroup[group].items.push(itemObject)
         }
       })
       setQuestionValue({ index: state.selectedIndex, payload: { moreOptions: curr, moreOptionsData: tempGroup } })
