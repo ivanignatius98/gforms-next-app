@@ -4,13 +4,8 @@ import { AiOutlineAlignLeft } from 'react-icons/ai'
 import { BsCircleFill, BsFillGrid3X3GapFill, BsGrid3X3GapFill } from 'react-icons/bs'
 import { VscTriangleDown } from 'react-icons/vsc';
 import { IoMdCloudUpload, IoMdTime, IoMdCalendar } from 'react-icons/io';
-
-interface Item {
-  icon?: JSX.Element
-  label: string
-  value: string
-  group?: number
-}
+import { Item } from '@interfaces/dropdown.interface';
+import { Question } from '@interfaces/question.interface';
 
 interface ItemMap {
   [key: string]: string[];
@@ -137,7 +132,7 @@ export const moreOptionsArr: Item[] = [
     group: 1
   }
 ]
-export const defaultQuestion = {
+export const defaultQuestion: Question = {
   title: '',
   type: choicesData[2],
   answerOptions: [{ value: 'Option 1', error: false, image: '', previewImage: '' }],

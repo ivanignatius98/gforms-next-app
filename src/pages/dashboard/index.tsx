@@ -1,3 +1,4 @@
+//#region imports
 import { useState, useRef, useEffect, Ref, useCallback } from 'react';
 import { connect } from 'react-redux'
 import Layout from '@layouts/DefaultLayout';
@@ -15,10 +16,14 @@ import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
 import { IoMdCheckmark } from 'react-icons/io';
 import { FiTrash2 } from 'react-icons/fi'
-import { BiDotsVerticalRounded } from 'react-icons/bi';
 
 import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
 import { debounce, getLayoutY, swap } from '@helpers'
+import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
+import { Question } from '@interfaces/question.interface';
+// #endregion
+
+//#region card content
 interface questionParams {
   index: number,
   payload: any
@@ -92,21 +97,8 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
     </div >
   )
 }
+//#endregion
 
-interface Item {
-  icon?: JSX.Element
-  label: string
-  value: string
-  group?: number
-}
-interface DropdownItemsList {
-  header: string
-  items: DropdownItem[]
-}
-interface DropdownItem {
-  onClick: () => void;
-  content: Item
-}
 interface State {
   title: string,
   description: string,
@@ -117,19 +109,6 @@ interface State {
   currentlyDragged: number | null,
   currentSwapIndex: number | null,
   navbarHeight: number
-}
-interface Question {
-  title: string
-  type: Item
-  answerOptions: any[]
-  gridRowOptions: any[]
-  gridColumnOptions: any[]
-  linearValueOptions: any
-  image: string
-  previewImage: string
-  imageAlignment: string
-  moreOptions: object
-  [key: string]: any
 }
 const Page: React.FC<Props> = (props) => {
   const [state, setState] = useState<State>({
@@ -280,7 +259,7 @@ const Page: React.FC<Props> = (props) => {
 
     let selectedIndex = 0
     if (state.selectedIndex != undefined) {
-      tempOpt.splice(state.selectedIndex + 1, 0, defaultQuestion.moreOptions)
+      tempOpt.splice(state.selectedIndex + 1, 0, defaultQuestion.moreOptions as Opt)
       temp.splice(state.selectedIndex + 1, 0, defaultQuestion)
       selectedIndex = state.selectedIndex + 1
     } else {
@@ -501,6 +480,7 @@ const Page: React.FC<Props> = (props) => {
       setQuestionValue({ index: state.selectedIndex, payload: { moreOptions: curr, moreOptionsData: tempGroup } })
     }
   }, [moreOptQuestion, state.selectedIndex])
+  // #endregion
   return (
     <Layout>
       {props.tabIndex == 0 && (

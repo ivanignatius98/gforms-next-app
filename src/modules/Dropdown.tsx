@@ -1,15 +1,7 @@
 import { Menu, Transition } from '@headlessui/react'
 import React, { Fragment, useEffect, useCallback, useRef, useState, isValidElement } from 'react'
-import { BiUndo, BiRedo, BiDotsVerticalRounded } from 'react-icons/bi';
+import { DropdownItemsList, Content, ListItem } from '@interfaces/dropdown.interface';
 
-interface Content {
-  icon?: JSX.Element,
-  label: string
-}
-interface ListItem {
-  onClick: Function;
-  content: Content
-}
 type Props = {
   children?: JSX.Element,
   dropdownItemData: DropdownItemsList[],
@@ -27,11 +19,6 @@ type Props = {
   scrollOffset?: number,
   transition?: any
 };
-
-interface DropdownItemsList {
-  header?: string
-  items: ListItem[]
-}
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
@@ -82,8 +69,8 @@ export default function Dropdown({ children, transition, scrollOffset, setOption
           <Transition
             show={open}
             as={Fragment}
-            beforeEnter={() => {
-              setOpen?.(true)
+            beforeEnter={() => { setOpen?.(true) }}
+            afterEnter={() => {
               if (ref.current != undefined) {
                 setOptionsHeight(ref.current?.getBoundingClientRect().height);
               }

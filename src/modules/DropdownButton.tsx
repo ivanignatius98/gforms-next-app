@@ -2,26 +2,14 @@ import { useEffect, Ref, useState, useCallback } from 'react';
 import Tooltip from './Tooltip'
 import Dropdown from './Dropdown'
 import { BiDotsVerticalRounded } from 'react-icons/bi';
+import { DropdownItemsList } from '@interfaces/dropdown.interface';
 
-interface Content {
-  icon?: JSX.Element,
-  label: string
-}
-interface ListItem {
-  onClick: Function;
-  content: Content
-}
 type Props = {
   dropdownItemData: DropdownItemsList[],
   cardRef?: HTMLDivElement,
   selected?: boolean,
-
 };
 
-interface DropdownItemsList {
-  header?: string
-  items: ListItem[]
-}
 const DropdownButton = ({ dropdownItemData, cardRef, selected }: Props) => {
   const [showTooltip, setShowTooltip] = useState(true)
   const [leftPosition, setLeftPosition] = useState(0);
@@ -37,6 +25,7 @@ const DropdownButton = ({ dropdownItemData, cardRef, selected }: Props) => {
     // set y position
     if (selected && cardRef != undefined) {
       const currentY = cardRef.getBoundingClientRect().bottom + optionsHeight
+      console.log(optionsHeight)
       if (screenHeight < (currentY + 24)) {
         setTopPosition(screenHeight - (currentY - 24))
       } else {
