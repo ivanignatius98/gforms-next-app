@@ -7,6 +7,7 @@ import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
 import DropdownButton from '@modules/DropdownButton'
 import Toggle from '@modules/Toggle'
+import AnswerOptions from '@components/dashboard/answerOptions'
 
 import { MdOutlineSmartDisplay, MdOutlineImage, MdContentCopy, } from 'react-icons/md'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
@@ -492,6 +493,10 @@ const Page: React.FC<Props> = (props) => {
     }
   }, [moreOptQuestion, state.selectedIndex])
   // #endregion
+
+  //#region content
+
+  //#endregion
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -617,6 +622,21 @@ const Page: React.FC<Props> = (props) => {
                         />
                       </div>
                     </div>
+                    {/* Content */}
+                    {i == state.selectedIndex &&
+                      <AnswerOptions
+                        answerProps={{
+                          type: row.type,
+                          answerOptions: row.answerOptions,
+                          gridRowOptions: row.gridRowOptions,
+                          gridColumnOptions: row.gridColumnOptions,
+                          linearValueOptions: row.linearValueOptions,
+                          otherOption: row.otherOption
+                        }}
+                        setQuestionValue={setQuestionValue}
+                      />
+                    }
+                    {/* Footer */}
                     <div style={{ display: state.selectedIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
                       <MenuIcon
                         title="Duplicate"
