@@ -625,14 +625,7 @@ const Page: React.FC<Props> = (props) => {
                     {/* Content */}
                     {i == state.selectedIndex &&
                       <AnswerOptions
-                        answerProps={{
-                          type: row.type,
-                          answerOptions: row.answerOptions,
-                          gridRowOptions: row.gridRowOptions,
-                          gridColumnOptions: row.gridColumnOptions,
-                          linearValueOptions: row.linearValueOptions,
-                          otherOption: row.otherOption
-                        }}
+                        questionProps={row}
                         setQuestionValue={setQuestionValue}
                       />
                     }
@@ -656,11 +649,6 @@ const Page: React.FC<Props> = (props) => {
                         value={row.required}
                         handleChange={(checked: boolean) => setQuestionValue({ index: i, payload: { required: checked } })}
                       />
-                      {/* <MenuIcon
-                        title="More options"
-                        additionalClass='mx-[1px]'
-                        icon={<BiDotsVerticalRounded />}
-                      /> */}
                       <DropdownButton
                         optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
                         dropdownItemData={row.moreOptionsData?.items ?? []}

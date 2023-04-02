@@ -430,10 +430,7 @@ import TextAnswer from './textAnswer'
 //     )
 // }
 
-const AnswerOption = ({
-    setQuestionValue,
-    answerProps
-}) => {
+const AnswerOption = ({ setQuestionValue, questionProps }) => {
     const {
         type,
         answerOptions,
@@ -441,9 +438,9 @@ const AnswerOption = ({
         gridColumnOptions,
         linearValueOptions,
         otherOption
-    } = answerProps
+    } = questionProps
     const { value } = type
-    const [content, setContent] = useState(null)
+    const [content, setContent] = useState<JSX.Element | null>(null)
 
     useEffect(() => {
         if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {

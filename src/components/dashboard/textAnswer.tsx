@@ -1,5 +1,16 @@
-const TextAnswer = ({ type }) => {
-    const texts = {
+interface Props {
+    type: string
+}
+
+interface Content {
+    content: string
+    width: number
+}
+interface Opt {
+    [key: string]: Content;
+}
+const TextAnswer = ({ type }: Props) => {
+    const texts: Opt = {
         short_answer: {
             content: 'Short Answer Text',
             width: 50
