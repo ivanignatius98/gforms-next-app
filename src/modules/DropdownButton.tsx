@@ -8,13 +8,14 @@ type Props = {
   dropdownItemData: DropdownItemsList[],
   cardRef?: HTMLDivElement,
   selected?: boolean,
+  optionsHeight: number
 };
 
-const DropdownButton = ({ dropdownItemData, cardRef, selected }: Props) => {
+const DropdownButton = ({ dropdownItemData, optionsHeight, cardRef, selected }: Props) => {
   const [showTooltip, setShowTooltip] = useState(true)
   const [leftPosition, setLeftPosition] = useState(0);
   const [topPosition, setTopPosition] = useState(48);
-  const [optionsHeight, setOptionsHeight] = useState(100);
+  // const [optionsHeight, setOptionsHeight] = useState(100);
 
   const repositionOptions = useCallback(() => {
     const screenWidth = window.innerWidth;
@@ -64,7 +65,6 @@ const DropdownButton = ({ dropdownItemData, cardRef, selected }: Props) => {
           enterFrom: "transform opacity-0 scale-y-50",
           enterTo: "transform opacity-100 scale-y-100"
         }}
-        setOptionsHeight={(val: number) => { setOptionsHeight(val) }}
         setOpen={(val: boolean) => {
           setShowTooltip(!val);
           if (val) { repositionOptions() }

@@ -463,6 +463,9 @@ const Page: React.FC<Props> = (props) => {
         }
       })
       const tempGroup: DropdownItemsList[] = []
+      let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
+      let groupCount = 1
+      let prevGroup = 0
       tempArr.forEach(({ group = 0, ...item }) => {
         const itemObject = {
           onClick: () => toggleQuestionOptions({ index: state.selectedIndex ?? 0, payload: item.value }),
@@ -476,8 +479,16 @@ const Page: React.FC<Props> = (props) => {
         } else {
           tempGroup[group].items.push(itemObject)
         }
+        if (prevGroup != group) {
+          groupCount++
+        }
+        optionsHeight += 44
       })
-      setQuestionValue({ index: state.selectedIndex, payload: { moreOptions: curr, moreOptionsData: tempGroup } })
+      optionsHeight += (groupCount * 16)
+      setQuestionValue({
+        index: state.selectedIndex,
+        payload: { moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } }
+      })
     }
   }, [moreOptQuestion, state.selectedIndex])
   // #endregion
@@ -631,7 +642,8 @@ const Page: React.FC<Props> = (props) => {
                         icon={<BiDotsVerticalRounded />}
                       /> */}
                       <DropdownButton
-                        dropdownItemData={row.moreOptionsData ?? []}
+                        optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
+                        dropdownItemData={row.moreOptionsData?.items ?? []}
                         cardRef={cardRefs?.current[i]}
                         selected={i == state.selectedIndex}
                       />
