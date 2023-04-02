@@ -67,53 +67,63 @@ interface ListItem {
   content: { icon?: JSX.Element, label: string };
 }
 
-const dropdownItemData: ListItem[][] = [
+interface DropdownItemsList {
+  header?: string
+  items: ListItem[]
+}
+const dropdownItemData: DropdownItemsList[] =
   [{
-    onClick: () => { console.log("TEST") },
-    content: {
-      icon: <MdContentCopy size={24} color="#5f6368" />,
-      label: "Make a copy"
-    }
-  }, {
-    onClick: () => { console.log("TEST2") },
-    content: {
-      icon: <FiTrash2 size={24} color="#5f6368" />,
-      label: "Move to trash"
-    }
-  }, {
-    onClick: () => { console.log("TEST3") },
-    content: {
-      icon: <MdOutlineInsertLink size={24} color="#5f6368" />,
-      label: "Get pre-filled link"
-    }
-  }, {
-    onClick: () => { console.log("TEST4") },
-    content: {
-      icon: <MdPrint size={24} color="#5f6368" />,
-      label: "Print"
-    }
-  }],
-  [{
-    onClick: () => { console.log("TEST4") },
-    content: {
-      icon: <MdGroupAdd size={24} color="#5f6368" />,
-      label: "Add collaborators"
-    }
-  }],
-  [{
-    onClick: () => { console.log("TEST4") },
-    content: {
-      icon: <MdCode size={24} color="#5f6368" />,
-      label: "Script editor"
-    }
-  }, {
-    onClick: () => { console.log("TEST4") },
-    content: {
-      icon: <IoExtensionPuzzleOutline size={24} color="#5f6368" />,
-      label: "Add ons"
-    }
-  }]
-]
+    items: [{
+      onClick: () => { console.log("TEST") },
+      content: {
+        icon: <MdContentCopy size={24} color="#5f6368" />,
+        label: "Make a copy"
+      }
+    }, {
+      onClick: () => { console.log("TEST2") },
+      content: {
+        icon: <FiTrash2 size={24} color="#5f6368" />,
+        label: "Move to trash"
+      }
+    }, {
+      onClick: () => { console.log("TEST3") },
+      content: {
+        icon: <MdOutlineInsertLink size={24} color="#5f6368" />,
+        label: "Get pre-filled link"
+      }
+    }, {
+      onClick: () => { console.log("TEST4") },
+      content: {
+        icon: <MdPrint size={24} color="#5f6368" />,
+        label: "Print"
+      }
+    }]
+  },
+  {
+    items: [{
+      onClick: () => { console.log("TEST4") },
+      content: {
+        icon: <MdGroupAdd size={24} color="#5f6368" />,
+        label: "Add collaborators"
+      }
+    }]
+  },
+  {
+    items: [{
+      onClick: () => { console.log("TEST4") },
+      content: {
+        icon: <MdCode size={24} color="#5f6368" />,
+        label: "Script editor"
+      }
+    }, {
+      onClick: () => { console.log("TEST4") },
+      content: {
+        icon: <IoExtensionPuzzleOutline size={24} color="#5f6368" />,
+        label: "Add ons"
+      }
+    }]
+  }
+  ]
 
 
 const tabItemData = ["Questions", "Responses", "Settings"]
@@ -162,6 +172,7 @@ const Navbar: React.FC = () => {
             <MenuItems />
             <React.Fragment>
               <Tooltip
+                additionalContainerClass=''
                 orientation="bottom"
                 showPointer={false}
                 show={showTooltip}

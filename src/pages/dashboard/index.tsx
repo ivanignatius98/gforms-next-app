@@ -1,19 +1,29 @@
+//#region imports
 import { useState, useRef, useEffect, Ref, useCallback } from 'react';
 import { connect } from 'react-redux'
 import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
 import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
+import DropdownButton from '@modules/DropdownButton'
 import Toggle from '@modules/Toggle'
-import { MdOutlineSmartDisplay, MdOutlineImage, MdOutlineShortText } from 'react-icons/md'
+
+import { MdOutlineSmartDisplay, MdOutlineImage, MdContentCopy, } from 'react-icons/md'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { TbFileImport } from 'react-icons/tb'
 import { AiOutlineFontSize } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
+import { IoMdCheckmark } from 'react-icons/io';
+import { FiTrash2 } from 'react-icons/fi'
 
-import { defaultQuestion, choicesData } from '@components/dashboard/defaults'
-import { debounce, getLayoutY } from '@helpers'
+import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
+import { debounce, getLayoutY, swap } from '@helpers'
+import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
+import { Question } from '@interfaces/question.interface';
+// #endregion
+
+//#region card content
 interface questionParams {
   index: number,
   payload: any
@@ -61,9 +71,9 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
       ref={cardRef}
       onClick={onClick}
       style={{
-        opacity: currentlyDragged ? 0 : 1,
+        opacity: currentlyDragged ? 0.5 : 1,
       }}
-      className={'bg-white w-full shadow-md rounded-md relative flex flex-col py-1 mb-4' + containerClass}
+      className={'bg-white w-full shadow-md rounded-md relative flex flex-col mb-4' + containerClass}
     >
       {topHeader ?
         <div className=' bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-[9px] w-full'></div> :
@@ -87,6 +97,8 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
     </div >
   )
 }
+//#endregion
+
 interface State {
   title: string,
   description: string,
@@ -102,7 +114,7 @@ const Page: React.FC<Props> = (props) => {
   const [state, setState] = useState<State>({
     title: "",
     description: "",
-    selectedIndex: -1,
+    selectedIndex: 0,
     reposition: true,
     minHeight: "100vh",
     divClick: true,
@@ -110,7 +122,8 @@ const Page: React.FC<Props> = (props) => {
     currentlyDragged: null,
     navbarHeight: 105
   })
-  const [questions, setQuestions] = useState([defaultQuestion]);
+  const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+
   const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
   const handleChange = (e: React.ChangeEvent<any>) => {
@@ -234,39 +247,57 @@ const Page: React.FC<Props> = (props) => {
     payload: any
   }
   const setQuestionValue = ({ index, payload }: questionParams) => {
-    const temp = [...questions]
-    temp[index] = { ...temp[index], ...payload }
-    setQuestions(temp)
+    setQuestions(prevState => {
+      const temp = [...prevState]
+      temp[index] = { ...temp[index], ...payload }
+      return temp;
+    })
   }
   const addQuestions = () => {
     const temp = [...questions]
-    let selectedIndex
+    const tempOpt = [...moreOptQuestion]
+
+    let selectedIndex = 0
     if (state.selectedIndex != undefined) {
+      tempOpt.splice(state.selectedIndex + 1, 0, defaultQuestion.moreOptions as Opt)
       temp.splice(state.selectedIndex + 1, 0, defaultQuestion)
       selectedIndex = state.selectedIndex + 1
     } else {
+      tempOpt.push({})
       temp.push(defaultQuestion)
       selectedIndex = temp.length - 1
     }
-    setQuestions([...temp])
     setState({ ...state, selectedIndex, divClick: true })
+    setQuestions(temp)
+    setMoreOptQuestion(tempOpt)
   }
+  const duplicateQuestion = (index: number) => {
+    const temp = [...questions]
+    const tempOpt = [...moreOptQuestion]
+    let selectedIndex = index
+    if (index != undefined) {
+      temp.splice(index + 1, 0, temp[index])
+      tempOpt.splice(index + 1, 0, tempOpt[index])
+      selectedIndex = index + 1
+    }
+    setTimeout(() => {
+      setState({ ...state, selectedIndex, divClick: true })
+      setQuestions(temp)
+      setMoreOptQuestion(tempOpt)
+    }, 50)
+  }
+  const removeQuestion = (index: number) => {
+    const temp = [...questions]
+    const tempOpt = [...moreOptQuestion]
+    temp.splice(index, 1)
+    tempOpt.splice(index, 1)
 
-  // const duplicateQuestion = () => {
-  //   const temp = [...questions]
-  //   temp.splice(state.selectedIndex + 1, 0, temp[state.selectedIndex])
-  //   setQuestions([...temp])
-  //   setState({ ...state, selectedIndex: state.selectedIndex + 1 })
-  // }
-  // const removeQuestion = (index:number) => {
-  //   const temp = [...questions]
-  //   if (temp[index].id != undefined) {
-  //     setDeletedQuestionIds([...deletedQuestionIds, temp[index].id])
-  //   }
-  //   temp.splice(index, 1)
-  //   setQuestions([...temp])
-  //   setState({ ...state, selectedIndex: index - 1 })
-  // }
+    setTimeout(() => {
+      setQuestions(temp)
+      setMoreOptQuestion(tempOpt)
+      setState({ ...state, selectedIndex: index == 0 && questions.length > 1 ? index : index - 1 })
+    }, 50)
+  }
   //#endregion
 
   const menus = [
@@ -278,11 +309,12 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Import questions",
       icon: <TbFileImport />,
-      onClick: () => console.log(questions)
+      onClick: () => console.log(moreOptQuestion)
     },
     {
       title: "Add title and description",
       icon: <AiOutlineFontSize />,
+      onClick: () => console.log(questions)
     },
     {
       title: "Add image",
@@ -310,14 +342,17 @@ const Page: React.FC<Props> = (props) => {
     })
   }, [])
 
+  interface Opt {
+    [key: string]: boolean;
+  }
+  const [moreOptQuestion, setMoreOptQuestion] = useState<Opt[]>([]);
   const handleDragging = useCallback((event: any) => {
     const move = (index: number, direction: "up" | "down") => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
       if (nextIndex >= 0 && nextIndex < questions.length && index !== state.currentSwapIndex) {
-        let temp = [...questions]
-        const swap = temp[nextIndex]
-        temp[nextIndex] = temp[index]
-        temp[index] = swap
+        const temp = swap([...questions], index, nextIndex)
+        const tempOpt = swap([...moreOptQuestion], index, nextIndex)
+        setMoreOptQuestion(tempOpt)
         setQuestions(temp)
         setState((prevState) => ({
           ...prevState,
@@ -347,7 +382,7 @@ const Page: React.FC<Props> = (props) => {
       }
       setDragY(yCoordinate - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
     }
-  }, [state.currentlyDragged, questions, state.currentSwapIndex])
+  }, [state.currentlyDragged, questions, moreOptQuestion, setMoreOptQuestion, state.currentSwapIndex])
 
   useEffect(() => {
     if (state.currentlyDragged != null) {
@@ -387,6 +422,76 @@ const Page: React.FC<Props> = (props) => {
   }
   //#endregion
 
+  //#region map more options
+  const toggleQuestionOptions = ({ index, payload }: questionParams) => {
+    setMoreOptQuestion(prevState => {
+      const temp = [...prevState]
+      const updatedQuestion = {
+        ...(temp[index] || {}),
+        [payload]: !(temp[index]?.[payload] ?? false)
+      };
+      temp[index] = updatedQuestion;
+      return temp;
+    })
+  }
+
+  const handleTypeChange = (event: Item, index: number) => {
+    const validOptions = additionalOptionsMap[event.value]
+
+    setQuestionValue({ index, payload: { type: event } })
+    setMoreOptQuestion(prevState => {
+      const temp = [...prevState]
+      temp[index] = validOptions.reduce((acc: any, curr) => {
+        acc[curr] = false;
+        return acc;
+      }, {})
+      return temp;
+    })
+  }
+  useEffect(() => {
+    if (state.selectedIndex != null && state.selectedIndex >= 0) {
+      const curr = moreOptQuestion[state.selectedIndex] ?? {}
+      const tempArr: Item[] = []
+      moreOptionsArr.forEach((item) => {
+        if (curr[item.value] != undefined) {
+          tempArr.push({
+            ...item,
+            icon: curr[item.value] ?
+              <IoMdCheckmark size={24} color="#5f6368" /> :
+              <div className='w-6'></div>
+          })
+        }
+      })
+      const tempGroup: DropdownItemsList[] = []
+      let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
+      let groupCount = 1
+      let prevGroup = 0
+      tempArr.forEach(({ group = 0, ...item }) => {
+        const itemObject = {
+          onClick: () => toggleQuestionOptions({ index: state.selectedIndex ?? 0, payload: item.value }),
+          content: item
+        }
+        if (!tempGroup[group]) {
+          tempGroup[group] = {
+            items: [itemObject],
+            header: group == 0 ? "Show" : ""
+          }
+        } else {
+          tempGroup[group].items.push(itemObject)
+        }
+        if (prevGroup != group) {
+          groupCount++
+        }
+        optionsHeight += 44
+      })
+      optionsHeight += (groupCount * 16)
+      setQuestionValue({
+        index: state.selectedIndex,
+        payload: { moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } }
+      })
+    }
+  }, [moreOptQuestion, state.selectedIndex])
+  // #endregion
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -410,7 +515,7 @@ const Page: React.FC<Props> = (props) => {
                     className='absolute z-20 w-full opacity-50'
                   >
                     <CardContainer selected={true}>
-                      <div className='py-4 px-6 flex flex-wrap items-start'>
+                      <div className='pt-6 pb-2 px-6 flex flex-wrap items-start'>
                         <div className="flex-grow max-w-full ml-2 mr-1">
                           <Input
                             value={questions[state.currentlyDragged].title}
@@ -418,13 +523,13 @@ const Page: React.FC<Props> = (props) => {
                             className=" text-base p-3 bg-gray-100 cursor-move"
                           />
                         </div>
-                        <div className='mx-1 z-0 cursor-move'>
+                        <div className='mx-1 cursor-move'>
                           <MenuIcon
                             icon={<MdOutlineImage />}
                           />
                         </div>
                         <div className="w-60">
-                          {/* <Select /> */}
+                          <Select value={questions[state.currentlyDragged].type} />
                         </div>
                       </div>
                     </CardContainer>
@@ -433,6 +538,7 @@ const Page: React.FC<Props> = (props) => {
               )}
               <div className='relative hidden form:block'>
                 <Toolbar
+                  viewportWidth={viewportWidth ?? 100}
                   menus={menus}
                   toolbarRef={toolbarRef}
                   sidebarY={sidebarY}
@@ -469,7 +575,9 @@ const Page: React.FC<Props> = (props) => {
                 <CardContainer
                   cardRef={(el: any) => cardRefs.current[i] = el}
                   selected={i == state.selectedIndex}
-                  onClick={(event) => handleCardClick(event.target instanceof HTMLDivElement, i)}
+                  onClick={(event) => {
+                    handleCardClick(event.target instanceof HTMLDivElement, i)
+                  }}
                   key={i}
                   currentlyDragged={state.currentlyDragged == i}
                   handleDragStart={(event) => {
@@ -477,7 +585,7 @@ const Page: React.FC<Props> = (props) => {
                     setState({ ...state, currentlyDragged: i, selectedIndex: null })
                   }}
                 >
-                  <div className='py-4 px-6 '>
+                  <div className='pt-6 pb-2 px-6 '>
                     <div className='flex flex-wrap items-start'>
                       <div className="flex-grow w-[300px] max-w-full">
                         <Input
@@ -501,33 +609,43 @@ const Page: React.FC<Props> = (props) => {
                       <div className="w-60">
                         <Select
                           value={row.type}
-                          onChange={(e) => setQuestionValue({ index: i, payload: { type: e } })}
+                          onChange={(e) => {
+                            handleTypeChange(e, i)
+                          }}
                           cardRef={cardRefs.current[i]}
                           options={choicesData}
                         />
                       </div>
                     </div>
-                    <div className='flex justify-end items-center border-t-[1.5px] my-4'>
+                    <div style={{ display: state.selectedIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
                       <MenuIcon
+                        title="Duplicate"
+                        onClick={() => { duplicateQuestion(i) }}
                         additionalClass='mx-[1px]'
-                        icon={<MdOutlineImage />}
+                        icon={<MdContentCopy />}
                       />
                       <MenuIcon
+                        title="Delete"
+                        onClick={() => removeQuestion(i)}
                         additionalClass='mx-[1px]'
-                        icon={<MdOutlineImage />}
-                      />
-                      <MenuIcon
-                        additionalClass='mx-[1px]'
-                        icon={<MdOutlineImage />}
+                        icon={<FiTrash2 />}
                       />
                       <div className=' border-l-[1.5px] h-8 mx-2'></div>
-                      <span className='text-sm mx-2'>Required</span>
-                      <div className='mx-2'>
-                        <Toggle />
-                      </div>
-                      <MenuIcon
+                      <span className='text-sm ml-2 mr-3'>Required</span>
+                      <Toggle
+                        value={row.required}
+                        handleChange={(checked: boolean) => setQuestionValue({ index: i, payload: { required: checked } })}
+                      />
+                      {/* <MenuIcon
+                        title="More options"
                         additionalClass='mx-[1px]'
-                        icon={<MdOutlineImage />}
+                        icon={<BiDotsVerticalRounded />}
+                      /> */}
+                      <DropdownButton
+                        optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
+                        dropdownItemData={row.moreOptionsData?.items ?? []}
+                        cardRef={cardRefs?.current[i]}
+                        selected={i == state.selectedIndex}
                       />
                     </div>
                   </div>
@@ -547,6 +665,7 @@ interface ToolbarProps {
   menus: any[],
   toolbarRef?: Ref<HTMLDivElement>,
   sidebarY?: number,
+  viewportWidth?: number
 }
 const BottomToolbar = ({ menus }: ToolbarProps) => {
   return (
@@ -566,16 +685,20 @@ const BottomToolbar = ({ menus }: ToolbarProps) => {
     </div>
   )
 }
-const Toolbar = ({ toolbarRef, sidebarY, menus }: ToolbarProps) => {
+const Toolbar = ({ toolbarRef, sidebarY, menus, viewportWidth = 100 }: ToolbarProps) => {
   return (
     <div
       ref={toolbarRef}
-      style={{ top: sidebarY }}
-      className='items-center transition-all duration-500 flex flex-col shadow-md bg-white rounded-md absolute z-0 -right-16 px-[2px] py-1'>
+      style={{ top: sidebarY, zIndex: 1 }}
+      className='items-center  transition-all duration-500 flex flex-col shadow-md bg-white rounded-md absolute -right-16 px-[2px] py-1'>
       {menus.map((row, i) =>
-        <div key={i} className='m-1' onClick={row.onClick}>
+        <div key={i} className='m-[6px]' onClick={row.onClick}>
           <MenuIcon
-            orientation="right"
+            orientation={
+              viewportWidth < 965 ? "left" :
+                viewportWidth < 1150 ? "bottom" :
+                  "right"
+            }
             additionalClass="w-8 h-8 p-1"
             title={row.title}
             icon={row.icon}
