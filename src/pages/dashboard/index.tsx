@@ -563,7 +563,7 @@ const Page: React.FC<Props> = (props) => {
                   />
                 </div>
               </CardContainer>
-              {questions.map((row: any, i: number) =>
+              {questions.map((row: Question, i: number) =>
                 <CardContainer
                   cardRef={(el: any) => cardRefs.current[i] = el}
                   selected={i == state.selectedIndex}

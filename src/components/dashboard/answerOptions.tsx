@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react'
 // import Select from '../forms/general-form/select'
 // import ChoiceIcon from './choiceIcon'
 import TextAnswer from './textAnswer'
+import { Question } from '@interfaces/question.interface';
+
 
 // const FileUploader = ({ setItemImage, index }) => {
 //     const hiddenFileInput = React.useRef(null);
@@ -430,7 +432,11 @@ import TextAnswer from './textAnswer'
 //     )
 // }
 
-const AnswerOption = ({ setQuestionValue, questionProps }) => {
+interface AnswerProps {
+    questionProps: Question
+    setQuestionValue: Function
+}
+const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
     const {
         type,
         answerOptions,
