@@ -62,7 +62,6 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
     } else if (bottomPosition < sidePosition) {
       finalPos = bottomPosition
     }
-    console.log({ groupIndex, index, finalPos })
 
     setYScrollOffset((sidePosition - 24) * -1)
     setSelectY(finalPos + 8)

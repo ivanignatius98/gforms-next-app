@@ -47,16 +47,6 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
   const handleMouseLeave = () => {
     setIsHovered(false);
   };
-  function DoubleEllipsis() {
-    return (
-      <IconContext.Provider value={{ style: { display: 'flex' } }}>
-        <div>
-          <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
-          <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
-        </div>
-      </IconContext.Provider>
-    );
-  }
   return (
     <div
       onMouseEnter={handleMouseEnter}
@@ -78,7 +68,12 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
             display: isHovered || selected ? "flex" : "none"
           }}
         >
-          {DoubleEllipsis()}
+          <IconContext.Provider value={{ style: { display: 'flex' } }}>
+            <div>
+              <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
+              <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
+            </div>
+          </IconContext.Provider>
         </button>
       }
       {selected &&
