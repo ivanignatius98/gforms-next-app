@@ -481,6 +481,7 @@ const Page: React.FC<Props> = (props) => {
         }
         if (prevGroup != group) {
           groupCount++
+          prevGroup = group
         }
         optionsHeight += 44
       })
