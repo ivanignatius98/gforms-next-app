@@ -1,19 +1,14 @@
-import { useEffect, useRef, useState } from 'react';
-import Dropdown from '@modules/Dropdown';
-import { MdOutlinePalette, MdOutlineSmartDisplay, MdOutlineImage } from 'react-icons/md'
+import { useEffect, useRef, Fragment, useState } from 'react';
 import { VscTriangleDown } from 'react-icons/vsc';
+import { Listbox, Transition } from '@headlessui/react';
 import { getLayoutY } from '@helpers'
-interface Item {
-  icon?: JSX.Element
-  label: string
-  value: string,
-  group?: number
-}
-interface DropdownItem {
-  onClick: () => void;
-  content: Item
-}
+import { Content, Item } from '@interfaces/dropdown.interface';
 
+
+interface SelectItem {
+  header?: string
+  items: Item[]
+}
 type Props = {
   options?: Item[]
   onChange?: (val: Item) => void
@@ -21,28 +16,23 @@ type Props = {
   cardRef?: any
 };
 
-
-interface DropdownItemsList {
-  header?: string
-  items: DropdownItem[]
-}
 interface ItemMap {
   [key: string]: [number, number];
 }
+
+function classNames(...classes: string[]) {
+  return classes.filter(Boolean).join(' ')
+}
 function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
   const [selectY, setSelectY] = useState(0)
-  const [selected, setSelected] = useState<Item>(value ?? options[0])
-  const [mappedOptions, setMappedOptions] = useState<DropdownItemsList[]>([])
+  const [mappedOptions, setMappedOptions] = useState<SelectItem[]>([])
   const [valuesMap, setValuesMap] = useState<ItemMap>({})
   useEffect(() => {
     const map: ItemMap = {}
-    const arrGroup: DropdownItemsList[] = [];
+    const arrGroup: SelectItem[] = [];
 
     options.forEach(({ group = 0, ...itemWithoutGroup }, index) => {
-      const itemObject = {
-        onClick: () => setSelected(itemWithoutGroup),
-        content: itemWithoutGroup
-      }
+      const itemObject = itemWithoutGroup
       if (!arrGroup[group]) {
         arrGroup[group] = { items: [itemObject] }
       } else {
@@ -52,18 +42,16 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
     })
     setValuesMap(map)
     setMappedOptions(arrGroup)
-  }, [options])
+  }, [])
 
-  useEffect(() => onChange(selected), [selected])
+  // useEffect(() => onChange(selected), [selected])
   const [yScrollOffset, setYScrollOffset] = useState(0)
 
   const repositionCenter = () => {
     const currY = getLayoutY(cardRef)
     const { innerHeight } = window
-    const [groupIndex, index] = valuesMap[selected.value]
-
+    const [groupIndex, index] = valuesMap[value?.value || ""]
     const [groupDividerHeight, eachOptionHeight] = [16, 48]
-    // const optionHeight = groupDividerHeight * options.length + eachOptionHeight * Object.keys(valuesMap).length
     const optionHeight = 614
     const topPosition = 24
     const bottomPosition = innerHeight - optionHeight - 24
@@ -74,6 +62,8 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
     } else if (bottomPosition < sidePosition) {
       finalPos = bottomPosition
     }
+    console.log({ groupIndex, index, finalPos })
+
     setYScrollOffset((sidePosition - 24) * -1)
     setSelectY(finalPos + 8)
   }
@@ -87,19 +77,48 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
     </>)
       : null;
   }
+  const defaultTransitionProps = {
+    enter: "transition ease-out duration-100",
+    enterFrom: "transform opacity-0 scale-95",
+    enterTo: "transform opacity-100 scale-100",
+    leave: "transition ease-in duration-75",
+    leaveFrom: "transform opacity-100 scale-100",
+    leaveTo: "transform opacity-0 scale-90"
+  }
+  const ref = useRef<HTMLDivElement>(null)
+  const [lastActive, setLastActive] = useState([-1, -1])
 
+  interface OptionParams {
+    active: boolean
+    content: Content
+    index: number
+    groupIndex: number
+  }
+  const getOptionClass = ({ active, content, index, groupIndex }: OptionParams) => {
+    const [idx, grIdx] = lastActive
+    let classStr = ""
+    if (value?.label == content.label) {
+      classStr = "bg-blue-100"
+      if (active) {
+        classStr = "bg-blue-50"
+      }
+    } else if (active || idx == index && grIdx == groupIndex) {
+      classStr = "bg-gray-200"
+    }
+    return classNames(
+      classStr,
+      "flex w-full items-center px-2 py-3 text-sm"
+    )
+  }
   return (
-    <Dropdown
-      scrollOffset={yScrollOffset}
-      optionContainerStyle={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
-      containerClassName='w-full relative inline-block'
-      optionContainerClassName=" fixed z-30 w-60 mt-1 bg-white rounded-md shadow-lg origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-      dropdownItemData={mappedOptions}
-      selected={value?.label || ""}
+    <Listbox value={value} onChange={onChange}
+      as="div"
+      className="w-full relative inline-block"
     >
-      <button
+      <Listbox.Button
         onClick={() => repositionCenter()}
-        className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full transition-colors ease-in-out duration-200  active:bg-slate-200'>
+        className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full transition-colors ease-in-out duration-200  active:bg-slate-200'
+      >
         {/* value preview */}
         {value && (<>
           {contentPlaceholder(value)}
@@ -107,8 +126,47 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
             <VscTriangleDown size={12} color="#5f6368" />
           </div>
         </>)}
-      </button>
-    </Dropdown >
+      </Listbox.Button>
+      <Transition
+        as={Fragment}
+        afterEnter={() => {
+          (ref.current as unknown as { scrollTop: number }).scrollTop = yScrollOffset ?? 0;
+        }}
+        beforeLeave={() => { setLastActive([-1, -1]) }}
+        {...defaultTransitionProps}
+      >
+        <Listbox.Options
+          as='div'
+          ref={ref}
+          style={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
+          className="fixed z-30 w-60 mt-1 origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+        >
+          {mappedOptions.map(({ items }, groupIndex) => (
+            <div className='py-2' key={groupIndex}>
+              {items.map((content, i) =>
+                <Listbox.Option
+                  as={Fragment}
+                  key={content.value}
+                  value={content}
+                >
+                  {({ active }) => (
+                    <button
+                      onMouseEnter={() => { console.log("FIRED ENTER", i, groupIndex); setLastActive([i, groupIndex]) }}
+                      className={"text-left " + getOptionClass({ active, content, index: i, groupIndex })}
+                    >
+                      <div className="pl-2 pr-4">
+                        {content.icon}
+                      </div>
+                      {content.label}
+                    </button>
+                  )}
+                </Listbox.Option>
+              )}
+            </div>
+          ))}
+        </Listbox.Options>
+      </Transition>
+    </Listbox>
   )
 }
 
