@@ -22,7 +22,6 @@ function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
 export default function Dropdown({ children, transition, scrollOffset, setOpen, selected, optionContainerStyle = {}, dropdownItemData, containerClassName, optionContainerClassName }: Props) {
-  const [lastActive, setLastActive] = useState([-1, -1])
 
   interface OptionParams {
     active: boolean
@@ -32,17 +31,10 @@ export default function Dropdown({ children, transition, scrollOffset, setOpen, 
   }
 
   const getOptionClass = ({ active, content, index, groupIndex }: OptionParams) => {
-    const [idx, grIdx] = lastActive
     let classStr = ""
-    if (selected == content.label) {
-      classStr = "bg-blue-100"
-      if (active) {
-        classStr = "bg-blue-50"
-      }
-    } else if (active || idx == index && grIdx == groupIndex) {
-      classStr = "bg-gray-200"
+    if (active) {
+      classStr = "bg-blue-50"
     }
-
     return classNames(
       classStr,
       "flex w-full items-center px-2 py-3 text-sm"
@@ -74,7 +66,6 @@ export default function Dropdown({ children, transition, scrollOffset, setOpen, 
             }}
             beforeLeave={() => {
               setOpen?.(false)
-              setLastActive([-1, -1])
             }}
             {...(transition ?? defaultTransitionProps)}
           >
@@ -92,7 +83,6 @@ export default function Dropdown({ children, transition, scrollOffset, setOpen, 
                     <Menu.Item key={i}>
                       {({ active, close }) => (
                         <button
-                          onMouseEnter={() => { setLastActive([i, groupIndex]) }}
                           className={"text-left " + getOptionClass({ active, content, index: i, groupIndex })}
                           onClick={() => { onClick() }}
                         >
