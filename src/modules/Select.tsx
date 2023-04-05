@@ -63,6 +63,7 @@ function Select({ options = [], value, onChange = () => { }, cardRef, groupDivid
   }
   const repositionCenter = ({ value }: CenterProp) => {
     const currY = getLayoutY(cardRef)
+    console.log(currY, getLayoutY(containerRef.current))
     const { innerHeight } = window
     const [groupIndex, index] = valuesMap[value || ""]
     const topPosition = 24
@@ -95,7 +96,8 @@ function Select({ options = [], value, onChange = () => { }, cardRef, groupDivid
     leaveFrom: "transform opacity-100 scale-100",
     leaveTo: "transform opacity-0 scale-90"
   }
-  const ref = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const optionsRef = useRef<HTMLDivElement>(null)
   const [lastActive, setLastActive] = useState([-1, -1])
 
   interface OptionParams {
@@ -123,6 +125,7 @@ function Select({ options = [], value, onChange = () => { }, cardRef, groupDivid
   return (
     <Listbox value={value} onChange={(value: Item) => { onChange(value); setTimeout(() => repositionCenter(value), 200) }}
       as="div"
+      ref={containerRef}
       className="w-full relative inline-block"
     >
       <Listbox.Button
@@ -139,14 +142,14 @@ function Select({ options = [], value, onChange = () => { }, cardRef, groupDivid
       <Transition
         as={Fragment}
         afterEnter={() => {
-          (ref.current as unknown as { scrollTop: number }).scrollTop = yScrollOffset ?? 0;
+          (optionsRef.current as unknown as { scrollTop: number }).scrollTop = yScrollOffset ?? 0;
         }}
         beforeLeave={() => { setLastActive([-1, -1]) }}
         {...defaultTransitionProps}
       >
         <Listbox.Options
           as='div'
-          ref={ref}
+          ref={optionsRef}
           style={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
           className="fixed z-30 w-60 mt-1 origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
         >
