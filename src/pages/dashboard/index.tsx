@@ -22,6 +22,15 @@ import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } fr
 import { debounce, getLayoutY, swap } from '@helpers'
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
 import { Question } from '@interfaces/question.interface';
+import {
+  setQuestionIndex as setQuestionIndexDispatch,
+  setQuestionValue as setQuestionValueDispatch,
+  addQuestion as addQuestionsDispatch,
+  swapQuestions as swapQuestionsDispatch,
+  setQuestions as setQuestionsDispatch
+} from '@store/question/action';
+import { bindActionCreators } from 'redux'
+
 // #endregion
 
 //#region card content
@@ -98,7 +107,7 @@ interface State {
   currentSwapIndex: number | null,
   navbarHeight: number
 }
-const Page: React.FC<Props> = (props) => {
+const Page: React.FC<Props> = ({ setQuestionIndex, setQuestionValue, setQuestions, questions, swapQuestions, ...props }) => {
   const [state, setState] = useState<State>({
     title: "",
     description: "",
@@ -110,7 +119,7 @@ const Page: React.FC<Props> = (props) => {
     currentlyDragged: null,
     navbarHeight: 105
   })
-  const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+  // const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
 
   const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
@@ -120,6 +129,7 @@ const Page: React.FC<Props> = (props) => {
     })
   }
   const handleCardClick = (divClick: boolean, idx: number) => {
+    setQuestionIndex(idx)
     setState({ ...state, selectedIndex: idx, divClick })
   }
 
@@ -154,20 +164,20 @@ const Page: React.FC<Props> = (props) => {
   }, [state.navbarHeight])
   // selected index change
   useEffect(() => {
-    if (state.selectedIndex != null) {
+    if (props.selectedIndex != null) {
       if (state.divClick) {
-        if (state.selectedIndex == -1) {
+        if (props.selectedIndex == -1) {
           headerInputRef?.current?.focus()
         } else {
-          inputRefs?.current[state.selectedIndex].focus()
+          inputRefs?.current[props.selectedIndex].focus()
         }
       }
       if (state.reposition) {
         const getY = () => {
-          if (state.selectedIndex == null)
+          if (props.selectedIndex == null)
             return 0
 
-          const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
+          const curr = props.selectedIndex == -1 ? headerRef.current : cardRefs?.current[props.selectedIndex]
           return getLayoutY(curr as HTMLDivElement)
         }
         repositionToolbar(getY())
@@ -184,7 +194,7 @@ const Page: React.FC<Props> = (props) => {
       }
     }
     resizeScrollbar()
-  }, [state.selectedIndex, state.reposition, state.divClick, resizeScrollbar, repositionToolbar])
+  }, [props.selectedIndex, state.reposition, state.divClick, resizeScrollbar, repositionToolbar])
 
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, questions.length)
@@ -234,31 +244,31 @@ const Page: React.FC<Props> = (props) => {
     index: number,
     payload: any
   }
-  const setQuestionValue = ({ index, payload }: questionParams) => {
-    setQuestions(prevState => {
-      const temp = [...prevState]
-      temp[index] = { ...temp[index], ...payload }
-      return temp;
-    })
-  }
-  const addQuestions = () => {
-    const temp = [...questions]
-    const tempOpt = [...moreOptQuestion]
+  // const setQuestionValue = ({ index, payload }: questionParams) => {
+  //   setQuestions(prevState => {
+  //     const temp = [...prevState]
+  //     temp[index] = { ...temp[index], ...payload }
+  //     return temp;
+  //   })
+  // }
+  // const addQuestions = () => {
+  //   const temp = [...questions]
+  //   const tempOpt = [...moreOptQuestion]
 
-    let selectedIndex = 0
-    if (state.selectedIndex != undefined) {
-      tempOpt.splice(state.selectedIndex + 1, 0, defaultQuestion.moreOptions as Opt)
-      temp.splice(state.selectedIndex + 1, 0, defaultQuestion)
-      selectedIndex = state.selectedIndex + 1
-    } else {
-      tempOpt.push({})
-      temp.push(defaultQuestion)
-      selectedIndex = temp.length - 1
-    }
-    setState({ ...state, selectedIndex, divClick: true })
-    setQuestions(temp)
-    setMoreOptQuestion(tempOpt)
-  }
+  //   let selectedIndex = 0
+  //   if (props.selectedIndex != undefined) {
+  //     tempOpt.splice(props.selectedIndex + 1, 0, defaultQuestion.moreOptions as Opt)
+  //     // temp.splice(props.selectedIndex + 1, 0, defaultQuestion)
+  //     selectedIndex = props.selectedIndex + 1
+  //   } else {
+  //     tempOpt.push({})
+  //     // temp.push(defaultQuestion)
+  //     selectedIndex = temp.length - 1
+  //   }
+  //   setState({ ...state, selectedIndex, divClick: true })
+  //   // setQuestions(temp)
+  //   setMoreOptQuestion(tempOpt)
+  // }
   const duplicateQuestion = (index: number) => {
     const temp = [...questions]
     const tempOpt = [...moreOptQuestion]
@@ -283,6 +293,8 @@ const Page: React.FC<Props> = (props) => {
     setTimeout(() => {
       setQuestions(temp)
       setMoreOptQuestion(tempOpt)
+      setQuestionIndex(index == 0 && questions.length > 1 ? index : index - 1)
+
       setState({ ...state, selectedIndex: index == 0 && questions.length > 1 ? index : index - 1 })
     }, 50)
   }
@@ -292,7 +304,7 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Add question",
       icon: <IoAddCircleOutline />,
-      onClick: addQuestions
+      onClick: props.addQuestions
     },
     {
       title: "Import questions",
@@ -320,6 +332,8 @@ const Page: React.FC<Props> = (props) => {
 
   //#region dragging behavior
   const handleDragEnd = useCallback(() => {
+    setQuestionIndex(state.currentlyDragged)
+
     setState((prevState) => {
       return {
         ...prevState,
@@ -425,60 +439,109 @@ const Page: React.FC<Props> = (props) => {
 
   const handleTypeChange = (event: Item, index: number) => {
     const validOptions = additionalOptionsMap[event.value]
-
-    setQuestionValue({ index, payload: { type: event } })
-    setMoreOptQuestion(prevState => {
-      const temp = [...prevState]
-      temp[index] = validOptions.reduce((acc: any, curr) => {
-        acc[curr] = false;
-        return acc;
-      }, {})
-      return temp;
+    const curr = validOptions.reduce((acc: any, curr) => {
+      acc[curr] = false;
+      return acc;
+    }, {})
+    const tempArr: Item[] = []
+    moreOptionsArr.forEach((item) => {
+      if (curr[item.value] != undefined) {
+        tempArr.push({
+          ...item,
+          icon: curr[item.value] ?
+            <IoMdCheckmark size={24} color="#5f6368" /> :
+            <div className='w-6'></div>
+        })
+      }
     })
+    const tempGroup: DropdownItemsList[] = []
+    let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
+    let groupCount = 1
+    let prevGroup = 0
+    tempArr.forEach(({ group = 0, ...item }) => {
+      const itemObject = {
+        onClick: () => toggleQuestionOptions({ index: props.selectedIndex ?? 0, payload: item.value }),
+        content: item
+      }
+      if (!tempGroup[group]) {
+        tempGroup[group] = {
+          items: [itemObject],
+          header: group == 0 ? "Show" : ""
+        }
+      } else {
+        tempGroup[group].items.push(itemObject)
+      }
+      if (prevGroup != group) {
+        groupCount++
+      }
+      optionsHeight += 44
+    })
+    optionsHeight += (groupCount * 16)
+
+    setQuestionValue({
+      index,
+      payload: {
+        type: event,
+        moreOptions: curr,
+        moreOptionsData: {
+          items: tempGroup,
+          optionsHeight
+        }
+      }
+    })
+
+    // setMoreOptQuestion(prevState => {
+    //   const temp = [...prevState]
+    //   temp[index] = validOptions.reduce((acc: any, curr) => {
+    //     acc[curr] = false;
+    //     return acc;
+    //   }, {})
+    //   return temp;
+    // })
   }
-  useEffect(() => {
-    if (state.selectedIndex != null && state.selectedIndex >= 0) {
-      const curr = moreOptQuestion[state.selectedIndex] ?? {}
-      const tempArr: Item[] = []
-      moreOptionsArr.forEach((item) => {
-        if (curr[item.value] != undefined) {
-          tempArr.push({
-            ...item,
-            icon: curr[item.value] ?
-              <IoMdCheckmark size={24} color="#5f6368" /> :
-              <div className='w-6'></div>
-          })
-        }
-      })
-      const tempGroup: DropdownItemsList[] = []
-      let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
-      let groupCount = 1
-      let prevGroup = 0
-      tempArr.forEach(({ group = 0, ...item }) => {
-        const itemObject = {
-          onClick: () => toggleQuestionOptions({ index: state.selectedIndex ?? 0, payload: item.value }),
-          content: item
-        }
-        if (!tempGroup[group]) {
-          tempGroup[group] = {
-            items: [itemObject],
-            header: group == 0 ? "Show" : ""
-          }
-        } else {
-          tempGroup[group].items.push(itemObject)
-        }
-        if (prevGroup != group) {
-          groupCount++
-        }
-        optionsHeight += 44
-      })
-      optionsHeight += (groupCount * 16)
-      setQuestionValue({
-        index: state.selectedIndex,
-        payload: { moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } }
-      })
-    }
-  }, [moreOptQuestion, state.selectedIndex])
+  // useEffect(() => {
+  //   if (props.selectedIndex != null && props.selectedIndex >= 0) {
+  //     const curr = moreOptQuestion[props.selectedIndex] ?? {}
+  //     const tempArr: Item[] = []
+  //     moreOptionsArr.forEach((item) => {
+  //       if (curr[item.value] != undefined) {
+  //         tempArr.push({
+  //           ...item,
+  //           icon: curr[item.value] ?
+  //             <IoMdCheckmark size={24} color="#5f6368" /> :
+  //             <div className='w-6'></div>
+  //         })
+  //       }
+  //     })
+  //     const tempGroup: DropdownItemsList[] = []
+  //     let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
+  //     let groupCount = 1
+  //     let prevGroup = 0
+  //     tempArr.forEach(({ group = 0, ...item }) => {
+  //       const itemObject = {
+  //         onClick: () => toggleQuestionOptions({ index: props.selectedIndex ?? 0, payload: item.value }),
+  //         content: item
+  //       }
+  //       if (!tempGroup[group]) {
+  //         tempGroup[group] = {
+  //           items: [itemObject],
+  //           header: group == 0 ? "Show" : ""
+  //         }
+  //       } else {
+  //         tempGroup[group].items.push(itemObject)
+  //       }
+  //       if (prevGroup != group) {
+  //         groupCount++
+  //       }
+  //       optionsHeight += 44
+  //     })
+  //     optionsHeight += (groupCount * 16)
+  //     setQuestionValue({
+  //       index: props.selectedIndex,
+  //       payload: { moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } }
+  //     })
+  //   }
+  // }, [moreOptQuestion, props.selectedIndex])
   // #endregion
 
   //#region content
@@ -542,7 +605,7 @@ const Page: React.FC<Props> = (props) => {
                 onClick={(event) => {
                   handleCardClick(event.target instanceof HTMLDivElement, -1)
                 }}
-                selected={-1 == state.selectedIndex}
+                selected={-1 == props.selectedIndex}
               >
                 <div className='py-4 px-6'>
                   <Input
@@ -566,7 +629,7 @@ const Page: React.FC<Props> = (props) => {
               {questions.map((row: Question, i: number) =>
                 <CardContainer
                   cardRef={(el: any) => cardRefs.current[i] = el}
-                  selected={i == state.selectedIndex}
+                  selected={i == props.selectedIndex}
                   onClick={(event) => {
                     handleCardClick(event.target instanceof HTMLDivElement, i)
                   }}
@@ -574,6 +637,8 @@ const Page: React.FC<Props> = (props) => {
                   currentlyDragged={state.currentlyDragged == i}
                   handleDragStart={(event) => {
                     event.preventDefault()
+                    setQuestionIndex(null)
+
                     setState({ ...state, currentlyDragged: i, selectedIndex: null })
                   }}
                 >
@@ -610,14 +675,14 @@ const Page: React.FC<Props> = (props) => {
                       </div>
                     </div>
                     {/* Content */}
-                    {i == state.selectedIndex &&
+                    {i == props.selectedIndex &&
                       <AnswerOptions
                         questionProps={row}
                         setQuestionValue={setQuestionValue}
                       />
                     }
                     {/* Footer */}
-                    <div style={{ display: state.selectedIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
+                    <div style={{ display: props.selectedIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
                       <MenuIcon
                         title="Duplicate"
                         onClick={() => { duplicateQuestion(i) }}
@@ -640,7 +705,7 @@ const Page: React.FC<Props> = (props) => {
                         optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
                         dropdownItemData={row.moreOptionsData?.items ?? []}
                         cardRef={cardRefs?.current[i]}
-                        selected={i == state.selectedIndex}
+                        selected={i == props.selectedIndex}
                       />
                     </div>
                   </div>
@@ -706,6 +771,18 @@ const Toolbar = ({ toolbarRef, sidebarY, menus, viewportWidth = 100 }: ToolbarPr
 
 const mapStateToProps = (state: any) => ({
   tabIndex: state.tab.tabIndex,
+  questions: state.question.questions,
+  selectedIndex: state.question.questionIndex
 })
 
-export default connect(mapStateToProps)(Page)
+const mapDispatchToProps = (dispatch: any) => {
+  return {
+    setQuestionValue: bindActionCreators(setQuestionValueDispatch, dispatch),
+    addQuestions: bindActionCreators(addQuestionsDispatch, dispatch),
+    swapQuestions: bindActionCreators(swapQuestionsDispatch, dispatch),
+    setQuestionIndex: bindActionCreators(setQuestionIndexDispatch, dispatch),
+    setQuestions: bindActionCreators(setQuestionsDispatch, dispatch),
+  }
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Page)
