@@ -24,12 +24,8 @@ import { Question } from '@interfaces/question.interface';
 // #endregion
 
 //#region card content
-interface questionParams {
-  index: number,
-  payload: any
-}
 type Props = {
-  tabIndex?: number,
+  tabIndex?: number
 };
 
 interface ContainerProps {
