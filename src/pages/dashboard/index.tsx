@@ -30,10 +30,6 @@ interface questionParams {
 }
 type Props = {
   tabIndex?: number,
-  question?: any,
-  setQuestionIndex: (index: number) => void,
-  addQuestion: (index?: number) => void,
-  setQuestionValue: ({ index, payload }: questionParams) => void,
 };
 
 interface ContainerProps {
