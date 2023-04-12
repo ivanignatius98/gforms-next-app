@@ -12,7 +12,6 @@ type Props = {
   options?: Item[]
   onChange?: (val: Item) => void
   value?: Item
-  cardRef?: any,
   groupDividerHeight?: number
   eachOptionHeight?: number
   containerMargins?: number
@@ -25,7 +24,7 @@ interface ItemMap {
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
-function Select({ options = [], value, onChange = () => { }, cardRef, groupDividerHeight = 16, eachOptionHeight = 48, containerMargins = 2 }: Props) {
+function Select({ options = [], value, onChange = () => { }, groupDividerHeight = 16, eachOptionHeight = 48, containerMargins = 2 }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [mappedOptions, setMappedOptions] = useState<SelectItem[]>([])
   const [valuesMap, setValuesMap] = useState<ItemMap>({})
@@ -56,16 +55,24 @@ function Select({ options = [], value, onChange = () => { }, cardRef, groupDivid
     setMappedOptions(arrGroup)
   }, [])
 
+  useEffect(() => {
+    if (value && valuesMap[value?.value] != undefined) {
+      repositionCenter(value)
+    }
+  }, [valuesMap])
+
   const [yScrollOffset, setYScrollOffset] = useState(0)
 
   interface CenterProp {
     value: string
   }
   const repositionCenter = ({ value }: CenterProp) => {
-    const currY = getLayoutY(cardRef)
-    console.log(currY, getLayoutY(containerRef.current))
+    const currY = getLayoutY(containerRef.current) - 24
     const { innerHeight } = window
-    const [groupIndex, index] = valuesMap[value || ""]
+
+    if (!valuesMap[value]) return
+
+    const [groupIndex, index] = valuesMap[value]
     const topPosition = 24
     const bottomPosition = innerHeight - optionsHeight - 24
     let sidePosition = currY - (groupIndex * groupDividerHeight) - (index * eachOptionHeight)
