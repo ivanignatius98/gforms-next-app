@@ -88,7 +88,7 @@ export const choicesData: Item[] = [{
 export const moreOptionsArr: Item[] = [
   {
     value: "description",
-    label: "Desription",
+    label: "Description",
     group: 0
   },
   {

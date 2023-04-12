@@ -473,6 +473,7 @@ const Page: React.FC<Props> = (props) => {
         }
         if (prevGroup != group) {
           groupCount++
+          prevGroup = group
         }
         optionsHeight += 44
       })
@@ -604,7 +605,6 @@ const Page: React.FC<Props> = (props) => {
                           onChange={(e) => {
                             handleTypeChange(e, i)
                           }}
-                          cardRef={cardRefs.current[i]}
                           options={choicesData}
                         />
                       </div>
