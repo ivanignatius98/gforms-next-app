@@ -14,13 +14,14 @@ import { TbFileImport } from 'react-icons/tb'
 import { AiOutlineFontSize } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
-import { IoMdCheckmark } from 'react-icons/io';
 import { FiTrash2 } from 'react-icons/fi'
 
 import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
 import { debounce, getLayoutY, swap } from '@helpers'
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
 import { Question } from '@interfaces/question.interface';
+import { BiDotsVerticalRounded } from 'react-icons/bi';
+
 // #endregion
 
 //#region card content
@@ -426,41 +427,25 @@ const Page: React.FC<Props> = (props) => {
       return temp;
     })
   }
+  interface contents {
+    content: Item
+  }
+  interface SelectItems {
+    header?: string
+    items: contents[]
+  }
 
   const handleTypeChange = (event: Item, index: number) => {
     const validOptions = additionalOptionsMap[event.value]
-
-    setQuestionValue({ type: event })
-    setMoreOptQuestion(prevState => {
-      const temp = [...prevState]
-      temp[index] = validOptions.reduce((acc: any, curr) => {
-        acc[curr] = false;
-        return acc;
-      }, {})
-      return temp;
-    })
-  }
-  useEffect(() => {
     if (cardClick.cardIndex != null && cardClick.cardIndex >= 0) {
-      const curr = moreOptQuestion[cardClick.cardIndex] ?? {}
-      const tempArr: Item[] = []
-      moreOptionsArr.forEach((item) => {
-        if (curr[item.value] != undefined) {
-          tempArr.push({
-            ...item,
-            icon: curr[item.value] ?
-              <IoMdCheckmark size={24} color="#5f6368" /> :
-              <div className='w-6'></div>
-          })
-        }
-      })
-      const tempGroup: DropdownItemsList[] = []
+      const tempArr: Item[] = moreOptionsArr.filter((item) => validOptions.includes(item.value));
+      console.log({ validOptions, moreOptionsArr, tempArr })
+      const tempGroup: SelectItems[] = []
       let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
       let groupCount = 1
       let prevGroup = 0
       tempArr.forEach(({ group = 0, ...item }) => {
         const itemObject = {
-          onClick: () => toggleQuestionOptions({ index: cardClick.cardIndex ?? 0, payload: item.value }),
           content: item
         }
         if (!tempGroup[group]) {
@@ -478,10 +463,17 @@ const Page: React.FC<Props> = (props) => {
         optionsHeight += 44
       })
       optionsHeight += (groupCount * 16)
-      console.log({ moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } })
-      setQuestionValue({ moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } })
+
+      setQuestionValue({
+        moreOptionValues: [],
+        type: event,
+        moreOptionsData: {
+          items: tempGroup,
+          optionsHeight
+        }
+      })
     }
-  }, [moreOptQuestion, cardClick.cardIndex])
+  }
   // #endregion
   return (
     <Layout>
@@ -567,7 +559,9 @@ const Page: React.FC<Props> = (props) => {
                   cardRef={(el: any) => cardRefs.current[i] = el}
                   selected={i == cardClick.cardIndex}
                   onClick={(event) => {
-                    handleCardClick(event.target instanceof HTMLDivElement, i)
+                    if (i != cardClick.cardIndex) {
+                      handleCardClick(event.target instanceof HTMLDivElement, i)
+                    }
                   }}
                   key={i}
                   currentlyDragged={state.currentlyDragged == i}
@@ -631,11 +625,17 @@ const Page: React.FC<Props> = (props) => {
                         handleChange={(checked: boolean) => setQuestionValue({ required: checked })}
                       />
                       <DropdownButton
+                        value={row.moreOptionValues}
+                        onChange={(newVal) => setQuestionValue({ moreOptionValues: newVal })}
                         optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
                         dropdownItemData={row.moreOptionsData?.items ?? []}
                         cardRef={cardRefs?.current[i]}
                         selected={i == cardClick.cardIndex}
-                      />
+                      >
+                        <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
+                          <BiDotsVerticalRounded size={24} color="#5f6368" />
+                        </button>
+                      </DropdownButton>
                     </div>
                   </div>
                 </CardContainer>
