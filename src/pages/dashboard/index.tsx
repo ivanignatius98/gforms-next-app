@@ -94,27 +94,28 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
 interface State {
   title: string,
   description: string,
-  reposition: boolean,
   minHeight: string,
-  divClick: boolean,
-  selectedIndex: number | null,
   currentlyDragged: number | null,
   currentSwapIndex: number | null,
-  navbarHeight: number
 }
+interface ClickState {
+  cardIndex: number | null
+  divClickedOrigin: boolean
+}
+const hideToolbarBreakpoint = 930 //px
 const Page: React.FC<Props> = (props) => {
   const [state, setState] = useState<State>({
     title: "",
     description: "",
-    selectedIndex: 0,
-    reposition: true,
     minHeight: "100vh",
-    divClick: true,
     currentSwapIndex: null,
     currentlyDragged: null,
-    navbarHeight: 105
   })
   const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+  const [cardClick, setCardClick] = useState<ClickState>({
+    cardIndex: 0,
+    divClickedOrigin: true
+  });
 
   const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
@@ -124,7 +125,7 @@ const Page: React.FC<Props> = (props) => {
     })
   }
   const handleCardClick = (divClick: boolean, idx: number) => {
-    setState({ ...state, selectedIndex: idx, divClick })
+    setCardClick({ cardIndex: idx, divClickedOrigin: divClick })
   }
 
   const layoutRef = useRef<HTMLDivElement>(null)
@@ -153,25 +154,23 @@ const Page: React.FC<Props> = (props) => {
     setSidebarY(finalPos)
   }, [])
 
-  const resizeScrollbar = useCallback(() => {
-    setHasScrollbar((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - state.navbarHeight));
-  }, [state.navbarHeight])
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   // selected index change
   useEffect(() => {
-    if (state.selectedIndex != null) {
-      if (state.divClick) {
-        if (state.selectedIndex == -1) {
+    const { cardIndex, divClickedOrigin } = cardClick
+    if (cardIndex != null) {
+      if (divClickedOrigin) {
+        if (cardIndex == -1) {
           headerInputRef?.current?.focus()
         } else {
-          inputRefs?.current[state.selectedIndex].focus()
+          inputRefs?.current[cardIndex].focus()
         }
       }
-      if (state.reposition) {
+      if ((viewportWidth ?? 0) > hideToolbarBreakpoint) {
         const getY = () => {
-          if (state.selectedIndex == null)
+          if (cardIndex == null)
             return 0
-
-          const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
+          const curr = cardIndex == -1 ? headerRef.current : cardRefs?.current[cardIndex]
           return getLayoutY(curr as HTMLDivElement)
         }
         repositionToolbar(getY())
@@ -187,8 +186,7 @@ const Page: React.FC<Props> = (props) => {
         return () => window.removeEventListener('scroll', onScroll);
       }
     }
-    resizeScrollbar()
-  }, [state.selectedIndex, state.reposition, state.divClick, resizeScrollbar, repositionToolbar])
+  }, [cardClick, repositionToolbar])
 
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, questions.length)
@@ -196,37 +194,32 @@ const Page: React.FC<Props> = (props) => {
   }, [questions])
 
   //#region resize behavior
-  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
-
   useEffect(() => {
-    resizeScrollbar()
     const handleResize = () => {
       const newViewportWidth = window.innerWidth;
       setViewportWidth(newViewportWidth);
-      resizeScrollbar()
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [resizeScrollbar]);
+  }, []);
 
   useEffect(() => {
     const containerMarginTop = 12
-    let navbarHeight = 105
+    let newNavHeight = 105
     let bottomToolbarHeight = 48
     if (viewportWidth) {
       if (viewportWidth < 640) {
-        navbarHeight = 151
-      } else if (viewportWidth > 930) {
+        newNavHeight = 151
+      } else if (viewportWidth > hideToolbarBreakpoint) {
         bottomToolbarHeight = 0
       }
     }
 
+    setHasScrollbar((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - newNavHeight))
     setState(prevState => ({
       ...prevState,
-      reposition: (viewportWidth ?? 0) > 930,
-      navbarHeight,
-      minHeight: `calc(100vh - ${navbarHeight + bottomToolbarHeight + containerMarginTop}px)`
+      minHeight: `calc(100vh - ${newNavHeight + bottomToolbarHeight + containerMarginTop}px)`
     }));
   }, [viewportWidth]);
 
@@ -234,61 +227,65 @@ const Page: React.FC<Props> = (props) => {
   //#endregion
 
   //#region question
-  interface questionParams {
-    index: number,
-    payload: any
-  }
-  const setQuestionValue = ({ index, payload }: questionParams) => {
+
+  const setQuestionValue = (payload: any) => {
     setQuestions(prevState => {
       const temp = [...prevState]
-      temp[index] = { ...temp[index], ...payload }
+      temp[cardClick.cardIndex ?? 0] = { ...temp[cardClick.cardIndex ?? 0], ...payload }
       return temp;
     })
   }
   const addQuestions = () => {
-    const temp = [...questions]
-    const tempOpt = [...moreOptQuestion]
+    // const { cardIndex } = { ...cardClick }
+    // const tempOpt = [...moreOptQuestion]
+    // if (cardIndex != undefined) {
+    //   tempOpt.splice(cardIndex + 1, 0, defaultQuestion.moreOptions as Opt)
+    // } else {
+    //   tempOpt.push(defaultQuestion.moreOptions as Opt)
+    // }
+    // setMoreOptQuestion(tempOpt)
 
-    let selectedIndex = 0
-    if (state.selectedIndex != undefined) {
-      tempOpt.splice(state.selectedIndex + 1, 0, defaultQuestion.moreOptions as Opt)
-      temp.splice(state.selectedIndex + 1, 0, defaultQuestion)
-      selectedIndex = state.selectedIndex + 1
-    } else {
-      tempOpt.push({})
-      temp.push(defaultQuestion)
-      selectedIndex = temp.length - 1
-    }
-    setState({ ...state, selectedIndex, divClick: true })
-    setQuestions(temp)
-    setMoreOptQuestion(tempOpt)
+    setQuestions((prevQuestion) => {
+      const { cardIndex } = { ...cardClick }
+      let newIdx = 0
+      if (cardIndex != undefined) {
+        prevQuestion.splice(cardIndex + 1, 0, defaultQuestion)
+        newIdx = cardIndex + 1
+      } else {
+        prevQuestion.push(defaultQuestion)
+        newIdx = prevQuestion.length - 1
+      }
+      setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
+      return [...prevQuestion]
+    })
   }
-  const duplicateQuestion = (index: number) => {
-    const temp = [...questions]
-    const tempOpt = [...moreOptQuestion]
-    let selectedIndex = index
-    if (index != undefined) {
-      temp.splice(index + 1, 0, temp[index])
-      tempOpt.splice(index + 1, 0, tempOpt[index])
-      selectedIndex = index + 1
-    }
-    setTimeout(() => {
-      setState({ ...state, selectedIndex, divClick: true })
-      setQuestions(temp)
+  const duplicateQuestion = () => {
+    setQuestions((prevQuestion) => {
+      const { cardIndex } = { ...cardClick }
+      const tempOpt = [...moreOptQuestion]
+      let newIdx = cardIndex
+      if (cardIndex != undefined) {
+        prevQuestion.splice(cardIndex + 1, 0, prevQuestion[cardIndex])
+        tempOpt.splice(cardIndex + 1, 0, tempOpt[cardIndex])
+        newIdx = cardIndex + 1
+      }
+      setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
       setMoreOptQuestion(tempOpt)
-    }, 50)
+      return [...prevQuestion]
+    })
   }
-  const removeQuestion = (index: number) => {
-    const temp = [...questions]
-    const tempOpt = [...moreOptQuestion]
-    temp.splice(index, 1)
-    tempOpt.splice(index, 1)
-
-    setTimeout(() => {
-      setQuestions(temp)
-      setMoreOptQuestion(tempOpt)
-      setState({ ...state, selectedIndex: index == 0 && questions.length > 1 ? index : index - 1 })
-    }, 50)
+  const removeQuestion = () => {
+    setQuestions((prevQuestion) => {
+      const { cardIndex } = { ...cardClick }
+      if (cardIndex) {
+        const tempOpt = [...moreOptQuestion]
+        prevQuestion.splice(cardIndex, 1)
+        tempOpt.splice(cardIndex, 1)
+        setMoreOptQuestion(tempOpt)
+        setCardClick({ cardIndex: cardIndex == 0 && questions.length > 1 ? cardIndex : cardIndex - 1, divClickedOrigin: true })
+      }
+      return [...prevQuestion]
+    })
   }
   //#endregion
 
@@ -333,11 +330,11 @@ const Page: React.FC<Props> = (props) => {
       }
     })
   }, [])
-
   interface Opt {
     [key: string]: boolean;
   }
   const [moreOptQuestion, setMoreOptQuestion] = useState<Opt[]>([]);
+
   const handleDragging = useCallback((event: any) => {
     const move = (index: number, direction: "up" | "down") => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
@@ -413,7 +410,10 @@ const Page: React.FC<Props> = (props) => {
     }
   }
   //#endregion
-
+  interface questionParams {
+    index: number
+    payload: any
+  }
   //#region map more options
   const toggleQuestionOptions = ({ index, payload }: questionParams) => {
     setMoreOptQuestion(prevState => {
@@ -430,7 +430,7 @@ const Page: React.FC<Props> = (props) => {
   const handleTypeChange = (event: Item, index: number) => {
     const validOptions = additionalOptionsMap[event.value]
 
-    setQuestionValue({ index, payload: { type: event } })
+    setQuestionValue({ type: event })
     setMoreOptQuestion(prevState => {
       const temp = [...prevState]
       temp[index] = validOptions.reduce((acc: any, curr) => {
@@ -441,8 +441,8 @@ const Page: React.FC<Props> = (props) => {
     })
   }
   useEffect(() => {
-    if (state.selectedIndex != null && state.selectedIndex >= 0) {
-      const curr = moreOptQuestion[state.selectedIndex] ?? {}
+    if (cardClick.cardIndex != null && cardClick.cardIndex >= 0) {
+      const curr = moreOptQuestion[cardClick.cardIndex] ?? {}
       const tempArr: Item[] = []
       moreOptionsArr.forEach((item) => {
         if (curr[item.value] != undefined) {
@@ -460,7 +460,7 @@ const Page: React.FC<Props> = (props) => {
       let prevGroup = 0
       tempArr.forEach(({ group = 0, ...item }) => {
         const itemObject = {
-          onClick: () => toggleQuestionOptions({ index: state.selectedIndex ?? 0, payload: item.value }),
+          onClick: () => toggleQuestionOptions({ index: cardClick.cardIndex ?? 0, payload: item.value }),
           content: item
         }
         if (!tempGroup[group]) {
@@ -478,12 +478,10 @@ const Page: React.FC<Props> = (props) => {
         optionsHeight += 44
       })
       optionsHeight += (groupCount * 16)
-      setQuestionValue({
-        index: state.selectedIndex,
-        payload: { moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } }
-      })
+      console.log({ moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } })
+      setQuestionValue({ moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } })
     }
-  }, [moreOptQuestion, state.selectedIndex])
+  }, [moreOptQuestion, cardClick.cardIndex])
   // #endregion
   return (
     <Layout>
@@ -543,7 +541,7 @@ const Page: React.FC<Props> = (props) => {
                 onClick={(event) => {
                   handleCardClick(event.target instanceof HTMLDivElement, -1)
                 }}
-                selected={-1 == state.selectedIndex}
+                selected={-1 == cardClick.cardIndex}
               >
                 <div className='py-4 px-6'>
                   <Input
@@ -567,7 +565,7 @@ const Page: React.FC<Props> = (props) => {
               {questions.map((row: any, i: number) =>
                 <CardContainer
                   cardRef={(el: any) => cardRefs.current[i] = el}
-                  selected={i == state.selectedIndex}
+                  selected={i == cardClick.cardIndex}
                   onClick={(event) => {
                     handleCardClick(event.target instanceof HTMLDivElement, i)
                   }}
@@ -575,7 +573,8 @@ const Page: React.FC<Props> = (props) => {
                   currentlyDragged={state.currentlyDragged == i}
                   handleDragStart={(event) => {
                     event.preventDefault()
-                    setState({ ...state, currentlyDragged: i, selectedIndex: null })
+                    setCardClick({ cardIndex: null, divClickedOrigin: false })
+                    setState({ ...state, currentlyDragged: i })
                   }}
                 >
                   <div className='pt-6 pb-2 px-6 '>
@@ -589,7 +588,7 @@ const Page: React.FC<Props> = (props) => {
                           name="question"
                           value={row.title}
                           onChange={(e) => {
-                            setQuestionValue({ index: i, payload: { title: e.target.value } })
+                            setQuestionValue({ title: e.target.value })
                           }}
                           placeholder={`Question ${i + 1}`}
                         />
@@ -609,16 +608,19 @@ const Page: React.FC<Props> = (props) => {
                         />
                       </div>
                     </div>
-                    <div style={{ display: state.selectedIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
+                    <div
+                      style={{ display: cardClick.cardIndex == i ? "flex" : "none" }}
+                      className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'
+                    >
                       <MenuIcon
                         title="Duplicate"
-                        onClick={() => { duplicateQuestion(i) }}
+                        onClick={() => { duplicateQuestion() }}
                         additionalClass='mx-[1px]'
                         icon={<MdContentCopy />}
                       />
                       <MenuIcon
                         title="Delete"
-                        onClick={() => removeQuestion(i)}
+                        onClick={() => removeQuestion()}
                         additionalClass='mx-[1px]'
                         icon={<FiTrash2 />}
                       />
@@ -626,18 +628,13 @@ const Page: React.FC<Props> = (props) => {
                       <span className='text-sm ml-2 mr-3'>Required</span>
                       <Toggle
                         value={row.required}
-                        handleChange={(checked: boolean) => setQuestionValue({ index: i, payload: { required: checked } })}
+                        handleChange={(checked: boolean) => setQuestionValue({ required: checked })}
                       />
-                      {/* <MenuIcon
-                        title="More options"
-                        additionalClass='mx-[1px]'
-                        icon={<BiDotsVerticalRounded />}
-                      /> */}
                       <DropdownButton
                         optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
                         dropdownItemData={row.moreOptionsData?.items ?? []}
                         cardRef={cardRefs?.current[i]}
-                        selected={i == state.selectedIndex}
+                        selected={i == cardClick.cardIndex}
                       />
                     </div>
                   </div>

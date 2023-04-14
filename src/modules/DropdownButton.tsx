@@ -26,7 +26,6 @@ const DropdownButton = ({ dropdownItemData, optionsHeight, cardRef, selected }: 
     // set y position
     if (selected && cardRef != undefined) {
       const currentY = cardRef.getBoundingClientRect().bottom + optionsHeight
-      console.log(optionsHeight)
       if (screenHeight < (currentY + 24)) {
         setTopPosition(screenHeight - (currentY - 24))
       } else {
