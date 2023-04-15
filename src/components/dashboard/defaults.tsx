@@ -147,9 +147,20 @@ export const defaultQuestion: Question = {
   image: '',
   previewImage: '',
   imageAlignment: 'left',
-  moreOptions: {
-    description: false,
-    go_to_section: false,
-    shuffle_options: false
-  },
+  moreOptionValues: [],
+  moreOptionsData: {
+    items: [
+      {
+        items: [
+          { content: moreOptionsArr[0] },
+          { content: moreOptionsArr[2] }
+        ],
+        header: "Show"
+      }, {
+        items: [{ content: moreOptionsArr[3] }],
+        header: ""
+      }
+    ],
+    optionsHeight: 192
+  }
 }

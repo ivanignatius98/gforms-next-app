@@ -1,21 +1,24 @@
-import { useEffect, Ref, useState, useCallback } from 'react';
+import { useEffect, Ref, useState, useCallback, Fragment } from 'react';
 import Tooltip from './Tooltip'
-import Dropdown from './Dropdown'
-import { BiDotsVerticalRounded } from 'react-icons/bi';
-import { DropdownItemsList } from '@interfaces/dropdown.interface';
+import { Listbox, Transition } from '@headlessui/react';
+import { SelectItems } from '@interfaces/dropdown.interface';
+import { IoMdCheckmark } from 'react-icons/io';
+import { classNames } from "@helpers"
 
 type Props = {
-  dropdownItemData: DropdownItemsList[],
+  dropdownItemData: SelectItems[],
   cardRef?: HTMLDivElement,
   selected?: boolean,
   optionsHeight: number
+  onChange?: (val: string) => void
+  value?: string[]
+  children: JSX.Element
 };
 
-const DropdownButton = ({ dropdownItemData, optionsHeight, cardRef, selected }: Props) => {
+const DropdownButton = ({ children, dropdownItemData, value, onChange = () => { }, optionsHeight, cardRef, selected }: Props) => {
   const [showTooltip, setShowTooltip] = useState(true)
   const [leftPosition, setLeftPosition] = useState(0);
   const [topPosition, setTopPosition] = useState(48);
-  // const [optionsHeight, setOptionsHeight] = useState(100);
 
   const repositionOptions = useCallback(() => {
     const screenWidth = window.innerWidth;
@@ -26,7 +29,6 @@ const DropdownButton = ({ dropdownItemData, optionsHeight, cardRef, selected }: 
     // set y position
     if (selected && cardRef != undefined) {
       const currentY = cardRef.getBoundingClientRect().bottom + optionsHeight
-      console.log(optionsHeight)
       if (screenHeight < (currentY + 24)) {
         setTopPosition(screenHeight - (currentY - 24))
       } else {
@@ -51,6 +53,11 @@ const DropdownButton = ({ dropdownItemData, optionsHeight, cardRef, selected }: 
       window.removeEventListener('resize', repositionOptions);
     };
   }, [repositionOptions]);
+
+  const setOpen = (val: boolean) => {
+    setShowTooltip(!val);
+    if (val) { repositionOptions() }
+  }
   return (
     <Tooltip
       orientation="bottom"
@@ -58,25 +65,64 @@ const DropdownButton = ({ dropdownItemData, optionsHeight, cardRef, selected }: 
       show={showTooltip}
       tooltipText="More options"
     >
-      <Dropdown
-        {...{ dropdownItemData }}
-        transition={{
-          enter: "transition duration-200",
-          enterFrom: "transform opacity-0 scale-y-50",
-          enterTo: "transform opacity-100 scale-y-100"
+      <Listbox
+        value={value}
+        onChange={(value: any) => {
+          onChange(value)
         }}
-        setOpen={(val: boolean) => {
-          setShowTooltip(!val);
-          if (val) { repositionOptions() }
-        }}
-        optionContainerStyle={{ left: leftPosition, top: topPosition }}
-        optionContainerClassName='absolute text-left py-1 z-40 w-80 origin-top-left divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5'
-        containerClassName=" relative inline-block text-left"
+        as="div"
+        className="relative inline-block text-left"
+        multiple
       >
-        <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
-          <BiDotsVerticalRounded size={24} color="#5f6368" />
-        </button>
-      </Dropdown>
+        <Listbox.Button
+          as={Fragment}
+        >
+          {/* value preview */}
+          {children}
+        </Listbox.Button>
+        <Transition
+          as={Fragment}
+          beforeEnter={() => { setOpen?.(true) }}
+          beforeLeave={() => {
+            setOpen?.(false)
+          }}
+        >
+          <Listbox.Options
+            as='div'
+            style={{ left: leftPosition, top: topPosition }}
+            className="absolute text-left py-1 z-40 w-80 origin-top-left divide-y divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+          >
+            {dropdownItemData.map(({ items }, groupIndex) => (
+              <div className='py-2' key={groupIndex}>
+                {items.map(({ content }, i) =>
+                  <Listbox.Option
+                    as={Fragment}
+                    key={content.value}
+                    value={content.value}
+                  >
+                    {({ selected, active }) => (
+                      <button
+                        className={classNames(
+                          active ? 'bg-blue-50' : '',
+                          'flex w-full items-center px-2 py-3 text-sm h-12'
+                        )}
+                      >
+                        <div className="pl-2 pr-4">
+                          {selected ?
+                            <IoMdCheckmark size={24} color="#5f6368" /> :
+                            <div className='w-6'></div>
+                          }
+                        </div>
+                        {content.label}
+                      </button>
+                    )}
+                  </Listbox.Option>
+                )}
+              </div>
+            ))}
+          </Listbox.Options>
+        </Transition>
+      </Listbox >
     </Tooltip>
   )
 }

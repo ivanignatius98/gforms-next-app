@@ -24,3 +24,7 @@ export const swap = (arr: any[], index1: number, index2: number) => {
   temp[index1] = swap
   return temp
 }
+
+export const classNames = (...classes: string[]) => {
+  return classes.filter(Boolean).join(' ')
+}
