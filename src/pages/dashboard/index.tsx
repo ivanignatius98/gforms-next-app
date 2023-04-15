@@ -237,15 +237,6 @@ const Page: React.FC<Props> = (props) => {
     })
   }
   const addQuestions = () => {
-    // const { cardIndex } = { ...cardClick }
-    // const tempOpt = [...moreOptQuestion]
-    // if (cardIndex != undefined) {
-    //   tempOpt.splice(cardIndex + 1, 0, defaultQuestion.moreOptions as Opt)
-    // } else {
-    //   tempOpt.push(defaultQuestion.moreOptions as Opt)
-    // }
-    // setMoreOptQuestion(tempOpt)
-
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
       let newIdx = 0
@@ -263,15 +254,12 @@ const Page: React.FC<Props> = (props) => {
   const duplicateQuestion = () => {
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
-      const tempOpt = [...moreOptQuestion]
       let newIdx = cardIndex
       if (cardIndex != undefined) {
         prevQuestion.splice(cardIndex + 1, 0, prevQuestion[cardIndex])
-        tempOpt.splice(cardIndex + 1, 0, tempOpt[cardIndex])
         newIdx = cardIndex + 1
       }
       setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
-      setMoreOptQuestion(tempOpt)
       return [...prevQuestion]
     })
   }
@@ -279,10 +267,7 @@ const Page: React.FC<Props> = (props) => {
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
       if (cardIndex) {
-        const tempOpt = [...moreOptQuestion]
         prevQuestion.splice(cardIndex, 1)
-        tempOpt.splice(cardIndex, 1)
-        setMoreOptQuestion(tempOpt)
         setCardClick({ cardIndex: cardIndex == 0 && questions.length > 1 ? cardIndex : cardIndex - 1, divClickedOrigin: true })
       }
       return [...prevQuestion]
@@ -299,12 +284,11 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Import questions",
       icon: <TbFileImport />,
-      onClick: () => console.log(moreOptQuestion)
+      onClick: () => console.log(questions)
     },
     {
       title: "Add title and description",
       icon: <AiOutlineFontSize />,
-      onClick: () => console.log(questions)
     },
     {
       title: "Add image",
@@ -334,15 +318,12 @@ const Page: React.FC<Props> = (props) => {
   interface Opt {
     [key: string]: boolean;
   }
-  const [moreOptQuestion, setMoreOptQuestion] = useState<Opt[]>([]);
 
   const handleDragging = useCallback((event: any) => {
     const move = (index: number, direction: "up" | "down") => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
       if (nextIndex >= 0 && nextIndex < questions.length && index !== state.currentSwapIndex) {
         const temp = swap([...questions], index, nextIndex)
-        const tempOpt = swap([...moreOptQuestion], index, nextIndex)
-        setMoreOptQuestion(tempOpt)
         setQuestions(temp)
         setState((prevState) => ({
           ...prevState,
@@ -372,7 +353,7 @@ const Page: React.FC<Props> = (props) => {
       }
       setDragY(yCoordinate - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
     }
-  }, [state.currentlyDragged, questions, moreOptQuestion, setMoreOptQuestion, state.currentSwapIndex])
+  }, [state.currentlyDragged, questions, state.currentSwapIndex])
 
   useEffect(() => {
     if (state.currentlyDragged != null) {
@@ -416,17 +397,6 @@ const Page: React.FC<Props> = (props) => {
     payload: any
   }
   //#region map more options
-  const toggleQuestionOptions = ({ index, payload }: questionParams) => {
-    setMoreOptQuestion(prevState => {
-      const temp = [...prevState]
-      const updatedQuestion = {
-        ...(temp[index] || {}),
-        [payload]: !(temp[index]?.[payload] ?? false)
-      };
-      temp[index] = updatedQuestion;
-      return temp;
-    })
-  }
   interface contents {
     content: Item
   }
@@ -435,11 +405,10 @@ const Page: React.FC<Props> = (props) => {
     items: contents[]
   }
 
-  const handleTypeChange = (event: Item, index: number) => {
-    const validOptions = additionalOptionsMap[event.value]
+  const handleTypeChange = (event: Item) => {
     if (cardClick.cardIndex != null && cardClick.cardIndex >= 0) {
+      const validOptions = additionalOptionsMap[event.value]
       const tempArr: Item[] = moreOptionsArr.filter((item) => validOptions.includes(item.value));
-      console.log({ validOptions, moreOptionsArr, tempArr })
       const tempGroup: SelectItems[] = []
       let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
       let groupCount = 1
@@ -596,7 +565,7 @@ const Page: React.FC<Props> = (props) => {
                         <Select
                           value={row.type}
                           onChange={(e) => {
-                            handleTypeChange(e, i)
+                            handleTypeChange(e)
                           }}
                           options={choicesData}
                         />
