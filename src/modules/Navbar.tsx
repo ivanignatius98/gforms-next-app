@@ -136,7 +136,7 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-2 sm:px-4 pt-2.5 rounded dark:bg-gray-900 sticky top-0 z-10">
+    <nav className="bg-white border-b border-gray-200 px-2 sm:px-4 pt-2.5 rounded sticky top-0 z-10">
       <div className="flex flex-wrap justify-between items-center">
         <div className={"p-0 m-0 static"}>
           <div className="flex h-12 items-center">

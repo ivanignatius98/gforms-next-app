@@ -31,6 +31,7 @@ const Input: React.FC<Props> = (props) => {
         className={props.containerClass + ` bg-white`}
       >
         <input
+          name={props.name}
           ref={props.inputRef}
           autoFocus={props.autoFocus}
           spellCheck={false}

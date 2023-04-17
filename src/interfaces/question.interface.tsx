@@ -31,6 +31,6 @@ export interface Question {
   image: string
   previewImage: string
   imageAlignment: string
-  moreOptions: object
+  moreOptionValues: string[]
   [key: string]: any
 }

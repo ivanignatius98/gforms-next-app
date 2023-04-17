@@ -4,7 +4,6 @@ import { Listbox, Transition } from '@headlessui/react';
 import { getLayoutY } from '@helpers'
 import { Content, Item } from '@interfaces/dropdown.interface';
 
-
 interface SelectItem {
   header?: string
   items: Item[]
@@ -13,7 +12,9 @@ type Props = {
   options?: Item[]
   onChange?: (val: Item) => void
   value?: Item
-  cardRef?: any
+  groupDividerHeight?: number
+  eachOptionHeight?: number
+  containerMargins?: number
 };
 
 interface ItemMap {
@@ -23,14 +24,16 @@ interface ItemMap {
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ')
 }
-function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
+function Select({ options = [], value, onChange = () => { }, groupDividerHeight = 16, eachOptionHeight = 48, containerMargins = 2 }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [mappedOptions, setMappedOptions] = useState<SelectItem[]>([])
   const [valuesMap, setValuesMap] = useState<ItemMap>({})
+  const [optionsHeight, setOptionsHeight] = useState(0)
+
   useEffect(() => {
     const map: ItemMap = {}
     const arrGroup: SelectItem[] = [];
-
+    let [optHeight, groupCount, prevGroup] = [containerMargins, 1, 0]
     options.forEach(({ group = 0, ...itemWithoutGroup }, index) => {
       const itemObject = itemWithoutGroup
       if (!arrGroup[group]) {
@@ -39,30 +42,46 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
         arrGroup[group].items.push(itemObject);
       }
       map[itemWithoutGroup.value] = [group, index];
+      if (prevGroup != group) {
+        groupCount++
+        prevGroup = group
+      }
+      optHeight += eachOptionHeight
     })
+    // sum of group padding and divider (1px)
+    optHeight += (groupCount * groupDividerHeight) + (groupCount - 1)
+    setOptionsHeight(optHeight)
     setValuesMap(map)
     setMappedOptions(arrGroup)
   }, [])
 
-  // useEffect(() => onChange(selected), [selected])
+  useEffect(() => {
+    if (value && valuesMap[value?.value] != undefined) {
+      repositionCenter(value)
+    }
+  }, [valuesMap])
+
   const [yScrollOffset, setYScrollOffset] = useState(0)
 
-  const repositionCenter = () => {
-    const currY = getLayoutY(cardRef)
+  interface CenterProp {
+    value: string
+  }
+  const repositionCenter = ({ value }: CenterProp) => {
+    const currY = getLayoutY(containerRef.current) - 24
     const { innerHeight } = window
-    const [groupIndex, index] = valuesMap[value?.value || ""]
-    const [groupDividerHeight, eachOptionHeight] = [16, 48]
-    const optionHeight = 614
+
+    if (!valuesMap[value]) return
+
+    const [groupIndex, index] = valuesMap[value]
     const topPosition = 24
-    const bottomPosition = innerHeight - optionHeight - 24
+    const bottomPosition = innerHeight - optionsHeight - 24
     let sidePosition = currY - (groupIndex * groupDividerHeight) - (index * eachOptionHeight)
     let finalPos = sidePosition
-    if (window.innerHeight < optionHeight || sidePosition <= topPosition) {
+    if (window.innerHeight < optionsHeight || sidePosition <= topPosition) {
       finalPos = topPosition
     } else if (bottomPosition < sidePosition) {
       finalPos = bottomPosition
     }
-
     setYScrollOffset((sidePosition - 24) * -1)
     setSelectY(finalPos + 8)
   }
@@ -84,7 +103,8 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
     leaveFrom: "transform opacity-100 scale-100",
     leaveTo: "transform opacity-0 scale-90"
   }
-  const ref = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const optionsRef = useRef<HTMLDivElement>(null)
   const [lastActive, setLastActive] = useState([-1, -1])
 
   interface OptionParams {
@@ -110,12 +130,12 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
     )
   }
   return (
-    <Listbox value={value} onChange={onChange}
+    <Listbox value={value} onChange={(value: Item) => { onChange(value); setTimeout(() => repositionCenter(value), 200) }}
       as="div"
+      ref={containerRef}
       className="w-full relative inline-block"
     >
       <Listbox.Button
-        onClick={() => repositionCenter()}
         className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full transition-colors ease-in-out duration-200  active:bg-slate-200'
       >
         {/* value preview */}
@@ -129,14 +149,14 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
       <Transition
         as={Fragment}
         afterEnter={() => {
-          (ref.current as unknown as { scrollTop: number }).scrollTop = yScrollOffset ?? 0;
+          (optionsRef.current as unknown as { scrollTop: number }).scrollTop = yScrollOffset ?? 0;
         }}
         beforeLeave={() => { setLastActive([-1, -1]) }}
         {...defaultTransitionProps}
       >
         <Listbox.Options
           as='div'
-          ref={ref}
+          ref={optionsRef}
           style={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
           className="fixed z-30 w-60 mt-1 origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
         >
@@ -150,7 +170,7 @@ function Select({ options = [], value, onChange = () => { }, cardRef }: Props) {
                 >
                   {({ active }) => (
                     <button
-                      onMouseEnter={() => { console.log("FIRED ENTER", i, groupIndex); setLastActive([i, groupIndex]) }}
+                      onMouseEnter={() => { setLastActive([i, groupIndex]) }}
                       className={"text-left " + getOptionClass({ active, content, index: i, groupIndex })}
                     >
                       <div className="pl-2 pr-4">

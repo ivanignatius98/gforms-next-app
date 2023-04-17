@@ -14,3 +14,11 @@ export interface DropdownItemsList {
   header?: string
   items: ListItem[]
 }
+
+export interface contents {
+  content: Item
+}
+export interface SelectItems {
+  header?: string
+  items: contents[]
+}

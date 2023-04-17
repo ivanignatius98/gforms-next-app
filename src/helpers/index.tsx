@@ -12,8 +12,9 @@ export const debounce = (func: Function, wait: number) => {
   }
 }
 
-export const getLayoutY = (curr: HTMLDivElement) => {
-  return curr.getBoundingClientRect().y ?? 0
+export const getLayoutY = (curr: HTMLDivElement | null) => {
+  if (!curr) return 0
+  return curr.getBoundingClientRect().y
 }
 
 export const swap = (arr: any[], index1: number, index2: number) => {
@@ -22,4 +23,8 @@ export const swap = (arr: any[], index1: number, index2: number) => {
   temp[index2] = temp[index1]
   temp[index1] = swap
   return temp
+}
+
+export const classNames = (...classes: string[]) => {
+  return classes.filter(Boolean).join(' ')
 }

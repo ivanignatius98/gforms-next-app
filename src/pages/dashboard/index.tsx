@@ -15,13 +15,14 @@ import { TbFileImport } from 'react-icons/tb'
 import { AiOutlineFontSize } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
-import { IoMdCheckmark } from 'react-icons/io';
 import { FiTrash2 } from 'react-icons/fi'
 
 import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
 import { debounce, getLayoutY, swap } from '@helpers'
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
 import { Question } from '@interfaces/question.interface';
+import { BiDotsVerticalRounded } from 'react-icons/bi';
+
 // #endregion
 
 //#region card content
@@ -90,27 +91,24 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
 interface State {
   title: string,
   description: string,
-  reposition: boolean,
   minHeight: string,
-  divClick: boolean,
-  selectedIndex: number | null,
-  currentlyDragged: number | null,
-  currentSwapIndex: number | null,
-  navbarHeight: number
 }
+interface ClickState {
+  cardIndex: number | null
+  divClickedOrigin: boolean
+}
+const hideToolbarBreakpoint = 930 //px
 const Page: React.FC<Props> = (props) => {
   const [state, setState] = useState<State>({
     title: "",
     description: "",
-    selectedIndex: 0,
-    reposition: true,
     minHeight: "100vh",
-    divClick: true,
-    currentSwapIndex: null,
-    currentlyDragged: null,
-    navbarHeight: 105
   })
   const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+  const [cardClick, setCardClick] = useState<ClickState>({
+    cardIndex: 0,
+    divClickedOrigin: true
+  });
 
   const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
@@ -120,7 +118,7 @@ const Page: React.FC<Props> = (props) => {
     })
   }
   const handleCardClick = (divClick: boolean, idx: number) => {
-    setState({ ...state, selectedIndex: idx, divClick })
+    setCardClick({ cardIndex: idx, divClickedOrigin: divClick })
   }
 
   const layoutRef = useRef<HTMLDivElement>(null)
@@ -149,25 +147,23 @@ const Page: React.FC<Props> = (props) => {
     setSidebarY(finalPos)
   }, [])
 
-  const resizeScrollbar = useCallback(() => {
-    setHasScrollbar((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - state.navbarHeight));
-  }, [state.navbarHeight])
+  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   // selected index change
   useEffect(() => {
-    if (state.selectedIndex != null) {
-      if (state.divClick) {
-        if (state.selectedIndex == -1) {
+    const { cardIndex, divClickedOrigin } = cardClick
+    if (cardIndex != null) {
+      if (divClickedOrigin) {
+        if (cardIndex == -1) {
           headerInputRef?.current?.focus()
         } else {
-          inputRefs?.current[state.selectedIndex].focus()
+          inputRefs?.current[cardIndex].focus()
         }
       }
-      if (state.reposition) {
+      if ((viewportWidth ?? 0) > hideToolbarBreakpoint) {
         const getY = () => {
-          if (state.selectedIndex == null)
+          if (cardIndex == null)
             return 0
-
-          const curr = state.selectedIndex == -1 ? headerRef.current : cardRefs?.current[state.selectedIndex]
+          const curr = cardIndex == -1 ? headerRef.current : cardRefs?.current[cardIndex]
           return getLayoutY(curr as HTMLDivElement)
         }
         repositionToolbar(getY())
@@ -183,8 +179,7 @@ const Page: React.FC<Props> = (props) => {
         return () => window.removeEventListener('scroll', onScroll);
       }
     }
-    resizeScrollbar()
-  }, [state.selectedIndex, state.reposition, state.divClick, resizeScrollbar, repositionToolbar])
+  }, [cardClick, repositionToolbar])
 
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, questions.length)
@@ -192,37 +187,32 @@ const Page: React.FC<Props> = (props) => {
   }, [questions])
 
   //#region resize behavior
-  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
-
   useEffect(() => {
-    resizeScrollbar()
     const handleResize = () => {
       const newViewportWidth = window.innerWidth;
       setViewportWidth(newViewportWidth);
-      resizeScrollbar()
     };
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [resizeScrollbar]);
+  }, []);
 
   useEffect(() => {
     const containerMarginTop = 12
-    let navbarHeight = 105
+    let newNavHeight = 105
     let bottomToolbarHeight = 48
     if (viewportWidth) {
       if (viewportWidth < 640) {
-        navbarHeight = 151
-      } else if (viewportWidth > 930) {
+        newNavHeight = 151
+      } else if (viewportWidth > hideToolbarBreakpoint) {
         bottomToolbarHeight = 0
       }
     }
 
+    setHasScrollbar((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - newNavHeight))
     setState(prevState => ({
       ...prevState,
-      reposition: (viewportWidth ?? 0) > 930,
-      navbarHeight,
-      minHeight: `calc(100vh - ${navbarHeight + bottomToolbarHeight + containerMarginTop}px)`
+      minHeight: `calc(100vh - ${newNavHeight + bottomToolbarHeight + containerMarginTop}px)`
     }));
   }, [viewportWidth]);
 
@@ -230,61 +220,50 @@ const Page: React.FC<Props> = (props) => {
   //#endregion
 
   //#region question
-  interface questionParams {
-    index: number,
-    payload: any
-  }
-  const setQuestionValue = ({ index, payload }: questionParams) => {
+
+  const setQuestionValue = (payload: any) => {
     setQuestions(prevState => {
       const temp = [...prevState]
-      temp[index] = { ...temp[index], ...payload }
+      temp[cardClick.cardIndex ?? 0] = { ...temp[cardClick.cardIndex ?? 0], ...payload }
       return temp;
     })
   }
   const addQuestions = () => {
-    const temp = [...questions]
-    const tempOpt = [...moreOptQuestion]
-
-    let selectedIndex = 0
-    if (state.selectedIndex != undefined) {
-      tempOpt.splice(state.selectedIndex + 1, 0, defaultQuestion.moreOptions as Opt)
-      temp.splice(state.selectedIndex + 1, 0, defaultQuestion)
-      selectedIndex = state.selectedIndex + 1
-    } else {
-      tempOpt.push({})
-      temp.push(defaultQuestion)
-      selectedIndex = temp.length - 1
-    }
-    setState({ ...state, selectedIndex, divClick: true })
-    setQuestions(temp)
-    setMoreOptQuestion(tempOpt)
+    setQuestions((prevQuestion) => {
+      const { cardIndex } = { ...cardClick }
+      let newIdx = 0
+      if (cardIndex != undefined) {
+        prevQuestion.splice(cardIndex + 1, 0, defaultQuestion)
+        newIdx = cardIndex + 1
+      } else {
+        prevQuestion.push(defaultQuestion)
+        newIdx = prevQuestion.length - 1
+      }
+      setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
+      return [...prevQuestion]
+    })
   }
-  const duplicateQuestion = (index: number) => {
-    const temp = [...questions]
-    const tempOpt = [...moreOptQuestion]
-    let selectedIndex = index
-    if (index != undefined) {
-      temp.splice(index + 1, 0, temp[index])
-      tempOpt.splice(index + 1, 0, tempOpt[index])
-      selectedIndex = index + 1
-    }
-    setTimeout(() => {
-      setState({ ...state, selectedIndex, divClick: true })
-      setQuestions(temp)
-      setMoreOptQuestion(tempOpt)
-    }, 50)
+  const duplicateQuestion = () => {
+    setQuestions((prevQuestion) => {
+      const { cardIndex } = { ...cardClick }
+      let newIdx = cardIndex
+      if (cardIndex != undefined) {
+        prevQuestion.splice(cardIndex + 1, 0, prevQuestion[cardIndex])
+        newIdx = cardIndex + 1
+      }
+      setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
+      return [...prevQuestion]
+    })
   }
-  const removeQuestion = (index: number) => {
-    const temp = [...questions]
-    const tempOpt = [...moreOptQuestion]
-    temp.splice(index, 1)
-    tempOpt.splice(index, 1)
-
-    setTimeout(() => {
-      setQuestions(temp)
-      setMoreOptQuestion(tempOpt)
-      setState({ ...state, selectedIndex: index == 0 && questions.length > 1 ? index : index - 1 })
-    }, 50)
+  const removeQuestion = () => {
+    setQuestions((prevQuestion) => {
+      const { cardIndex } = { ...cardClick }
+      if (cardIndex) {
+        prevQuestion.splice(cardIndex, 1)
+        setCardClick({ cardIndex: cardIndex == 0 && questions.length > 1 ? cardIndex : cardIndex - 1, divClickedOrigin: true })
+      }
+      return [...prevQuestion]
+    })
   }
   //#endregion
 
@@ -297,12 +276,11 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Import questions",
       icon: <TbFileImport />,
-      onClick: () => console.log(moreOptQuestion)
+      onClick: () => console.log(questions)
     },
     {
       title: "Add title and description",
       icon: <AiOutlineFontSize />,
-      onClick: () => console.log(questions)
     },
     {
       title: "Add image",
@@ -319,61 +297,58 @@ const Page: React.FC<Props> = (props) => {
   ]
 
   //#region dragging behavior
+  interface dragProp {
+    current: number | null
+    prev: number | null
+  }
+  const [drag, setDrag] = useState<dragProp>({
+    current: null,
+    prev: null
+  })
   const handleDragEnd = useCallback(() => {
-    setState((prevState) => {
+    setDrag((prevDrag) => {
+      setCardClick({ cardIndex: prevDrag.current, divClickedOrigin: false })
       return {
-        ...prevState,
-        selectedIndex: prevState.currentlyDragged,
-        currentlyDragged: null,
-        currentSwapIndex: null
+        current: null,
+        prev: null
       }
     })
   }, [])
 
-  interface Opt {
-    [key: string]: boolean;
-  }
-  const [moreOptQuestion, setMoreOptQuestion] = useState<Opt[]>([]);
   const handleDragging = useCallback((event: any) => {
     const move = (index: number, direction: "up" | "down") => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
-      if (nextIndex >= 0 && nextIndex < questions.length && index !== state.currentSwapIndex) {
+      if (nextIndex >= 0 && nextIndex < questions.length && index !== drag.prev) {
         const temp = swap([...questions], index, nextIndex)
-        const tempOpt = swap([...moreOptQuestion], index, nextIndex)
-        setMoreOptQuestion(tempOpt)
         setQuestions(temp)
-        setState((prevState) => ({
-          ...prevState,
-          currentlyDragged: nextIndex,
-          currentSwapIndex: index,
-        }))
+        setDrag({ current: nextIndex, prev: index })
       }
     }
-    if (state.currentlyDragged != null && state.currentlyDragged != state.currentSwapIndex) {
-      const isLastCard = state.currentlyDragged >= questions.length - 1
-      const isFirstCard = state.currentlyDragged === 0
+    if (drag.current != null && drag.current != drag.prev) {
+      const isLastCard = drag.current >= questions.length - 1
+      const isFirstCard = drag.current === 0
       const yCoordinate = event.clientY
       if (yCoordinate <= 0) {
         return
       }
       if (!isLastCard) {
-        const nextY = getLayoutY(cardRefs.current[state.currentlyDragged + 1]) + 12
+        const nextY = getLayoutY(cardRefs.current[drag.current + 1]) + 12
         if (yCoordinate > nextY) {
-          move(state.currentlyDragged, "down")
+          move(drag.current, "down")
         }
       }
       if (!isFirstCard) {
-        const prevY = getLayoutY(cardRefs.current[state.currentlyDragged - 1]) + 12
+        const prevY = getLayoutY(cardRefs.current[drag.current - 1]) + 12
         if (yCoordinate < prevY) {
-          move(state.currentlyDragged, "up")
+          move(drag.current, "up")
         }
       }
       setDragY(yCoordinate - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
     }
-  }, [state.currentlyDragged, questions, moreOptQuestion, setMoreOptQuestion, state.currentSwapIndex])
+  }, [drag, questions])
 
   useEffect(() => {
-    if (state.currentlyDragged != null) {
+    if (drag.current != null) {
       window.addEventListener('mouseup', handleDragEnd)
       window.addEventListener('mousemove', handleDragging, { passive: true })
     }
@@ -381,10 +356,10 @@ const Page: React.FC<Props> = (props) => {
       window.removeEventListener('mouseup', handleDragEnd)
       window.removeEventListener('mousemove', handleDragging)
     }
-  }, [state.currentlyDragged, handleDragEnd, handleDragging])
+  }, [drag, handleDragEnd, handleDragging])
 
   function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    if (state.currentlyDragged == null) {
+    if (drag.current == null) {
       return;
     }
     const y = event.clientY;
@@ -409,54 +384,25 @@ const Page: React.FC<Props> = (props) => {
     }
   }
   //#endregion
-
   //#region map more options
-  const toggleQuestionOptions = ({ index, payload }: questionParams) => {
-    setMoreOptQuestion(prevState => {
-      const temp = [...prevState]
-      const updatedQuestion = {
-        ...(temp[index] || {}),
-        [payload]: !(temp[index]?.[payload] ?? false)
-      };
-      temp[index] = updatedQuestion;
-      return temp;
-    })
+  interface contents {
+    content: Item
+  }
+  interface SelectItems {
+    header?: string
+    items: contents[]
   }
 
-  const handleTypeChange = (event: Item, index: number) => {
-    const validOptions = additionalOptionsMap[event.value]
-
-    setQuestionValue({ index, payload: { type: event } })
-    setMoreOptQuestion(prevState => {
-      const temp = [...prevState]
-      temp[index] = validOptions.reduce((acc: any, curr) => {
-        acc[curr] = false;
-        return acc;
-      }, {})
-      return temp;
-    })
-  }
-  useEffect(() => {
-    if (state.selectedIndex != null && state.selectedIndex >= 0) {
-      const curr = moreOptQuestion[state.selectedIndex] ?? {}
-      const tempArr: Item[] = []
-      moreOptionsArr.forEach((item) => {
-        if (curr[item.value] != undefined) {
-          tempArr.push({
-            ...item,
-            icon: curr[item.value] ?
-              <IoMdCheckmark size={24} color="#5f6368" /> :
-              <div className='w-6'></div>
-          })
-        }
-      })
-      const tempGroup: DropdownItemsList[] = []
+  const handleTypeChange = (event: Item) => {
+    if (cardClick.cardIndex != null && cardClick.cardIndex >= 0) {
+      const validOptions = additionalOptionsMap[event.value]
+      const tempArr: Item[] = moreOptionsArr.filter((item) => validOptions.includes(item.value));
+      const tempGroup: SelectItems[] = []
       let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
       let groupCount = 1
       let prevGroup = 0
       tempArr.forEach(({ group = 0, ...item }) => {
         const itemObject = {
-          onClick: () => toggleQuestionOptions({ index: state.selectedIndex ?? 0, payload: item.value }),
           content: item
         }
         if (!tempGroup[group]) {
@@ -469,16 +415,22 @@ const Page: React.FC<Props> = (props) => {
         }
         if (prevGroup != group) {
           groupCount++
+          prevGroup = group
         }
         optionsHeight += 44
       })
       optionsHeight += (groupCount * 16)
+
       setQuestionValue({
-        index: state.selectedIndex,
-        payload: { moreOptions: curr, moreOptionsData: { items: tempGroup, optionsHeight } }
+        moreOptionValues: [],
+        type: event,
+        moreOptionsData: {
+          items: tempGroup,
+          optionsHeight
+        }
       })
     }
-  }, [moreOptQuestion, state.selectedIndex])
+  }
   // #endregion
 
   //#region content
@@ -497,10 +449,10 @@ const Page: React.FC<Props> = (props) => {
             }}
           >
             <div className='sm:w-[770px] pb-16'
-              style={{ minHeight: state.minHeight, cursor: state.currentlyDragged != null ? "move" : "auto" }}
+              style={{ minHeight: state.minHeight, cursor: drag.current != null ? "move" : "auto" }}
               onMouseMove={handleMouseMove}
             >
-              {state.currentlyDragged != null && (
+              {drag.current != null && (
                 <div className='relative'>
                   <div
                     style={{ top: dragY }}
@@ -510,7 +462,7 @@ const Page: React.FC<Props> = (props) => {
                       <div className='pt-6 pb-2 px-6 flex flex-wrap items-start'>
                         <div className="flex-grow max-w-full ml-2 mr-1">
                           <Input
-                            value={questions[state.currentlyDragged].title}
+                            value={questions[drag.current].title}
                             containerClass=' bg-gray-100'
                             className=" text-base p-3 bg-gray-100 cursor-move"
                           />
@@ -521,7 +473,7 @@ const Page: React.FC<Props> = (props) => {
                           />
                         </div>
                         <div className="w-60">
-                          <Select value={questions[state.currentlyDragged].type} />
+                          <Select value={questions[drag.current].type} />
                         </div>
                       </div>
                     </CardContainer>
@@ -542,7 +494,7 @@ const Page: React.FC<Props> = (props) => {
                 onClick={(event) => {
                   handleCardClick(event.target instanceof HTMLDivElement, -1)
                 }}
-                selected={-1 == state.selectedIndex}
+                selected={-1 == cardClick.cardIndex}
               >
                 <div className='py-4 px-6'>
                   <Input
@@ -566,15 +518,18 @@ const Page: React.FC<Props> = (props) => {
               {questions.map((row: Question, i: number) =>
                 <CardContainer
                   cardRef={(el: any) => cardRefs.current[i] = el}
-                  selected={i == state.selectedIndex}
+                  selected={i == cardClick.cardIndex}
                   onClick={(event) => {
-                    handleCardClick(event.target instanceof HTMLDivElement, i)
+                    if (i != cardClick.cardIndex) {
+                      handleCardClick(event.target instanceof HTMLDivElement, i)
+                    }
                   }}
                   key={i}
-                  currentlyDragged={state.currentlyDragged == i}
+                  currentlyDragged={drag.current == i}
                   handleDragStart={(event) => {
                     event.preventDefault()
-                    setState({ ...state, currentlyDragged: i, selectedIndex: null })
+                    setCardClick({ cardIndex: null, divClickedOrigin: false })
+                    setDrag({ current: i, prev: null })
                   }}
                 >
                   <div className='pt-6 pb-2 px-6 '>
@@ -588,7 +543,7 @@ const Page: React.FC<Props> = (props) => {
                           name="question"
                           value={row.title}
                           onChange={(e) => {
-                            setQuestionValue({ index: i, payload: { title: e.target.value } })
+                            setQuestionValue({ title: e.target.value })
                           }}
                           placeholder={`Question ${i + 1}`}
                         />
@@ -602,31 +557,30 @@ const Page: React.FC<Props> = (props) => {
                         <Select
                           value={row.type}
                           onChange={(e) => {
-                            handleTypeChange(e, i)
+                            handleTypeChange(e)
                           }}
-                          cardRef={cardRefs.current[i]}
                           options={choicesData}
                         />
                       </div>
                     </div>
                     {/* Content */}
-                    {i == state.selectedIndex &&
+                    {i == cardClick.cardIndex &&
                       <AnswerOptions
                         questionProps={row}
                         setQuestionValue={setQuestionValue}
                       />
                     }
                     {/* Footer */}
-                    <div style={{ display: state.selectedIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
+                    <div style={{ display: cardClick.cardIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
                       <MenuIcon
                         title="Duplicate"
-                        onClick={() => { duplicateQuestion(i) }}
+                        onClick={() => { duplicateQuestion() }}
                         additionalClass='mx-[1px]'
                         icon={<MdContentCopy />}
                       />
                       <MenuIcon
                         title="Delete"
-                        onClick={() => removeQuestion(i)}
+                        onClick={() => removeQuestion()}
                         additionalClass='mx-[1px]'
                         icon={<FiTrash2 />}
                       />
@@ -634,14 +588,20 @@ const Page: React.FC<Props> = (props) => {
                       <span className='text-sm ml-2 mr-3'>Required</span>
                       <Toggle
                         value={row.required}
-                        handleChange={(checked: boolean) => setQuestionValue({ index: i, payload: { required: checked } })}
+                        handleChange={(checked: boolean) => setQuestionValue({ required: checked })}
                       />
                       <DropdownButton
+                        value={row.moreOptionValues}
+                        onChange={(newVal) => setQuestionValue({ moreOptionValues: newVal })}
                         optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
                         dropdownItemData={row.moreOptionsData?.items ?? []}
                         cardRef={cardRefs?.current[i]}
-                        selected={i == state.selectedIndex}
-                      />
+                        selected={i == cardClick.cardIndex}
+                      >
+                        <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
+                          <BiDotsVerticalRounded size={24} color="#5f6368" />
+                        </button>
+                      </DropdownButton>
                     </div>
                   </div>
                 </CardContainer>
