@@ -7,6 +7,7 @@ import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
 import DropdownButton from '@modules/DropdownButton'
 import Toggle from '@modules/Toggle'
+import AnswerOptions from '@components/dashboard/answerOptions'
 
 import { MdOutlineSmartDisplay, MdOutlineImage, MdContentCopy, } from 'react-icons/md'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
@@ -47,16 +48,6 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
   const handleMouseLeave = () => {
     setIsHovered(false);
   };
-  function DoubleEllipsis() {
-    return (
-      <IconContext.Provider value={{ style: { display: 'flex' } }}>
-        <div>
-          <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
-          <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
-        </div>
-      </IconContext.Provider>
-    );
-  }
   return (
     <div
       onMouseEnter={handleMouseEnter}
@@ -78,7 +69,12 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
             display: isHovered || selected ? "flex" : "none"
           }}
         >
-          {DoubleEllipsis()}
+          <IconContext.Provider value={{ style: { display: 'flex' } }}>
+            <div>
+              <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
+              <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
+            </div>
+          </IconContext.Provider>
         </button>
       }
       {selected &&
@@ -436,6 +432,10 @@ const Page: React.FC<Props> = (props) => {
     }
   }
   // #endregion
+
+  //#region content
+
+  //#endregion
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -515,7 +515,7 @@ const Page: React.FC<Props> = (props) => {
                   />
                 </div>
               </CardContainer>
-              {questions.map((row: any, i: number) =>
+              {questions.map((row: Question, i: number) =>
                 <CardContainer
                   cardRef={(el: any) => cardRefs.current[i] = el}
                   selected={i == cardClick.cardIndex}
@@ -563,19 +563,24 @@ const Page: React.FC<Props> = (props) => {
                         />
                       </div>
                     </div>
-                    <div
-                      style={{ display: cardClick.cardIndex == i ? "flex" : "none" }}
-                      className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'
-                    >
+                    {/* Content */}
+                    {i == cardClick.cardIndex &&
+                      <AnswerOptions
+                        questionProps={row}
+                        setQuestionValue={setQuestionValue}
+                      />
+                    }
+                    {/* Footer */}
+                    <div style={{ display: cardClick.cardIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
                       <MenuIcon
                         title="Duplicate"
-                        onClick={() => { duplicateQuestion() }}
+                        onClick={duplicateQuestion}
                         additionalClass='mx-[1px]'
                         icon={<MdContentCopy />}
                       />
                       <MenuIcon
                         title="Delete"
-                        onClick={() => removeQuestion()}
+                        onClick={removeQuestion}
                         additionalClass='mx-[1px]'
                         icon={<FiTrash2 />}
                       />
@@ -607,7 +612,7 @@ const Page: React.FC<Props> = (props) => {
         </>
       )
       }
-    </Layout >
+    </Layout>
   )
 }
 

@@ -28,7 +28,6 @@ export default function reducer(state = questionInitialState, action) {
     }
     case questionActionTypes.SET_VALUE: {
       state.questions[action.index] = { ...state.questions[action.index], ...action.payload }
-      console.log(action.index, action.payload)
       return Object.assign({}, state, {
         questions: [...state.questions],
       })

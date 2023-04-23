@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Switch } from '@headlessui/react'
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
+import { classNames } from '@helpers';
 
 type Props = {
   handleChange: (val: boolean) => void
@@ -49,12 +46,10 @@ export default function Toggle({ handleChange, value }: Props) {
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => { setIsHovered(false); setClicking(false) }}
       checked={value}
-      // onChange={setvalue}
       onChange={(checked: boolean) => { (handleChange ? handleChange(checked) : () => { }) }}
       className="flex-shrink-0 group relative rounded-full inline-flex outline-none items-center justify-center h-5 w-10 cursor-pointer"
     >
-      {JSON.stringify(active)}
-      < span className="sr-only" > Use setting</span >
+      <span className="sr-only"> Use setting</span >
       <span aria-hidden="true" className="pointer-events-none absolute bg-white w-full h-full rounded-md" />
       <span
         aria-hidden="true"

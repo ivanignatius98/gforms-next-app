@@ -7,9 +7,18 @@ type Props = {
   showPointer?: boolean,
   show?: boolean,
   additionalContainerClass?: string
+  additionalClass?: string
 };
 
-const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom", showPointer = true, additionalContainerClass = "", show = true }) => {
+const Tooltip: React.FC<Props> = ({
+  children,
+  tooltipText,
+  orientation = "bottom",
+  showPointer = true,
+  additionalClass = "",
+  additionalContainerClass = "",
+  show = true
+}) => {
   const tipRef = useRef<HTMLInputElement>(null);
 
   const handleShow = () => {
@@ -39,15 +48,16 @@ const Tooltip: React.FC<Props> = ({ children, tooltipText, orientation = "bottom
 
   return (
     <div
-      className={`relative  flex items-center ${additionalContainerClass}`}
+      className={`relative flex items-center ${additionalContainerClass}`}
       onMouseEnter={handleShow}
       onMouseLeave={handleHide}
       onClick={handleHide}
+      style={{ zIndex: 1 }}
     >
       {children}
       {show ?
         <div
-          className={classContainer}
+          className={classContainer + ` ${additionalClass}`}
           style={{ opacity: 0 }}
           ref={tipRef}
         >

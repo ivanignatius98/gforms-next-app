@@ -1,7 +1,7 @@
 import { Menu, Transition } from '@headlessui/react'
 import React, { Fragment, useEffect, useCallback, useRef, useState, isValidElement } from 'react'
 import { DropdownItemsList, Content, ListItem } from '@interfaces/dropdown.interface';
-
+import { classNames } from '@helpers';
 type Props = {
   children?: JSX.Element,
   dropdownItemData: DropdownItemsList[],
@@ -18,9 +18,6 @@ type Props = {
   scrollOffset?: number,
   transition?: any
 };
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
 export default function Dropdown({ children, transition, scrollOffset, setOpen, selected, optionContainerStyle = {}, dropdownItemData, containerClassName, optionContainerClassName }: Props) {
 
   interface OptionParams {

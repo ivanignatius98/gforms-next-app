@@ -2,15 +2,14 @@ import { useState } from "react"
 import { setTab } from '@store/tab/action'
 import { bindActionCreators } from 'redux'
 import { connect } from 'react-redux'
+import { classNames } from '@helpers';
 
 type Props = {
   tabItemData: string[],
   tabIndex: number,
   setTab: Function
 };
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
+
 function Tabs({ tabItemData, ...props }: Props) {
   return (
     <div className="relative pb-5  sm:pb-0 z-0">
