@@ -19,6 +19,7 @@ export interface OptionChoices extends Value {
   error?: boolean
   image?: string | null
   previewImage?: string | null
+  persistError?: boolean
 }
 
 export interface Question {

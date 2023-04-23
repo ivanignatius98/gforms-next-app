@@ -3,6 +3,7 @@ import { VscTriangleDown } from 'react-icons/vsc';
 import { Listbox, Transition } from '@headlessui/react';
 import { getLayoutY } from '@helpers'
 import { Content, Item } from '@interfaces/dropdown.interface';
+import { classNames } from '@helpers';
 
 interface SelectItem {
   header?: string
@@ -21,9 +22,6 @@ interface ItemMap {
   [key: string]: [number, number];
 }
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
 function Select({ options = [], value, onChange = () => { }, groupDividerHeight = 16, eachOptionHeight = 48, containerMargins = 2 }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [mappedOptions, setMappedOptions] = useState<SelectItem[]>([])

@@ -48,7 +48,7 @@ const Tooltip: React.FC<Props> = ({
 
   return (
     <div
-      className={`relative flex items-center ${additionalContainerClass}`}
+      className={`relative z-50 flex items-center ${additionalContainerClass}`}
       onMouseEnter={handleShow}
       onMouseLeave={handleHide}
       onClick={handleHide}

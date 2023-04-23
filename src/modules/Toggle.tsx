@@ -1,9 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Switch } from '@headlessui/react'
-
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
+import { classNames } from '@helpers';
 
 type Props = {
   handleChange: (val: boolean) => void

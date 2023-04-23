@@ -1,5 +1,6 @@
 import { useState, Fragment, useRef, Ref, useEffect } from 'react';
 import { Transition } from '@headlessui/react'
+import { classNames } from '@helpers';
 
 type Props = {
   children?: JSX.Element,
@@ -25,10 +26,7 @@ type Props = {
 
 }
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}
-const Input: React.FC<Props> = ({ showOnHover = true, underline = true, showFooter = true, value, ...props }) => {
+const Input: React.FC<Props> = ({ showOnHover = false, underline = true, showFooter = true, value, ...props }) => {
   const [isShowing, setIsShowing] = useState(false)
   return (
     <div>

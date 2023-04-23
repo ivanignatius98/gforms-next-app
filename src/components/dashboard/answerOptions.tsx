@@ -10,6 +10,7 @@ import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { OptionChoices } from '@interfaces/question.interface';
 import { IconContext } from 'react-icons';
 import Tooltip from '@modules/Tooltip'
+import { classNames } from '@helpers';
 
 
 // const ChoiceIcon = ({ type, index, numericIcon }) => {
@@ -292,27 +293,28 @@ interface ChoiceProps {
     setAnswerOptions: React.Dispatch<React.SetStateAction<OptionChoices[]>>
 }
 const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions }: ChoiceProps) => {
-
+    const inputRefs = useRef<HTMLInputElement[]>([])
     const [otherOption, setOtherOption] = useState(false)
     const addAnswerOption = () => {
         setAnswerOptions((prevProps) => {
             const newValue = `Option ${prevProps.length + 1}`
-            // const error = newValue != "" && prevProps.filter(row => row.value === newValue).length > 0
             prevProps.push({
                 value: newValue,
-                //  ,
-                image: '', previewImage: ''
+                // error,
+                image: '',
+                previewImage: ''
             })
             return [...prevProps]
         })
     }
-    const setItemValue = (newValue: string, index: number) => {
+    const setItemValue = (newValue: string, index: number, prevError: boolean = false) => {
         setAnswerOptions((prevProps) => {
-            // const error = newValue != "" && prevProps.filter(row => row.value === newValue).length > 0
-
+            const error = newValue != "" && prevProps.filter((row, i) => i != index && row.value === newValue).length > 0
             prevProps[index] = {
-                ...prevProps[index], value: newValue,
-                // error
+                ...prevProps[index],
+                value: newValue,
+                error,
+                persistError: prevError && error
             }
             return [...prevProps]
         })
@@ -337,9 +339,12 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions }: ChoiceProps) =
             newProps.splice(index, 1)
             return [...newProps]
         })
+        setTimeout(() => inputRefs.current[index - 1 > 0 ? index - 1 : 0].focus(), 10);
     }
     const otherType = type != 'dropdown' && type != 'polling'
-
+    useEffect(() => {
+        inputRefs.current = inputRefs.current.slice(0, answerOptions.length)
+    }, [answerOptions])
     const memoizedAnswerOptions = useMemo(() => answerOptions, [answerOptions]);
     return (
         <>
@@ -349,7 +354,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions }: ChoiceProps) =
                     className='group ml-[-1.5rem] mr-[-1.5rem]'
                 >
                     <div className='h-12 flex items-center px-6 relative'>
-                        <div className='hidden group-hover:block absolute left-2 z-10 transform rotate-90 cursor-move'>
+                        <div className='hidden group-hover:block absolute left-2 transform rotate-90 cursor-move'>
                             <IconContext.Provider value={{ style: { display: 'flex' } }}>
                                 <div>
                                     <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
@@ -362,25 +367,32 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions }: ChoiceProps) =
                         </div>
                         <div className="flex-grow w-[270px] max-w-full">
                             <Input
+                                inputRef={(el: any) => inputRefs.current[index] = el}
+                                showOnHover
                                 containerClass='text-sm'
-                                autoFocus={index != 0}
+                                autoFocus={answerOptions.length > 1}
                                 value={item.value}
                                 error={item.error}
                                 alwaysHighlight={true}
                                 onChange={({ target }) => {
                                     setItemValue(target.value, index)
                                 }}
-                                // onFocus={() => { setFocused(index) }}
                                 onBlur={({ target }) => {
-                                    // if (target.value == '' || item.error) {
-                                    //     setItemValue(`Option ${index + 1}`, index)
-                                    // }
-                                    // setFocused(null)
+                                    const defaultValue = `Option ${index + 1}`
+                                    const isError = target.value === '' || item.error
+                                    const hasDefaultError = target.value === defaultValue
+                                    if (item.persistError || hasDefaultError || isError) {
+                                        setItemValue(
+                                            item.persistError ? target.value : hasDefaultError || isError ? defaultValue : target.value,
+                                            index,
+                                            hasDefaultError || isError
+                                        );
+                                    }
                                 }}
                                 placeholder={`Option ${index + 1}`}
                             />
                         </div>
-                        <div className='hidden group-hover:block group-focus-within:block'>
+                        <div className={classNames(item.persistError ? "flex" : 'hidden group-hover:flex group-focus-within:flex')}>
                             {item.error &&
                                 <Tooltip
                                     tooltipText="Duplicate options not supported"
@@ -392,12 +404,13 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions }: ChoiceProps) =
                                     </div>
                                 </Tooltip>
                             }
+                        </div>
+                        <div className='invisible group-hover:visible group-focus-within:visible'>
                             <MenuIcon icon={<MdOutlineImage />} />
                         </div>
-                        {answerOptions.length > 1 ?
-                            <MenuIcon onClick={() => deleteItem(index)} icon={<MdClose />} /> :
-                            <div className='w-12'></div>
-                        }
+                        <div className={classNames(answerOptions.length > 1 ? "" : "invisible")}>
+                            <MenuIcon onClick={() => deleteItem(index)} icon={<MdClose />} />
+                        </div>
                     </div>
                 </div>
             ))}
@@ -647,7 +660,7 @@ interface AnswerProps {
 const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
     const {
         type,
-        answerOptions: ans,
+        answerOptions: initialAnswer,
         gridRowOptions,
         gridColumnOptions,
         linearValueOptions,
@@ -655,7 +668,7 @@ const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
 
     const { value } = type
     const [content, setContent] = useState<JSX.Element | null>(null)
-    const [answerOptions, setAnswerOptions] = useState<OptionChoices[]>([...ans])
+    const [answerOptions, setAnswerOptions] = useState<OptionChoices[]>([...initialAnswer])
     useEffect(() => {
         if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {
             setContent(<TextAnswer type={value} />)
@@ -667,15 +680,15 @@ const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
             />)
         } else if (value == 'checkboxes' || value == 'dropdown') {
             // setContent(<ChoicesAnswer
-                // type={value}
-                // answerOptions={answerOptions}
-                // setAnswerOptions={setAnswerOptions}
+            // type={value}
+            // answerOptions={answerOptions}
+            // setAnswerOptions={setAnswerOptions}
             // />)
             setContent(<></>)
         } else {
             setContent(<></>)
         }
-        // setQuestionValue(answerOptions)
+        setQuestionValue({ answerOptions })
     }, [value, answerOptions])
 
     // else if (value == 'linear_scale') {
