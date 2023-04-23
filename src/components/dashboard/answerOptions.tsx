@@ -56,12 +56,13 @@ const AddOption = ({ addAnswerOption, setOtherOption, label = 'Add Option', addO
 }
 interface ChoiceProps {
     type: string
+    otherOption: boolean
     answerOptions: OptionChoices[]
     setAnswerOptions: React.Dispatch<React.SetStateAction<OptionChoices[]>>
+    setOtherOption: React.Dispatch<React.SetStateAction<boolean>>
 }
-const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions }: ChoiceProps) => {
+const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, setOtherOption }: ChoiceProps) => {
     const inputRefs = useRef<HTMLInputElement[]>([])
-    const [otherOption, setOtherOption] = useState(false)
     const addAnswerOption = () => {
         setAnswerOptions((prevProps) => {
             const newValue = `Option ${prevProps.length + 1}`
@@ -226,11 +227,14 @@ const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
         gridRowOptions,
         gridColumnOptions,
         linearValueOptions,
+        otherOption: initialOtherOption
     } = questionProps
 
     const { value } = type
     const [content, setContent] = useState<JSX.Element | null>(null)
     const [answerOptions, setAnswerOptions] = useState<OptionChoices[]>([...initialAnswer])
+    const [otherOption, setOtherOption] = useState(initialOtherOption)
+
     useEffect(() => {
         if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {
             setContent(<TextAnswer type={value} />)
@@ -239,6 +243,8 @@ const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
                 type={value}
                 answerOptions={answerOptions}
                 setAnswerOptions={setAnswerOptions}
+                otherOption={otherOption}
+                setOtherOption={setOtherOption}
             />)
         } else if (value == 'checkboxes' || value == 'dropdown') {
             // setContent(<ChoicesAnswer
@@ -250,8 +256,8 @@ const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
         } else {
             setContent(<></>)
         }
-        setQuestionValue({ answerOptions })
-    }, [value, answerOptions])
+        setQuestionValue({ answerOptions, otherOption })
+    }, [value, answerOptions, otherOption])
 
     // else if (value == 'linear_scale') {
     //     content = <LinearScaleAnswer
