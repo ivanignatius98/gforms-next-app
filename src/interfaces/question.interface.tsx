@@ -15,10 +15,10 @@ interface OptionLinears {
   maxLabel: string
 }
 
-interface OptionChoices extends Value {
-  error: boolean
-  image: string | null
-  previewImage: string | null
+export interface OptionChoices extends Value {
+  error?: boolean
+  image?: string | null
+  previewImage?: string | null
 }
 
 export interface Question {

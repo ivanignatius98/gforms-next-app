@@ -574,13 +574,13 @@ const Page: React.FC<Props> = (props) => {
                     <div style={{ display: cardClick.cardIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
                       <MenuIcon
                         title="Duplicate"
-                        onClick={() => { duplicateQuestion() }}
+                        onClick={duplicateQuestion}
                         additionalClass='mx-[1px]'
                         icon={<MdContentCopy />}
                       />
                       <MenuIcon
                         title="Delete"
-                        onClick={() => removeQuestion()}
+                        onClick={removeQuestion}
                         additionalClass='mx-[1px]'
                         icon={<FiTrash2 />}
                       />
@@ -612,7 +612,7 @@ const Page: React.FC<Props> = (props) => {
         </>
       )
       }
-    </Layout >
+    </Layout>
   )
 }
 

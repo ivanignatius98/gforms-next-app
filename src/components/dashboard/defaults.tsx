@@ -138,7 +138,7 @@ export const choicesData: Item[] = [
 ]
 export const defaultQuestion: Question = {
   title: '',
-  type: choicesData[0],
+  type: choicesData[2],
   answerOptions: [{ value: 'Option 1', error: false, image: '', previewImage: '' }],
   gridRowOptions: [{ value: 'Row 1' }],
   gridColumnOptions: [{ value: 'Column 1' }],
