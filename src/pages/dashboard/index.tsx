@@ -18,7 +18,7 @@ import { IconContext } from 'react-icons';
 import { FiTrash2 } from 'react-icons/fi'
 
 import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
-import { debounce, getLayoutY, swap } from '@helpers'
+import { classNames, debounce, getLayoutY, swap } from '@helpers'
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
 import { Question } from '@interfaces/question.interface';
 import { BiDotsVerticalRounded } from 'react-icons/bi';
@@ -515,96 +515,104 @@ const Page: React.FC<Props> = (props) => {
                   />
                 </div>
               </CardContainer>
-              {questions.map((row: Question, i: number) =>
-                <CardContainer
-                  cardRef={(el: any) => cardRefs.current[i] = el}
-                  selected={i == cardClick.cardIndex}
-                  onClick={(event) => {
-                    if (i != cardClick.cardIndex) {
-                      handleCardClick(event.target instanceof HTMLDivElement, i)
-                    }
-                  }}
-                  key={i}
-                  currentlyDragged={drag.current == i}
-                  handleDragStart={(event) => {
-                    event.preventDefault()
-                    setCardClick({ cardIndex: null, divClickedOrigin: false })
-                    setDrag({ current: i, prev: null })
-                  }}
-                >
-                  <div className='pt-6 pb-2 px-6 '>
-                    <div className='flex flex-wrap items-start'>
-                      <div className="flex-grow w-[300px] max-w-full">
-                        <Input
-                          alwaysHighlight
-                          inputRef={(el: any) => inputRefs.current[i] = el}
-                          containerClass=' bg-gray-100'
-                          className=" text-base p-3 bg-gray-100"
-                          name="question"
-                          value={row.title}
-                          onChange={(e) => {
-                            setQuestionValue({ title: e.target.value })
-                          }}
-                          placeholder={`Question ${i + 1}`}
-                        />
+              {questions.map((row: Question, i: number) => {
+                const selected = i == cardClick.cardIndex
+                const textPreview = row.required || row.title === ""
+                return (
+                  <CardContainer
+                    cardRef={(el: any) => cardRefs.current[i] = el}
+                    selected={selected}
+                    onClick={(event) => {
+                      if (!selected) {
+                        handleCardClick(event.target instanceof HTMLDivElement, i)
+                      }
+                    }}
+                    key={i}
+                    currentlyDragged={drag.current == i}
+                    handleDragStart={(event) => {
+                      event.preventDefault()
+                      setCardClick({ cardIndex: null, divClickedOrigin: false })
+                      setDrag({ current: i, prev: null })
+                    }}
+                  >
+                    <div className='p-6'>
+                      <div className='flex flex-wrap items-start'>
+                        <div className={classNames(textPreview && !selected ? "hidden" : "flex-grow w-[300px] max-w-full")}>
+                          <Input
+                            alwaysHighlight
+                            inputRef={(el: any) => inputRefs.current[i] = el}
+                            showFooter={selected}
+                            containerClass={classNames(selected ? "bg-gray-100" : "bg-none mb-[2px]")}
+                            className={classNames(selected ? "bg-gray-100 p-3" : "bg-none", "text-base")}
+                            name="question"
+                            value={row.title}
+                            onChange={(e) => setQuestionValue({ title: e.target.value })}
+                            placeholder={`Question`}
+                          />
+                        </div>
+                        {textPreview && !selected && (
+                          <div className='my-[2px] mb-1 flex'>
+                            <div className='text-base'>{row.title || "Question"}</div>
+                            {row.required && <div className='ml-1 text-red-500'>*</div>}
+                          </div>
+                        )}
+                        {selected && (
+                          <>
+                            <div className='mx-3 z-0'>
+                              <MenuIcon icon={<MdOutlineImage />} />
+                            </div>
+                            <div className="w-60">
+                              <Select
+                                value={row.type}
+                                onChange={(e) => handleTypeChange(e)}
+                                options={choicesData}
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
-                      <div className='mx-3 z-0'>
-                        <MenuIcon
-                          icon={<MdOutlineImage />}
-                        />
-                      </div>
-                      <div className="w-60">
-                        <Select
-                          value={row.type}
-                          onChange={(e) => {
-                            handleTypeChange(e)
-                          }}
-                          options={choicesData}
-                        />
-                      </div>
-                    </div>
-                    {/* Content */}
-                    {i == cardClick.cardIndex &&
+                      {/* Content */}
                       <AnswerOptions
+                        selected={selected}
                         questionProps={row}
                         setQuestionValue={setQuestionValue}
                       />
-                    }
-                    {/* Footer */}
-                    <div style={{ display: cardClick.cardIndex == i ? "flex" : "none" }} className=' justify-end items-center border-t-[1.5px] mt-4 pt-2'>
-                      <MenuIcon
-                        title="Duplicate"
-                        onClick={duplicateQuestion}
-                        additionalClass='mx-[1px]'
-                        icon={<MdContentCopy />}
-                      />
-                      <MenuIcon
-                        title="Delete"
-                        onClick={removeQuestion}
-                        additionalClass='mx-[1px]'
-                        icon={<FiTrash2 />}
-                      />
-                      <div className=' border-l-[1.5px] h-8 mx-2'></div>
-                      <span className='text-sm ml-2 mr-3'>Required</span>
-                      <Toggle
-                        value={row.required}
-                        handleChange={(checked: boolean) => setQuestionValue({ required: checked })}
-                      />
-                      <DropdownButton
-                        value={row.moreOptionValues}
-                        onChange={(newVal) => setQuestionValue({ moreOptionValues: newVal })}
-                        optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
-                        dropdownItemData={row.moreOptionsData?.items ?? []}
-                        cardRef={cardRefs?.current[i]}
-                        selected={i == cardClick.cardIndex}
-                      >
-                        <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
-                          <BiDotsVerticalRounded size={24} color="#5f6368" />
-                        </button>
-                      </DropdownButton>
+                      {/* Footer */}
+                      <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2')}>
+                        <MenuIcon
+                          title="Duplicate"
+                          onClick={duplicateQuestion}
+                          additionalClass='mx-[1px]'
+                          icon={<MdContentCopy />}
+                        />
+                        <MenuIcon
+                          title="Delete"
+                          onClick={removeQuestion}
+                          additionalClass='mx-[1px]'
+                          icon={<FiTrash2 />}
+                        />
+                        <div className=' border-l-[1.5px] h-8 mx-2'></div>
+                        <span className='text-sm ml-2 mr-3'>Required</span>
+                        <Toggle
+                          value={row.required}
+                          handleChange={(checked: boolean) => setQuestionValue({ required: checked })}
+                        />
+                        <DropdownButton
+                          value={row.moreOptionValues}
+                          onChange={(newVal) => setQuestionValue({ moreOptionValues: newVal })}
+                          optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
+                          dropdownItemData={row.moreOptionsData?.items ?? []}
+                          cardRef={cardRefs?.current[i]}
+                          selected={selected}
+                        >
+                          <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
+                            <BiDotsVerticalRounded size={24} color="#5f6368" />
+                          </button>
+                        </DropdownButton>
+                      </div>
                     </div>
-                  </div>
-                </CardContainer>
+                  </CardContainer>)
+              }
               )}
             </div>
           </div>

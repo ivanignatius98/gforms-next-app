@@ -28,6 +28,7 @@ type Props = {
 
 const Input: React.FC<Props> = ({ showOnHover = false, underline = true, showFooter = true, value, ...props }) => {
   const [isShowing, setIsShowing] = useState(false)
+
   return (
     <div>
       {props.label &&
@@ -60,34 +61,35 @@ const Input: React.FC<Props> = ({ showOnHover = false, underline = true, showFoo
           disabled={props.disabled}
           style={props.style}
         />
-        {showFooter && (<div className={classNames('h-0.5')} >
-          <div className={classNames(showOnHover ? "hidden group-hover:block group-focus-within:block" : "")} >
-            <Transition
-              as={Fragment}
-              show={isShowing}
-              enter="transform transition duration-200"
-              enterFrom="scale-x-0"
-              enterTo=" scale-100"
-              leave="transform transition ease-in-out duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95 "
-            >
+        {showFooter && (
+          <div className={classNames('h-0.5')}>
+            <div className={classNames(showOnHover ? "hidden group-hover:block group-focus-within:block" : "")} >
+              <Transition
+                as={Fragment}
+                show={isShowing}
+                enter="transform transition duration-200"
+                enterFrom="scale-x-0"
+                enterTo=" scale-100"
+                leave="transform transition ease-in-out duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95 "
+              >
+                <div className={classNames(
+                  props.error
+                    ? 'bg-red-500'
+                    : 'bg-blue-500',
+                  "h-[1px] w-full rounded-md bg-blue-500 shadow-lg overflow-hidden"
+                )} />
+              </Transition>
               <div className={classNames(
-                props.error
-                  ? 'bg-red-500'
-                  : 'bg-blue-500',
-                "h-[1px] w-full rounded-md bg-blue-500 shadow-lg overflow-hidden"
-              )} />
-            </Transition>
-            <div className={classNames(
-              props.error && isShowing
-                ? 'bg-red-300'
-                : 'bg-slate-300',
-              ' h-[1px] w-full'
-            )} ></div>
+                props.error && isShowing
+                  ? 'bg-red-300'
+                  : 'bg-slate-300',
+                ' h-[1px] w-full'
+              )} ></div>
+            </div>
           </div>
-        </div>)}
-
+        )}
       </div>
     </div>
   )
