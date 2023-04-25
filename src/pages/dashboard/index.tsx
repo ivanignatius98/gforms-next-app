@@ -166,7 +166,7 @@ const Page: React.FC<Props> = (props) => {
           const curr = cardIndex == -1 ? headerRef.current : cardRefs?.current[cardIndex]
           return getLayoutY(curr as HTMLDivElement)
         }
-        repositionToolbar(getY())
+        setTimeout(() => repositionToolbar(getY()), 0)
         // scroll behavior
         const onScroll = () => {
           const repositionToolbarDebounced = debounce(repositionToolbar, 50)
@@ -448,7 +448,7 @@ const Page: React.FC<Props> = (props) => {
               paddingLeft: hasScrollbar ? 8 : 0
             }}
           >
-            <div className='sm:w-[770px] pb-16'
+            <div className='min-w-[300px] sm:w-[770px] pb-16'
               style={{ minHeight: state.minHeight, cursor: drag.current != null ? "move" : "auto" }}
               onMouseMove={handleMouseMove}
             >
@@ -564,7 +564,7 @@ const Page: React.FC<Props> = (props) => {
                             <div className="w-60">
                               <Select
                                 value={row.type}
-                                onChange={(e) => handleTypeChange(e)}
+                                onChange={handleTypeChange}
                                 options={choicesData}
                               />
                             </div>

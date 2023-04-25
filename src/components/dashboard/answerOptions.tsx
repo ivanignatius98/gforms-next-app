@@ -3,7 +3,7 @@ import React, { useEffect, useState, useRef, useMemo } from 'react'
 import TextAnswer from './textAnswer'
 import Input from '@modules/Input'
 import { Question } from '@interfaces/question.interface';
-import { MdRadioButtonUnchecked, MdClose, MdOutlineImage, MdWarning, } from 'react-icons/md'
+import { MdRadioButtonUnchecked, MdCheckBoxOutlineBlank, MdClose, MdOutlineImage, MdWarning, } from 'react-icons/md'
 import MenuIcon from '@modules/MenuIcon'
 import { FiTrash2 } from 'react-icons/fi'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
@@ -12,14 +12,42 @@ import { IconContext } from 'react-icons';
 import Tooltip from '@modules/Tooltip'
 import { classNames } from '@helpers';
 
+interface Icon {
+    type: string
+    index?: number
+}
+const OptionIcon = ({ type, index }: Icon) => {
+    const props = {
+        size: 21,
+        style: {
+            color: "darkgray"
+        }
+    }
+    let content = <></>
+    switch (type) {
+        case "multiple_choice":
+            content = <MdRadioButtonUnchecked {...props} />
+            break;
+        case "checkboxes":
+            content = <MdCheckBoxOutlineBlank {...props} />
+            break;
+        case "dropdown":
+            content = <>{index ? index + 1 : 1}</>
+            break;
+        default:
+            break;
+    }
+    return content
+}
 interface AddProps {
     type: string
+    index: number
     label?: string
     addOther: boolean
     setOtherOption: (val: boolean) => void
     addAnswerOption: () => void
 }
-const AddOption = ({ addAnswerOption, setOtherOption, label = 'Add Option', addOther = false }: AddProps) => {
+const AddOption = ({ type, index, addAnswerOption, setOtherOption, label = 'Add Option', addOther = false }: AddProps) => {
     const containerRef = useRef<HTMLDivElement>(null)
     return (
         <>
@@ -28,7 +56,7 @@ const AddOption = ({ addAnswerOption, setOtherOption, label = 'Add Option', addO
             </div>
             <div className='h-12 flex items-center text-sm group'>
                 <div className=''>
-                    <MdRadioButtonUnchecked size={21} style={{ color: "darkgray" }} />
+                    <OptionIcon type={type} index={index} />
                 </div>
                 <div onClick={addAnswerOption} className='mx-2'>
                     <Input
@@ -69,7 +97,6 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
             const newValue = `Option ${prevProps.length + 1}`
             prevProps.push({
                 value: newValue,
-                // error,
                 image: '',
                 previewImage: ''
             })
@@ -110,10 +137,11 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
         })
         setTimeout(() => inputRefs.current[index - 1 > 0 ? index - 1 : 0].focus(), 10);
     }
-    const otherType = type != 'dropdown' && type != 'polling'
+    const otherType = type != 'dropdown'
     useEffect(() => {
         inputRefs.current = inputRefs.current.slice(0, answerOptions.length)
     }, [answerOptions])
+
     const memoizedAnswerOptions = useMemo(() => answerOptions, [answerOptions]);
     return (
         <>
@@ -135,7 +163,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                             </IconContext.Provider>
                         </div>
                         <div className='mr-2'>
-                            <MdRadioButtonUnchecked size={21} style={{ color: "darkgray" }} />
+                            <OptionIcon type={type} index={index} />
                         </div>
                         <div className="flex-grow w-[270px] max-w-full">
                             <Input
@@ -188,11 +216,10 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
             ))}
             {selected &&
                 <>
-                    {otherOption && (
-                        <div className='h-12 flex items-center group'
-                        >
+                    {otherOption && otherType && (
+                        <div className='h-12 flex items-center group'>
                             <div className='mr-2'>
-                                <MdRadioButtonUnchecked size={21} style={{ color: "darkgray" }} />
+                                <OptionIcon type={type} />
                             </div>
                             <div className="flex-grow w-[300px] max-w-full">
                                 <Input
@@ -214,7 +241,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                     <AddOption
                         type={type}
                         addOther={(!otherOption && otherType)}
-                        // index={answerOptions.length}
+                        index={answerOptions.length}
                         addAnswerOption={addAnswerOption}
                         setOtherOption={setOtherOption}
                     />
@@ -246,7 +273,7 @@ const AnswerOption = ({ setQuestionValue, questionProps, selected = false }: Ans
     useEffect(() => {
         if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {
             setContent(<TextAnswer type={value} />)
-        } else if (value == 'multiple_choice') {
+        } else if (value == 'multiple_choice' || value == 'checkboxes' || value == 'dropdown') {
             setContent(<ChoicesAnswer
                 type={value}
                 answerOptions={answerOptions}
@@ -255,13 +282,6 @@ const AnswerOption = ({ setQuestionValue, questionProps, selected = false }: Ans
                 setOtherOption={setOtherOption}
                 selected={selected}
             />)
-        } else if (value == 'checkboxes' || value == 'dropdown') {
-            // setContent(<ChoicesAnswer
-            // type={value}
-            // answerOptions={answerOptions}
-            // setAnswerOptions={setAnswerOptions}
-            // />)
-            setContent(<></>)
         } else {
             setContent(<></>)
         }
