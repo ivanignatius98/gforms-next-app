@@ -535,7 +535,7 @@ const Page: React.FC<Props> = (props) => {
                       setDrag({ current: i, prev: null })
                     }}
                   >
-                    <div className='p-6'>
+                    <div className={classNames(selected ? "p-6 pb-2" : "p-6")}>
                       <div className='flex flex-wrap items-start'>
                         <div className={classNames(textPreview && !selected ? "hidden" : "flex-grow w-[300px] max-w-full")}>
                           <Input
@@ -543,7 +543,7 @@ const Page: React.FC<Props> = (props) => {
                             inputRef={(el: any) => inputRefs.current[i] = el}
                             showFooter={selected}
                             containerClass={classNames(selected ? "bg-gray-100" : "bg-none mb-[2px]")}
-                            className={classNames(selected ? "bg-gray-100 p-3" : "bg-none", "text-base")}
+                            className={classNames(selected ? "p-3" : "", "bg-inherit text-base")}
                             name="question"
                             value={row.title}
                             onChange={(e) => setQuestionValue({ title: e.target.value })}
