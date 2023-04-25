@@ -57,11 +57,12 @@ const AddOption = ({ addAnswerOption, setOtherOption, label = 'Add Option', addO
 interface ChoiceProps {
     type: string
     otherOption: boolean
+    selected: boolean
     answerOptions: OptionChoices[]
     setAnswerOptions: React.Dispatch<React.SetStateAction<OptionChoices[]>>
     setOtherOption: React.Dispatch<React.SetStateAction<boolean>>
 }
-const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, setOtherOption }: ChoiceProps) => {
+const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, setOtherOption, selected = false }: ChoiceProps) => {
     const inputRefs = useRef<HTMLInputElement[]>([])
     const addAnswerOption = () => {
         setAnswerOptions((prevProps) => {
@@ -119,7 +120,10 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
             {memoizedAnswerOptions.map((item: OptionChoices, index: number) => (
                 <div
                     key={index}
-                    className='group ml-[-1.5rem] mr-[-1.5rem]'
+                    className={classNames(
+                        selected ? "group" : "",
+                        'ml-[-1.5rem] mr-[-1.5rem]'
+                    )}
                 >
                     <div className='h-12 flex items-center px-6 relative'>
                         <div className='hidden group-hover:block absolute left-2 transform rotate-90 cursor-move'>
@@ -182,36 +186,39 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                     </div>
                 </div>
             ))}
-            {otherOption && (
-                <div className='h-12 flex items-center group'
-                >
-                    <div className='mr-2'>
-                        <MdRadioButtonUnchecked size={21} style={{ color: "darkgray" }} />
-                    </div>
-                    <div className="flex-grow w-[300px] max-w-full">
-                        <Input
-                            showFooter={false}
-                            value=""
-                            placeholder="Other..."
-                            disabled
-                            className='bg-inherit text-sm'
-                        />
-                        <div className='h-0.5'>
-                            <div className="hidden group-hover:block w-full border-dotted border-[1px] border-b-slate-400  border-spacing-8 overflow-hidden" />
+            {selected &&
+                <>
+                    {otherOption && (
+                        <div className='h-12 flex items-center group'
+                        >
+                            <div className='mr-2'>
+                                <MdRadioButtonUnchecked size={21} style={{ color: "darkgray" }} />
+                            </div>
+                            <div className="flex-grow w-[300px] max-w-full">
+                                <Input
+                                    showFooter={false}
+                                    value=""
+                                    placeholder="Other..."
+                                    disabled
+                                    className='bg-inherit text-sm'
+                                />
+                                <div className='h-0.5'>
+                                    <div className="hidden group-hover:block w-full border-dotted border-[1px] border-b-slate-400  border-spacing-8 overflow-hidden" />
+                                </div>
+                            </div>
+                            <MenuIcon
+                                onClick={() => setOtherOption(false)}
+                                icon={<MdClose />} />
                         </div>
-                    </div>
-                    <MenuIcon
-                        onClick={() => setOtherOption(false)}
-                        icon={<MdClose />} />
-                </div>
-            )}
-            <AddOption
-                type={type}
-                addOther={(!otherOption && otherType)}
-                // index={answerOptions.length}
-                addAnswerOption={addAnswerOption}
-                setOtherOption={setOtherOption}
-            />
+                    )}
+                    <AddOption
+                        type={type}
+                        addOther={(!otherOption && otherType)}
+                        // index={answerOptions.length}
+                        addAnswerOption={addAnswerOption}
+                        setOtherOption={setOtherOption}
+                    />
+                </>}
         </>
     )
 
@@ -219,8 +226,9 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
 interface AnswerProps {
     questionProps: Question
     setQuestionValue: Function
+    selected: boolean
 }
-const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
+const AnswerOption = ({ setQuestionValue, questionProps, selected = false }: AnswerProps) => {
     const {
         type,
         answerOptions: initialAnswer,
@@ -245,6 +253,7 @@ const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
                 setAnswerOptions={setAnswerOptions}
                 otherOption={otherOption}
                 setOtherOption={setOtherOption}
+                selected={selected}
             />)
         } else if (value == 'checkboxes' || value == 'dropdown') {
             // setContent(<ChoicesAnswer
@@ -257,7 +266,7 @@ const AnswerOption = ({ setQuestionValue, questionProps }: AnswerProps) => {
             setContent(<></>)
         }
         setQuestionValue({ answerOptions, otherOption })
-    }, [value, answerOptions, otherOption])
+    }, [value, answerOptions, otherOption, selected])
 
     // else if (value == 'linear_scale') {
     //     content = <LinearScaleAnswer
