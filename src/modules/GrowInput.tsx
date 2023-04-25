@@ -50,7 +50,7 @@ const Input: React.FC<Props> = ({ minW = 18, maxW = 384, ...props }) => {
           value={props.value}
           onChange={props.onChange}
           style={{ gridArea: '1 / 1 / 1 / 1' }}
-          className="w-full outline-none max-w-sm text-md"
+          className="w-full outline-none max-w-sm text-lg"
           onFocus={() => {
             setIsShowing(true)
           }}
@@ -61,7 +61,7 @@ const Input: React.FC<Props> = ({ minW = 18, maxW = 384, ...props }) => {
         />
         <span
           style={{ gridArea: '1 / 1 / 1 / 1' }}
-          className="w-fit invisible whitespace-nowrap max-w-sm text-md"
+          className="w-fit invisible whitespace-nowrap max-w-sm text-lg"
           ref={contentRef}
         >
           {props.value}

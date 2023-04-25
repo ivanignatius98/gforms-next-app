@@ -136,10 +136,10 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="bg-white border-b border-gray-200 px-2 sm:px-4 pt-2.5 rounded sticky top-0 z-10">
+    <nav className="bg-white border-b border-gray-200 px-4 sm:px-2 pt-2.5 rounded sticky top-0 z-10">
       <div className="flex flex-wrap justify-between items-center">
         <div className={"p-0 m-0 static"}>
-          <div className="flex h-12 items-center">
+          <div className="flex h-12 mb-4 items-center">
             <div className="w-12 p-2 flex rounded-lg items-center justify-center">
               <button>
                 <IoDocumentText size={40} color="#d946ef" />
@@ -188,10 +188,9 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
-      <div className="flex sm:hidden items-center">
+      <div className="flex sm:hidden items-center px-2">
         {/* <span className="self-center text-xl font-semibold whitespace-nowrap dark:text-white">Test Form</span> */}
         <GrowInput
-          underline
           placeholder='Untitled Form'
           value={title}
           onChange={handleTitleChange}
