@@ -208,44 +208,43 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                         <div className='invisible group-hover:visible group-focus-within:visible'>
                             <MenuIcon icon={<MdOutlineImage />} />
                         </div>
-                        <div className={classNames(answerOptions.length > 1 ? "" : "invisible")}>
+                        <div className={classNames(answerOptions.length > 1 && selected ? "" : "invisible")}>
                             <MenuIcon onClick={() => deleteItem(index)} icon={<MdClose />} />
                         </div>
                     </div>
                 </div>
             ))}
-            {selected &&
-                <>
-                    {otherOption && otherType && (
-                        <div className='h-12 flex items-center group'>
-                            <div className='mr-2'>
-                                <OptionIcon type={type} />
-                            </div>
-                            <div className="flex-grow w-[300px] max-w-full">
-                                <Input
-                                    showFooter={false}
-                                    value=""
-                                    placeholder="Other..."
-                                    disabled
-                                    className='bg-inherit text-sm'
-                                />
-                                <div className='h-0.5'>
-                                    <div className="hidden group-hover:block w-full border-dotted border-[1px] border-b-slate-400  border-spacing-8 overflow-hidden" />
-                                </div>
-                            </div>
-                            <MenuIcon
-                                onClick={() => setOtherOption(false)}
-                                icon={<MdClose />} />
+            {otherOption && otherType && (
+                <div className='h-12 flex items-center group'>
+                    <div className='mr-2'>
+                        <OptionIcon type={type} />
+                    </div>
+                    <div className="flex-grow w-[300px] max-w-full">
+                        <Input
+                            showFooter={false}
+                            value=""
+                            placeholder="Other..."
+                            disabled
+                            className='bg-inherit text-sm'
+                        />
+                        <div className='h-0.5'>
+                            <div className="hidden group-hover:block w-full border-dotted border-[1px] border-b-slate-400  border-spacing-8 overflow-hidden" />
                         </div>
-                    )}
-                    <AddOption
-                        type={type}
-                        addOther={(!otherOption && otherType)}
-                        index={answerOptions.length}
-                        addAnswerOption={addAnswerOption}
-                        setOtherOption={setOtherOption}
-                    />
-                </>}
+                    </div>
+                    {selected &&
+                        <MenuIcon
+                            onClick={() => setOtherOption(false)}
+                            icon={<MdClose />} />
+                    }
+                </div>
+            )}
+            <AddOption
+                type={type}
+                addOther={(!otherOption && otherType)}
+                index={answerOptions.length}
+                addAnswerOption={addAnswerOption}
+                setOtherOption={setOtherOption}
+            />
         </>
     )
 
