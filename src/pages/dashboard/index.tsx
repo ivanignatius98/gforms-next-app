@@ -199,11 +199,11 @@ const Page: React.FC<Props> = (props) => {
 
   useEffect(() => {
     const containerMarginTop = 12
-    let newNavHeight = 105
+    let newNavHeight = 129
     let bottomToolbarHeight = 48
     if (viewportWidth) {
       if (viewportWidth < 640) {
-        newNavHeight = 151
+        newNavHeight = 147
       } else if (viewportWidth > hideToolbarBreakpoint) {
         bottomToolbarHeight = 0
       }
@@ -571,6 +571,19 @@ const Page: React.FC<Props> = (props) => {
                           </>
                         )}
                       </div>
+                      {/* Description */}
+                      {row.moreOptionValues?.includes("description") &&
+                        <Input
+                          alwaysHighlight
+                          showFooter={selected}
+                          containerClass="bg-none my-2"
+                          className="bg-inherit text-sm"
+                          name="description"
+                          value={row.description}
+                          onChange={(e) => setQuestionValue({ description: e.target.value })}
+                          placeholder={`Description`}
+                        />
+                      }
                       {/* Content */}
                       <AnswerOptions
                         selected={selected}
@@ -578,7 +591,7 @@ const Page: React.FC<Props> = (props) => {
                         setQuestionValue={setQuestionValue}
                       />
                       {/* Footer */}
-                      <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2')}>
+                      <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2 ')}>
                         <MenuIcon
                           title="Duplicate"
                           onClick={duplicateQuestion}

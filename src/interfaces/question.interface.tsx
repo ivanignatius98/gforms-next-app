@@ -20,6 +20,7 @@ export interface OptionChoices extends Value {
   image?: string | null
   previewImage?: string | null
   persistError?: boolean
+  goToSectionVal?: Item
 }
 
 export interface Question {

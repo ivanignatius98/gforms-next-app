@@ -11,6 +11,9 @@ import { OptionChoices } from '@interfaces/question.interface';
 import { IconContext } from 'react-icons';
 import Tooltip from '@modules/Tooltip'
 import { classNames } from '@helpers';
+import Select from '@modules/Select'
+import { choicesData } from '@components/dashboard/defaults'
+import { Item } from '@interfaces/dropdown.interface';
 
 interface Icon {
     type: string
@@ -86,11 +89,12 @@ interface ChoiceProps {
     type: string
     otherOption: boolean
     selected: boolean
+    goToSection: boolean
     answerOptions: OptionChoices[]
     setAnswerOptions: React.Dispatch<React.SetStateAction<OptionChoices[]>>
     setOtherOption: React.Dispatch<React.SetStateAction<boolean>>
 }
-const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, setOtherOption, selected = false }: ChoiceProps) => {
+const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, setOtherOption, selected = false, goToSection }: ChoiceProps) => {
     const inputRefs = useRef<HTMLInputElement[]>([])
     const addAnswerOption = () => {
         setAnswerOptions((prevProps) => {
@@ -115,6 +119,15 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
             return [...prevProps]
         })
     }
+    const handleSectionSelect = (value: Item, index: number) => {
+        setAnswerOptions((prevProps) => {
+            prevProps[index] = {
+                ...prevProps[index],
+                goToSectionVal: value,
+            }
+            return [...prevProps]
+        })
+    }
     // const setItemImage = (newImage, index) => {
     //     const temp = [...answerOptions]
     //     temp[index] = { ...temp[index], ...newImage }
@@ -129,6 +142,21 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
     //     setAnswerOptions([...temp])
 
     // }
+    const dummySections = [
+        {
+            value: "section_1",
+            label: "Continue to next section",
+            group: 0
+        }, {
+            value: "section_2",
+            label: "Go to section 1",
+            group: 0
+        }, {
+            value: "section_3",
+            label: "Submit form",
+            group: 0
+        }
+    ]
     const deleteItem = (index: number) => {
         setAnswerOptions((prevProps) => {
             const newProps = prevProps.slice()
@@ -165,7 +193,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                         <div className='mr-2'>
                             <OptionIcon type={type} index={index} />
                         </div>
-                        <div className="flex-grow w-[270px] max-w-full">
+                        <div className="flex-grow max-w-full">
                             <Input
                                 inputRef={(el: any) => inputRefs.current[index] = el}
                                 showOnHover
@@ -211,6 +239,16 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                         <div className={classNames(answerOptions.length > 1 && selected ? "" : "invisible")}>
                             <MenuIcon onClick={() => deleteItem(index)} icon={<MdClose />} />
                         </div>
+                        {goToSection &&
+                            <div className="w-72">
+                                <Select
+                                    borderless
+                                    value={item.goToSectionVal ?? dummySections[1]}
+                                    onChange={(val) => handleSectionSelect(val, index)}
+                                    options={dummySections}
+                                />
+                            </div>
+                        }
                     </div>
                 </div>
             ))}
@@ -238,13 +276,15 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                     }
                 </div>
             )}
-            <AddOption
-                type={type}
-                addOther={(!otherOption && otherType)}
-                index={answerOptions.length}
-                addAnswerOption={addAnswerOption}
-                setOtherOption={setOtherOption}
-            />
+            {selected &&
+                <AddOption
+                    type={type}
+                    addOther={(!otherOption && otherType)}
+                    index={answerOptions.length}
+                    addAnswerOption={addAnswerOption}
+                    setOtherOption={setOtherOption}
+                />
+            }
         </>
     )
 
@@ -258,6 +298,7 @@ const AnswerOption = ({ setQuestionValue, questionProps, selected = false }: Ans
     const {
         type,
         answerOptions: initialAnswer,
+        moreOptionValues: initialMoreOptions,
         gridRowOptions,
         gridColumnOptions,
         linearValueOptions,
@@ -268,7 +309,6 @@ const AnswerOption = ({ setQuestionValue, questionProps, selected = false }: Ans
     const [content, setContent] = useState<JSX.Element | null>(null)
     const [answerOptions, setAnswerOptions] = useState<OptionChoices[]>([...initialAnswer])
     const [otherOption, setOtherOption] = useState(initialOtherOption)
-
     useEffect(() => {
         if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {
             setContent(<TextAnswer type={value} />)
@@ -280,12 +320,13 @@ const AnswerOption = ({ setQuestionValue, questionProps, selected = false }: Ans
                 otherOption={otherOption}
                 setOtherOption={setOtherOption}
                 selected={selected}
+                goToSection={initialMoreOptions?.includes("go_to_section")}
             />)
         } else {
             setContent(<></>)
         }
         setQuestionValue({ answerOptions, otherOption })
-    }, [value, answerOptions, otherOption, selected])
+    }, [value, answerOptions, otherOption, selected, initialMoreOptions])
 
     // else if (value == 'linear_scale') {
     //     content = <LinearScaleAnswer

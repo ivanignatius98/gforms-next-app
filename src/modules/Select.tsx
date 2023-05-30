@@ -16,13 +16,23 @@ type Props = {
   groupDividerHeight?: number
   eachOptionHeight?: number
   containerMargins?: number
+  borderless?: boolean
+
 };
 
 interface ItemMap {
   [key: string]: [number, number];
 }
 
-function Select({ options = [], value, onChange = () => { }, groupDividerHeight = 16, eachOptionHeight = 48, containerMargins = 2 }: Props) {
+function Select({
+  options = [],
+  value,
+  onChange = () => { },
+  groupDividerHeight = 16,
+  eachOptionHeight = 48,
+  containerMargins = 2,
+  borderless = false
+}: Props) {
   const [selectY, setSelectY] = useState(0)
   const [mappedOptions, setMappedOptions] = useState<SelectItem[]>([])
   const [valuesMap, setValuesMap] = useState<ItemMap>({})
@@ -134,7 +144,9 @@ function Select({ options = [], value, onChange = () => { }, groupDividerHeight 
       className="w-full relative inline-block"
     >
       <Listbox.Button
-        className='relative text-sm items-center flex h-12 ring-1 ring-slate-300 rounded-sm w-full transition-colors ease-in-out duration-200  active:bg-slate-200'
+        className={classNames(
+          borderless ? "" : "ring-1 ring-slate-300",
+          'relative text-sm items-center flex h-12 rounded-sm w-full transition-colors ease-in-out duration-200 active:bg-slate-200')}
       >
         {/* value preview */}
         {value && (<>
@@ -155,8 +167,13 @@ function Select({ options = [], value, onChange = () => { }, groupDividerHeight 
         <Listbox.Options
           as='div'
           ref={optionsRef}
-          style={{ top: selectY, overflowY: "auto", maxHeight: "calc(100% - 38px)" }}
-          className="fixed z-30 w-60 mt-1 origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+          style={{
+            width: containerRef.current?.offsetWidth || 240,
+            top: selectY,
+            overflowY: "auto",
+            maxHeight: "calc(100% - 38px)"
+          }}
+          className="fixed z-30 mt-1 origin-top-center focus:outline-none py-[1px] divide-y origin-center divide-gray-200 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
         >
           {mappedOptions.map(({ items }, groupIndex) => (
             <div className='py-2' key={groupIndex}>
