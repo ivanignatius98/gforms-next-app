@@ -138,7 +138,9 @@ function Select({
     )
   }
   return (
-    <Listbox value={value} onChange={(value: Item) => { onChange(value); setTimeout(() => repositionCenter(value), 200) }}
+    <Listbox
+      value={value}
+      onChange={(value: Item) => { onChange(value) }}
       as="div"
       ref={containerRef}
       className="w-full relative inline-block"
@@ -158,7 +160,8 @@ function Select({
       </Listbox.Button>
       <Transition
         as={Fragment}
-        afterEnter={() => {
+        beforeEnter={() => {
+          if (value) repositionCenter(value);
           (optionsRef.current as unknown as { scrollTop: number }).scrollTop = yScrollOffset ?? 0;
         }}
         beforeLeave={() => { setLastActive([-1, -1]) }}
@@ -186,7 +189,7 @@ function Select({
                   {({ active }) => (
                     <button
                       onMouseEnter={() => { setLastActive([i, groupIndex]) }}
-                      className={"text-left " + getOptionClass({ active, content, index: i, groupIndex })}
+                      className={"text-left h-12 " + getOptionClass({ active, content, index: i, groupIndex })}
                     >
                       <div className="pl-2 pr-4">
                         {content.icon}
