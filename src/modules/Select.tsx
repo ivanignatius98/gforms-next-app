@@ -146,9 +146,10 @@ function Select({
       className="w-full relative inline-block"
     >
       <Listbox.Button
+        style={{ height: eachOptionHeight }}
         className={classNames(
           borderless ? "" : "ring-1 ring-slate-300",
-          'relative text-sm items-center flex h-12 rounded-sm w-full transition-colors ease-in-out duration-200 active:bg-slate-200')}
+          'relative text-sm items-center flex rounded-sm w-full transition-colors ease-in-out duration-200 active:bg-slate-200')}
       >
         {/* value preview */}
         {value && (<>
@@ -188,8 +189,9 @@ function Select({
                 >
                   {({ active }) => (
                     <button
+                      style={{ height: eachOptionHeight }}
                       onMouseEnter={() => { setLastActive([i, groupIndex]) }}
-                      className={"text-left h-12 " + getOptionClass({ active, content, index: i, groupIndex })}
+                      className={"text-left " + getOptionClass({ active, content, index: i, groupIndex })}
                     >
                       <div className="pl-2 pr-4">
                         {content.icon}

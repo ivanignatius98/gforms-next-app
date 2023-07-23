@@ -459,21 +459,44 @@ const Page: React.FC<Props> = (props) => {
                     className='absolute z-20 w-full opacity-50'
                   >
                     <CardContainer selected={true}>
-                      <div className='pt-6 pb-2 px-6 flex flex-wrap items-start'>
-                        <div className="flex-grow max-w-full ml-2 mr-1">
-                          <Input
-                            value={questions[drag.current].title}
-                            containerClass=' bg-gray-100'
-                            className=" text-base p-3 bg-gray-100 cursor-move"
-                          />
+                      <div className='pt-6 pb-2 px-6 '>
+                        <div className='flex flex-wrap items-start'>
+                          <div className="flex-grow max-w-full ml-2 mr-1">
+                            <Input
+                              value={questions[drag.current].title}
+                              containerClass=' bg-gray-100'
+                              className="text-base p-3 bg-gray-100 cursor-move"
+                              placeholder="Question"
+                            />
+                          </div>
+                          <div className='mx-1 cursor-move'>
+                            <MenuIcon icon={<MdOutlineImage />} />
+                          </div>
+                          <div className="w-60">
+                            <Select value={questions[drag.current].type} />
+                          </div>
                         </div>
-                        <div className='mx-1 cursor-move'>
+                        <div className='flex justify-center items-center h-12'>
+                          <IoEllipsisHorizontalSharp size={18} style={{ color: "darkgray" }} />
+                        </div>
+                        <div className="flex justify-end items-center border-t-[1.5px] pt-2">
                           <MenuIcon
-                            icon={<MdOutlineImage />}
+                            additionalClass='mx-[1px]'
+                            icon={<MdContentCopy />}
                           />
-                        </div>
-                        <div className="w-60">
-                          <Select value={questions[drag.current].type} />
+                          <MenuIcon
+                            additionalClass='mx-[1px]'
+                            icon={<FiTrash2 />}
+                          />
+                          <div className='border-l-[1.5px] h-8 mx-2'></div>
+                          <span className='text-sm ml-2 mr-3'>Required</span>
+                          <Toggle
+                            handleChange={() => { }}
+                            value={questions[drag.current].required}
+                          />
+                          <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
+                            <BiDotsVerticalRounded size={24} color="#5f6368" />
+                          </button>
                         </div>
                       </div>
                     </CardContainer>
@@ -547,7 +570,7 @@ const Page: React.FC<Props> = (props) => {
                             name="question"
                             value={row.title}
                             onChange={(e) => setQuestionValue({ title: e.target.value })}
-                            placeholder={`Question`}
+                            placeholder="Question"
                           />
                         </div>
                         {textPreview && !selected && (
