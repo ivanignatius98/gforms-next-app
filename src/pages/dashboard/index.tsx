@@ -678,6 +678,7 @@ const Toolbar = ({ toolbarRef, sidebarY, menus, viewportWidth = 100 }: ToolbarPr
             additionalClass="w-8 h-8 p-1"
             title={row.title}
             icon={row.icon}
+            smallContainer
           />
         </div>
       )}
