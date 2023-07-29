@@ -20,7 +20,7 @@ import { FiTrash2 } from 'react-icons/fi'
 import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
 import { classNames, debounce, getLayoutY, swap } from '@helpers'
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
-import { Question } from '@interfaces/question.interface';
+import { Question, OptionChoices } from '@interfaces/question.interface';
 import { BiDotsVerticalRounded } from 'react-icons/bi';
 
 // #endregion
@@ -104,7 +104,35 @@ const Page: React.FC<Props> = (props) => {
     description: "",
     minHeight: "100vh",
   })
-  const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+  // const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+
+  const [questions, setQuestions] = useState<Question[]>([
+    {
+      ...defaultQuestion,
+      title: "Question A",
+    },
+    {
+      ...defaultQuestion,
+      title: "Question B",
+    },
+  ]);
+  const [answerOptionsArr, setAnswerOptionsArr] = useState<OptionChoices[][]>(
+    [
+      [
+        { value: 'Option 1', error: false, image: '', previewImage: '' },
+        { value: 'Option 2', error: false, image: '', previewImage: '' },
+        { value: 'Option 3', error: false, image: '', previewImage: '' }
+      ],
+      [
+        { value: 'Option 4', error: false, image: '', previewImage: '' },
+        { value: 'Option 5', error: false, image: '', previewImage: '' }
+      ],
+      // Add more options for other questions as needed
+    ]
+  );
+  const [otherOptionArr, setOtherOptionArr] = useState<boolean[]>(
+    [true, false]
+  );
   const [cardClick, setCardClick] = useState<ClickState>({
     cardIndex: 0,
     divClickedOrigin: true
@@ -228,6 +256,20 @@ const Page: React.FC<Props> = (props) => {
       return temp;
     })
   }
+  const setOptionsValue = (payload: any, idx: number) => {
+    setAnswerOptionsArr(prevState => {
+      const temp = [...prevState]
+      temp[idx] = payload
+      return temp;
+    })
+  }
+  const setOtherValue = (payload: any, idx: number) => {
+    setOtherOptionArr(prevState => {
+      const temp = [...prevState]
+      temp[idx] = payload
+      return temp;
+    })
+  }
   const addQuestions = () => {
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
@@ -320,7 +362,11 @@ const Page: React.FC<Props> = (props) => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
       if (nextIndex >= 0 && nextIndex < questions.length && index !== drag.prev) {
         const temp = swap([...questions], index, nextIndex)
+        const tempOpt = swap([...answerOptionsArr], index, nextIndex)
+        const tempOther = swap([...otherOptionArr], index, nextIndex)
         setQuestions(temp)
+        setAnswerOptionsArr(tempOpt)
+        setOtherOptionArr(tempOther)
         setDrag({ current: nextIndex, prev: index })
       }
     }
@@ -612,6 +658,14 @@ const Page: React.FC<Props> = (props) => {
                         selected={selected}
                         questionProps={row}
                         setQuestionValue={setQuestionValue}
+                        optionsValue={answerOptionsArr[i]}
+                        setOptionsValue={(newValue: OptionChoices[]) => {
+                          setOptionsValue(newValue, i)
+                        }}
+                        otherOptionValue={otherOptionArr[i]}
+                        setOtherOptionValue={(newValue: boolean) => {
+                          setOtherValue(newValue, i)
+                        }}
                       />
                       {/* Footer */}
                       <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2 ')}>
