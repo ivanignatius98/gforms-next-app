@@ -110,29 +110,18 @@ const Page: React.FC<Props> = (props) => {
     {
       ...defaultQuestion,
       title: "Question A",
+      answerOptions: [
+        { value: 'Option 1', error: false, image: '', previewImage: '' },
+        { value: 'Option 2', error: false, image: '', previewImage: '' },
+        { value: 'Option 3', error: false, image: '', previewImage: '' },
+        { value: 'Option 4', error: false, image: '', previewImage: '' }
+      ]
     },
     {
       ...defaultQuestion,
-      title: "Question B",
+      title: "Question B"
     },
   ]);
-  const [answerOptionsArr, setAnswerOptionsArr] = useState<OptionChoices[][]>(
-    [
-      [
-        { value: 'Option 1', error: false, image: '', previewImage: '' },
-        { value: 'Option 2', error: false, image: '', previewImage: '' },
-        { value: 'Option 3', error: false, image: '', previewImage: '' }
-      ],
-      [
-        { value: 'Option 4', error: false, image: '', previewImage: '' },
-        { value: 'Option 5', error: false, image: '', previewImage: '' }
-      ],
-      // Add more options for other questions as needed
-    ]
-  );
-  const [otherOptionArr, setOtherOptionArr] = useState<boolean[]>(
-    [true, false]
-  );
   const [cardClick, setCardClick] = useState<ClickState>({
     cardIndex: 0,
     divClickedOrigin: true
@@ -249,24 +238,10 @@ const Page: React.FC<Props> = (props) => {
 
   //#region question
 
-  const setQuestionValue = (payload: any) => {
+  const setQuestionValue = (payload: any, index: number) => {
     setQuestions(prevState => {
       const temp = [...prevState]
-      temp[cardClick.cardIndex ?? 0] = { ...temp[cardClick.cardIndex ?? 0], ...payload }
-      return temp;
-    })
-  }
-  const setOptionsValue = (payload: any, idx: number) => {
-    setAnswerOptionsArr(prevState => {
-      const temp = [...prevState]
-      temp[idx] = payload
-      return temp;
-    })
-  }
-  const setOtherValue = (payload: any, idx: number) => {
-    setOtherOptionArr(prevState => {
-      const temp = [...prevState]
-      temp[idx] = payload
+      temp[index] = { ...temp[index], ...payload }
       return temp;
     })
   }
@@ -356,17 +331,14 @@ const Page: React.FC<Props> = (props) => {
       }
     })
   }, [])
-
   const handleDragging = useCallback((event: any) => {
     const move = (index: number, direction: "up" | "down") => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
       if (nextIndex >= 0 && nextIndex < questions.length && index !== drag.prev) {
+        console.log({ index, nextIndex, ans1: questions[index].answerOptions, ans2: questions[nextIndex].answerOptions })
         const temp = swap([...questions], index, nextIndex)
-        const tempOpt = swap([...answerOptionsArr], index, nextIndex)
-        const tempOther = swap([...otherOptionArr], index, nextIndex)
+        console.log({ temp })
         setQuestions(temp)
-        setAnswerOptionsArr(tempOpt)
-        setOtherOptionArr(tempOther)
         setDrag({ current: nextIndex, prev: index })
       }
     }
@@ -439,8 +411,8 @@ const Page: React.FC<Props> = (props) => {
     items: contents[]
   }
 
-  const handleTypeChange = (event: Item) => {
-    if (cardClick.cardIndex != null && cardClick.cardIndex >= 0) {
+  const handleTypeChange = (event: Item, index: number) => {
+    if (index != null && index >= 0) {
       const validOptions = additionalOptionsMap[event.value]
       const tempArr: Item[] = moreOptionsArr.filter((item) => validOptions.includes(item.value));
       const tempGroup: SelectItems[] = []
@@ -474,7 +446,7 @@ const Page: React.FC<Props> = (props) => {
           items: tempGroup,
           optionsHeight
         }
-      })
+      }, index)
     }
   }
   // #endregion
@@ -615,7 +587,7 @@ const Page: React.FC<Props> = (props) => {
                             className={classNames(selected ? "p-3" : "", "bg-inherit text-base")}
                             name="question"
                             value={row.title}
-                            onChange={(e) => setQuestionValue({ title: e.target.value })}
+                            onChange={(e) => setQuestionValue({ title: e.target.value }, i)}
                             placeholder="Question"
                           />
                         </div>
@@ -633,7 +605,7 @@ const Page: React.FC<Props> = (props) => {
                             <div className="w-60">
                               <Select
                                 value={row.type}
-                                onChange={handleTypeChange}
+                                onChange={(newValue) => { handleTypeChange(newValue, i) }}
                                 options={choicesData}
                               />
                             </div>
@@ -649,7 +621,7 @@ const Page: React.FC<Props> = (props) => {
                           className="bg-inherit text-sm"
                           name="description"
                           value={row.description}
-                          onChange={(e) => setQuestionValue({ description: e.target.value })}
+                          onChange={(e) => setQuestionValue({ description: e.target.value }, i)}
                           placeholder={`Description`}
                         />
                       }
@@ -657,14 +629,13 @@ const Page: React.FC<Props> = (props) => {
                       <AnswerOptions
                         selected={selected}
                         questionProps={row}
-                        setQuestionValue={setQuestionValue}
-                        optionsValue={answerOptionsArr[i]}
+                        optionsValue={row.answerOptions}
                         setOptionsValue={(newValue: OptionChoices[]) => {
-                          setOptionsValue(newValue, i)
+                          setQuestionValue({ answerOptions: newValue }, i)
                         }}
-                        otherOptionValue={otherOptionArr[i]}
+                        otherOptionValue={row.otherOption}
                         setOtherOptionValue={(newValue: boolean) => {
-                          setOtherValue(newValue, i)
+                          setQuestionValue({ otherOption: newValue }, i)
                         }}
                       />
                       {/* Footer */}
@@ -685,11 +656,11 @@ const Page: React.FC<Props> = (props) => {
                         <span className='text-sm ml-2 mr-3'>Required</span>
                         <Toggle
                           value={row.required}
-                          handleChange={(checked: boolean) => setQuestionValue({ required: checked })}
+                          handleChange={(checked: boolean) => setQuestionValue({ required: checked }, i)}
                         />
                         <DropdownButton
                           value={row.moreOptionValues}
-                          onChange={(newVal) => setQuestionValue({ moreOptionValues: newVal })}
+                          onChange={(newVal) => setQuestionValue({ moreOptionValues: newVal }, i)}
                           optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
                           dropdownItemData={row.moreOptionsData?.items ?? []}
                           cardRef={cardRefs?.current[i]}

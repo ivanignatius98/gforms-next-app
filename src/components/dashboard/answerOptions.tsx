@@ -287,7 +287,6 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
 }
 interface AnswerProps {
     questionProps: Question
-    setQuestionValue: Function
     selected: boolean
     optionsValue: OptionChoices[]
     otherOptionValue: boolean

@@ -1,60 +1,65 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { OptionChoices, Question } from '@interfaces/question.interface';
 import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
-
-
+import AnswerOptions from '@components/dashboard/answerOptions'
+import { swap } from '@helpers';
 const MyComponent: React.FC = () => {
   const [questions, setQuestions] = useState<Question[]>([
     {
       ...defaultQuestion,
       title: "Question A",
+      answerOptions: [
+        { value: 'Option 1', error: false, image: '', previewImage: '' },
+        { value: 'Option 2', error: false, image: '', previewImage: '' },
+        { value: 'Option 3', error: false, image: '', previewImage: '' },
+        { value: 'Option 4', error: false, image: '', previewImage: '' }
+      ]
     },
     {
       ...defaultQuestion,
-      title: "Question B",
+      title: "Question B"
     },
   ]);
-  const [answerOptionsMap, setAnswerOptionsMap] = useState<OptionChoices[][]>(
-    [
-      [
-        { value: 'Option 1', error: false, image: '', previewImage: '' },
-        { value: 'Option 2', error: false, image: '', previewImage: '' },
-        { value: 'Option 3', error: false, image: '', previewImage: '' }
-      ],
-      [
-        { value: 'Option 4', error: false, image: '', previewImage: '' },
-        { value: 'Option 5', error: false, image: '', previewImage: '' }
-      ],
-      // Add more options for other questions as needed
-    ]
-  );
 
-  const swapAdjacentKeys = (index: number) => {
-    const entries = [...answerOptionsMap];
-
-    if (index >= 0 && index < entries.length - 1) {
-      const temp = entries[index];
-      entries[index] = entries[index + 1];
-      entries[index + 1] = temp;
-      setAnswerOptionsMap(entries); // Update the state with the new Map
+  const setQuestionValue = (payload: any, index: number) => {
+    setQuestions(prevState => {
+      const temp = [...prevState]
+      temp[index ?? 0] = { ...temp[index ?? 0], ...payload }
+      return temp;
+    })
+  }
+  useEffect(() => {
+    const move = (index: number, direction: "up" | "down") => {
+      const nextIndex = direction === "up" ? index - 1 : index + 1
+      console.log({ index, nextIndex, ans1: questions[index].answerOptions, ans2: questions[nextIndex].answerOptions })
+      const temp = swap([...questions], index, nextIndex)
+      console.log({ temp })
+      setQuestions(temp)
     }
-  };
-
+    move(0, "down")
+  }, [])
   return (
     <div>
-      {questions.map((row, i) => <>
-        <ul>
-          {answerOptionsMap[i].map((option, optionIndex) => (
-            <li key={optionIndex}>{option.value}</li>
-          ))}
-        </ul>
-      </>)}
-      {/* Render your component here */}
-      {/* Example: Display the options for question 1 */}
-      <button onClick={() => swapAdjacentKeys(0)}>Swap with Next</button>
-      <button onClick={() => console.log(answerOptionsMap)}>Log State</button>
+      {questions.map((row, i) => {
+        return <>
+          {row.title}
+          <br />
+          <AnswerOptions
+            selected={false}
+            questionProps={row}
+            optionsValue={row.answerOptions}
+            setOptionsValue={(newValue: OptionChoices[]) => {
+              // setQuestionValue({ answerOptions: newValue })
+            }}
+            otherOptionValue={row.otherOption}
+            setOtherOptionValue={(newValue: boolean) => {
+              // setQuestionValue({ otherOption: newValue })
+            }}
+          />
+        </>
+      })}
     </div>
-  );
+  )
 };
 
 export default MyComponent;
