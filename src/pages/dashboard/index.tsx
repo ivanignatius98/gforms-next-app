@@ -8,6 +8,7 @@ import MenuIcon from '@modules/MenuIcon'
 import DropdownButton from '@modules/DropdownButton'
 import Toggle from '@modules/Toggle'
 import AnswerOptions from '@components/dashboard/answerOptions'
+import { v4 as uuidv4 } from 'uuid';
 
 import { MdOutlineSmartDisplay, MdOutlineImage, MdContentCopy, } from 'react-icons/md'
 import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
@@ -16,13 +17,12 @@ import { AiOutlineFontSize } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
 import { FiTrash2 } from 'react-icons/fi'
+import { BiDotsVerticalRounded } from 'react-icons/bi';
 
 import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
 import { classNames, debounce, getLayoutY, swap } from '@helpers'
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
 import { Question, OptionChoices } from '@interfaces/question.interface';
-import { BiDotsVerticalRounded } from 'react-icons/bi';
-
 // #endregion
 
 //#region card content
@@ -40,7 +40,16 @@ interface ContainerProps {
   currentlyDragged?: boolean,
   cardRef?: Ref<HTMLDivElement>
 };
-const CardContainer = ({ children, currentlyDragged = false, handleDragStart, cardRef, onClick, containerClass = "", selected = false, topHeader = false, ...props }: ContainerProps) => {
+const CardContainer = ({ children,
+  currentlyDragged = false,
+  handleDragStart,
+  cardRef,
+  onClick,
+  containerClass = "",
+  selected = false,
+  topHeader = false,
+  ...props
+}: ContainerProps) => {
   const [isHovered, setIsHovered] = useState(false);
   const handleMouseEnter = () => {
     setIsHovered(true);
@@ -56,6 +65,7 @@ const CardContainer = ({ children, currentlyDragged = false, handleDragStart, ca
       onClick={onClick}
       style={{
         opacity: currentlyDragged ? 0.5 : 1,
+        ...(currentlyDragged ? { height: selected ? 200 : 100 } : {})
       }}
       className={'bg-white w-full shadow-md rounded-md relative flex flex-col mb-4' + containerClass}
     >
@@ -104,29 +114,54 @@ const Page: React.FC<Props> = (props) => {
     description: "",
     minHeight: "100vh",
   })
-  // const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+  // const [questions, setQuestions] = useState<Question[]>([{...defaultQuestion, xid: uuidv4()}]);
 
   const [questions, setQuestions] = useState<Question[]>([
     {
       ...defaultQuestion,
       title: "Question A",
+      xid: "xid0",
       answerOptions: [
         { value: 'Option 1', error: false, image: '', previewImage: '' },
         { value: 'Option 2', error: false, image: '', previewImage: '' },
-        { value: 'Option 3', error: false, image: '', previewImage: '' },
-        { value: 'Option 4', error: false, image: '', previewImage: '' }
       ]
     },
     {
       ...defaultQuestion,
-      title: "Question B"
+      title: "Question B",
+      xid: "xid1",
+      answerOptions: [
+        { value: 'Option 1', error: false, image: '', previewImage: '' },
+        { value: 'Option 2', error: false, image: '', previewImage: '' },
+      ]
     },
+    {
+      ...defaultQuestion,
+      title: "QuestionC",
+      xid: "xid2",
+      answerOptions: [
+        { value: 'Option 1', error: false, image: '', previewImage: '' },
+        { value: 'Option 2', error: false, image: '', previewImage: '' },
+      ]
+    },
+
+    {
+      ...defaultQuestion,
+      title: "QuestionD",
+      xid: "xid3",
+      answerOptions: [
+        { value: 'Option 1', error: false, image: '', previewImage: '' },
+        { value: 'Option 2', error: false, image: '', previewImage: '' },
+      ]
+    }
   ]);
   const [cardClick, setCardClick] = useState<ClickState>({
     cardIndex: 0,
     divClickedOrigin: true
   });
 
+  const [itemXid, setItemXid] = useState(questions[0].xid)
+  const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<Question | null>(null)
   const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
   const handleChange = (e: React.ChangeEvent<any>) => {
@@ -134,8 +169,9 @@ const Page: React.FC<Props> = (props) => {
       return { ...prevState, [e.target.name]: e.target.value }
     })
   }
-  const handleCardClick = (divClick: boolean, idx: number) => {
+  const handleCardClick = (divClick: boolean, idx: number, itemXid?: string) => {
     setCardClick({ cardIndex: idx, divClickedOrigin: divClick })
+    setItemXid(itemXid)
   }
 
   const layoutRef = useRef<HTMLDivElement>(null)
@@ -248,15 +284,17 @@ const Page: React.FC<Props> = (props) => {
   const addQuestions = () => {
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
+      const question = { ...defaultQuestion, xid: uuidv4() }
       let newIdx = 0
       if (cardIndex != undefined) {
-        prevQuestion.splice(cardIndex + 1, 0, defaultQuestion)
+        prevQuestion.splice(cardIndex + 1, 0, question)
         newIdx = cardIndex + 1
       } else {
-        prevQuestion.push(defaultQuestion)
+        prevQuestion.push(question)
         newIdx = prevQuestion.length - 1
       }
       setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
+      setItemXid(question.xid)
       return [...prevQuestion]
     })
   }
@@ -265,10 +303,13 @@ const Page: React.FC<Props> = (props) => {
       const { cardIndex } = { ...cardClick }
       let newIdx = cardIndex
       if (cardIndex != undefined) {
-        prevQuestion.splice(cardIndex + 1, 0, prevQuestion[cardIndex])
+        const question = { ...prevQuestion[cardIndex], xid: uuidv4() }
+        prevQuestion.splice(cardIndex + 1, 0, question)
+        setItemXid(question.xid)
         newIdx = cardIndex + 1
       }
       setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
+
       return [...prevQuestion]
     })
   }
@@ -276,8 +317,10 @@ const Page: React.FC<Props> = (props) => {
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
       if (cardIndex) {
+        const newIndex = cardIndex == 0 && questions.length > 1 ? cardIndex : cardIndex - 1
         prevQuestion.splice(cardIndex, 1)
-        setCardClick({ cardIndex: cardIndex == 0 && questions.length > 1 ? cardIndex : cardIndex - 1, divClickedOrigin: true })
+        setItemXid(prevQuestion[newIndex].xid)
+        setCardClick({ cardIndex: newIndex, divClickedOrigin: true })
       }
       return [...prevQuestion]
     })
@@ -298,6 +341,7 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Add title and description",
       icon: <AiOutlineFontSize />,
+      onClick: () => console.log(itemXid)
     },
     {
       title: "Add image",
@@ -320,28 +364,28 @@ const Page: React.FC<Props> = (props) => {
   }
   const [drag, setDrag] = useState<dragProp>({
     current: null,
-    prev: null
+    prev: null,
   })
   const handleDragEnd = useCallback(() => {
     setDrag((prevDrag) => {
       setCardClick({ cardIndex: prevDrag.current, divClickedOrigin: false })
+      setItemXid(questions[prevDrag.current ?? 0].xid)
       return {
         current: null,
-        prev: null
+        prev: null,
       }
     })
-  }, [])
+  }, [questions])
   const handleDragging = useCallback((event: any) => {
     const move = (index: number, direction: "up" | "down") => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
       if (nextIndex >= 0 && nextIndex < questions.length && index !== drag.prev) {
-        console.log({ index, nextIndex, ans1: questions[index].answerOptions, ans2: questions[nextIndex].answerOptions })
         const temp = swap([...questions], index, nextIndex)
-        console.log({ temp })
         setQuestions(temp)
         setDrag({ current: nextIndex, prev: index })
       }
     }
+
     if (drag.current != null && drag.current != drag.prev) {
       const isLastCard = drag.current >= questions.length - 1
       const isFirstCard = drag.current === 0
@@ -367,7 +411,7 @@ const Page: React.FC<Props> = (props) => {
 
   useEffect(() => {
     if (drag.current != null) {
-      window.addEventListener('mouseup', handleDragEnd)
+      window.addEventListener('mouseup', handleDragEnd, { passive: true })
       window.addEventListener('mousemove', handleDragging, { passive: true })
     }
     return () => {
@@ -470,18 +514,18 @@ const Page: React.FC<Props> = (props) => {
               style={{ minHeight: state.minHeight, cursor: drag.current != null ? "move" : "auto" }}
               onMouseMove={handleMouseMove}
             >
-              {drag.current != null && (
+              {drag.current != null && currentlyDraggedItem != null && (
                 <div className='relative'>
                   <div
                     style={{ top: dragY }}
                     className='absolute z-20 w-full opacity-50'
                   >
-                    <CardContainer selected={true}>
+                    <CardContainer selected={currentlyDraggedItem.xid == itemXid}>
                       <div className='pt-6 pb-2 px-6 '>
                         <div className='flex flex-wrap items-start'>
                           <div className="flex-grow max-w-full ml-2 mr-1">
                             <Input
-                              value={questions[drag.current].title}
+                              value={currentlyDraggedItem.title}
                               containerClass=' bg-gray-100'
                               className="text-base p-3 bg-gray-100 cursor-move"
                               placeholder="Question"
@@ -491,13 +535,13 @@ const Page: React.FC<Props> = (props) => {
                             <MenuIcon icon={<MdOutlineImage />} />
                           </div>
                           <div className="w-60">
-                            <Select value={questions[drag.current].type} />
+                            <Select value={currentlyDraggedItem.type} />
                           </div>
                         </div>
                         <div className='flex justify-center items-center h-12'>
                           <IoEllipsisHorizontalSharp size={18} style={{ color: "darkgray" }} />
                         </div>
-                        <div className="flex justify-end items-center border-t-[1.5px] pt-2">
+                        <div className={classNames(drag.current == cardClick.cardIndex ? "flex" : "hidden", 'flex justify-end items-center border-t-[1.5px] pt-2')}>
                           <MenuIcon
                             additionalClass='mx-[1px]'
                             icon={<MdContentCopy />}
@@ -510,7 +554,7 @@ const Page: React.FC<Props> = (props) => {
                           <span className='text-sm ml-2 mr-3'>Required</span>
                           <Toggle
                             handleChange={() => { }}
-                            value={questions[drag.current].required}
+                            value={currentlyDraggedItem.required}
                           />
                           <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
                             <BiDotsVerticalRounded size={24} color="#5f6368" />
@@ -557,7 +601,8 @@ const Page: React.FC<Props> = (props) => {
                 </div>
               </CardContainer>
               {questions.map((row: Question, i: number) => {
-                const selected = i == cardClick.cardIndex
+                // const selected = i == cardClick.cardIndex
+                const selected = itemXid == row.xid
                 const textPreview = row.required || row.title === ""
                 return (
                   <CardContainer
@@ -565,7 +610,7 @@ const Page: React.FC<Props> = (props) => {
                     selected={selected}
                     onClick={(event) => {
                       if (!selected) {
-                        handleCardClick(event.target instanceof HTMLDivElement, i)
+                        handleCardClick(event.target instanceof HTMLDivElement, i, row.xid)
                       }
                     }}
                     key={i}
@@ -574,6 +619,8 @@ const Page: React.FC<Props> = (props) => {
                       event.preventDefault()
                       setCardClick({ cardIndex: null, divClickedOrigin: false })
                       setDrag({ current: i, prev: null })
+                      setCurrentlyDraggedItem(row)
+                      setDragY(event.clientY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
                     }}
                   >
                     <div className={classNames(selected ? "p-6 pb-2" : "p-6")}>
