@@ -1,18 +1,15 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
-// import Select from '../forms/general-form/select'
 import TextAnswer from './textAnswer'
 import Input from '@modules/Input'
 import { Question } from '@interfaces/question.interface';
 import { MdRadioButtonUnchecked, MdCheckBoxOutlineBlank, MdClose, MdOutlineImage, MdWarning, } from 'react-icons/md'
 import MenuIcon from '@modules/MenuIcon'
-import { FiTrash2 } from 'react-icons/fi'
-import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
+import { IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { OptionChoices } from '@interfaces/question.interface';
 import { IconContext } from 'react-icons';
 import Tooltip from '@modules/Tooltip'
 import { classNames } from '@helpers';
 import Select from '@modules/Select'
-import { choicesData } from '@components/dashboard/defaults'
 import { Item } from '@interfaces/dropdown.interface';
 
 interface Icon {
@@ -300,40 +297,6 @@ const AnswerOption = ({ questionProps, selected = false, setOptionsValue, option
     } = questionProps
 
     const { value } = type
-    // const [content, setContent] = useState<JSX.Element | null>(null)
-    // useEffect(() => {
-    // if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {
-    //     setContent(<TextAnswer type={value} />)
-    // } else if (value == 'multiple_choice' || value == 'checkboxes' || value == 'dropdown') {
-    //     setContent(<ChoicesAnswer
-    //         type={value}
-    //         answerOptions={answerOptionsValue}
-    //         setAnswerOptions={setAnswerOptions}
-    //         otherOption={otherOption}
-    //         setOtherOption={setOtherOption}
-    //         selected={selected}
-    //         goToSection={initialMoreOptions?.includes("go_to_section")}
-    //     />)
-    // } else {
-    //     setContent(<></>)
-    // }
-    // }, [value, answerOptions, otherOption, selected, initialMoreOptions])
-
-    // useEffect(() =>{
-    //     setOptionsValue(answerOptions)
-    // }, [answerOptions])
-    // else if (value == 'linear_scale') {
-    //     content = <LinearScaleAnswer
-    //         linearValueOptions={linearValueOptions}
-    //         setQuestionValue={setQuestionValue} />
-    // } else if (value == 'multiple_choice_grid') {
-    //     content = <GridChoicesAnswer
-    //         type={value}
-    //         gridRowOptions={gridRowOptions}
-    //         gridColumnOptions={gridColumnOptions}
-    //         setQuestionValue={setQuestionValue}
-    //     />
-    // }
     let content = <></>
 
     if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {
