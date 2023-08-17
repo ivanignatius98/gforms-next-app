@@ -1,18 +1,15 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react'
-// import Select from '../forms/general-form/select'
 import TextAnswer from './textAnswer'
 import Input from '@modules/Input'
 import { Question } from '@interfaces/question.interface';
 import { MdRadioButtonUnchecked, MdCheckBoxOutlineBlank, MdClose, MdOutlineImage, MdWarning, } from 'react-icons/md'
 import MenuIcon from '@modules/MenuIcon'
-import { FiTrash2 } from 'react-icons/fi'
-import { IoAddCircleOutline, IoEllipsisHorizontalSharp } from 'react-icons/io5'
+import { IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { OptionChoices } from '@interfaces/question.interface';
 import { IconContext } from 'react-icons';
 import Tooltip from '@modules/Tooltip'
 import { classNames } from '@helpers';
 import Select from '@modules/Select'
-import { choicesData } from '@components/dashboard/defaults'
 import { Item } from '@interfaces/dropdown.interface';
 
 interface Icon {
@@ -91,42 +88,39 @@ interface ChoiceProps {
     selected: boolean
     goToSection: boolean
     answerOptions: OptionChoices[]
-    setAnswerOptions: React.Dispatch<React.SetStateAction<OptionChoices[]>>
-    setOtherOption: React.Dispatch<React.SetStateAction<boolean>>
+    setAnswerOptions: (newValue: OptionChoices[]) => void
+    setOtherOption: (newValue: boolean) => void
 }
 const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, setOtherOption, selected = false, goToSection }: ChoiceProps) => {
     const inputRefs = useRef<HTMLInputElement[]>([])
     const addAnswerOption = () => {
-        setAnswerOptions((prevProps) => {
-            const newValue = `Option ${prevProps.length + 1}`
-            prevProps.push({
-                value: newValue,
-                image: '',
-                previewImage: ''
-            })
-            return [...prevProps]
+        const prevProps = [...answerOptions]
+        const newValue = `Option ${prevProps.length + 1}`
+        prevProps.push({
+            value: newValue,
+            image: '',
+            previewImage: ''
         })
+        setAnswerOptions([...prevProps])
     }
     const setItemValue = (newValue: string, index: number, prevError: boolean = false) => {
-        setAnswerOptions((prevProps) => {
-            const error = newValue != "" && prevProps.filter((row, i) => i != index && row.value === newValue).length > 0
-            prevProps[index] = {
-                ...prevProps[index],
-                value: newValue,
-                error,
-                persistError: prevError && error
-            }
-            return [...prevProps]
-        })
+        const prevProps = [...answerOptions]
+        const error = newValue != "" && prevProps.filter((row, i) => i != index && row.value === newValue).length > 0
+        prevProps[index] = {
+            ...prevProps[index],
+            value: newValue,
+            error,
+            persistError: prevError && error
+        }
+        setAnswerOptions([...prevProps])
     }
     const handleSectionSelect = (value: Item, index: number) => {
-        setAnswerOptions((prevProps) => {
-            prevProps[index] = {
-                ...prevProps[index],
-                goToSectionVal: value,
-            }
-            return [...prevProps]
-        })
+        const prevProps = [...answerOptions]
+        prevProps[index] = {
+            ...prevProps[index],
+            goToSectionVal: value,
+        }
+        setAnswerOptions([...prevProps])
     }
     // const setItemImage = (newImage, index) => {
     //     const temp = [...answerOptions]
@@ -158,11 +152,10 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
         }
     ]
     const deleteItem = (index: number) => {
-        setAnswerOptions((prevProps) => {
-            const newProps = prevProps.slice()
-            newProps.splice(index, 1)
-            return [...newProps]
-        })
+        const prevProps = [...answerOptions]
+        const newProps = prevProps.slice()
+        newProps.splice(index, 1)
+        setAnswerOptions([...newProps])
         setTimeout(() => inputRefs.current[index - 1 > 0 ? index - 1 : 0].focus(), 10);
     }
     const otherType = type != 'dropdown'
@@ -291,55 +284,36 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
 }
 interface AnswerProps {
     questionProps: Question
-    setQuestionValue: Function
     selected: boolean
+    optionsValue: OptionChoices[]
+    otherOptionValue: boolean
+    setOptionsValue: (newValue: OptionChoices[]) => void,
+    setOtherOptionValue: (newValue: boolean) => void,
 }
-const AnswerOption = ({ setQuestionValue, questionProps, selected = false }: AnswerProps) => {
+const AnswerOption = ({ questionProps, selected = false, setOptionsValue, optionsValue, otherOptionValue, setOtherOptionValue }: AnswerProps) => {
     const {
         type,
-        answerOptions: initialAnswer,
         moreOptionValues: initialMoreOptions,
-        gridRowOptions,
-        gridColumnOptions,
-        linearValueOptions,
-        otherOption: initialOtherOption
     } = questionProps
 
     const { value } = type
-    const [content, setContent] = useState<JSX.Element | null>(null)
-    const [answerOptions, setAnswerOptions] = useState<OptionChoices[]>([...initialAnswer])
-    const [otherOption, setOtherOption] = useState(initialOtherOption)
-    useEffect(() => {
-        if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {
-            setContent(<TextAnswer type={value} />)
-        } else if (value == 'multiple_choice' || value == 'checkboxes' || value == 'dropdown') {
-            setContent(<ChoicesAnswer
-                type={value}
-                answerOptions={answerOptions}
-                setAnswerOptions={setAnswerOptions}
-                otherOption={otherOption}
-                setOtherOption={setOtherOption}
-                selected={selected}
-                goToSection={initialMoreOptions?.includes("go_to_section")}
-            />)
-        } else {
-            setContent(<></>)
-        }
-        setQuestionValue({ answerOptions, otherOption })
-    }, [value, answerOptions, otherOption, selected, initialMoreOptions])
+    let content = <></>
 
-    // else if (value == 'linear_scale') {
-    //     content = <LinearScaleAnswer
-    //         linearValueOptions={linearValueOptions}
-    //         setQuestionValue={setQuestionValue} />
-    // } else if (value == 'multiple_choice_grid') {
-    //     content = <GridChoicesAnswer
-    //         type={value}
-    //         gridRowOptions={gridRowOptions}
-    //         gridColumnOptions={gridColumnOptions}
-    //         setQuestionValue={setQuestionValue}
-    //     />
-    // }
+    if (value == 'short_answer' || value == 'paragraph' || value == 'date' || value == 'time') {
+        content = (<TextAnswer type={value} />)
+    } else if (value == 'multiple_choice' || value == 'checkboxes' || value == 'dropdown') {
+        content = (<ChoicesAnswer
+            type={value}
+            answerOptions={optionsValue}
+            setAnswerOptions={setOptionsValue}
+            otherOption={otherOptionValue}
+            setOtherOption={setOtherOptionValue}
+            selected={selected}
+            goToSection={initialMoreOptions?.includes("go_to_section")}
+        />)
+    } else {
+        content = (<></>)
+    }
     return content
 }
 
