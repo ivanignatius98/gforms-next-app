@@ -277,9 +277,10 @@ const Page: React.FC<Props> = (props) => {
   const removeQuestion = () => {
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
-      if (cardIndex) {
-        const newIndex = cardIndex == 0 && questions.length > 1 ? cardIndex : cardIndex - 1
+      if (cardIndex != null && questions.length > 1) {
         prevQuestion.splice(cardIndex, 1)
+
+        const newIndex = cardIndex == 0 ? cardIndex : cardIndex - 1
         setItemXid(prevQuestion[newIndex].xid)
         setCardClick({ cardIndex: newIndex, divClickedOrigin: true })
       }
@@ -322,58 +323,73 @@ const Page: React.FC<Props> = (props) => {
   interface dragProp {
     current: number | null
     prev: number | null
+    isFirstCard: boolean | null
+    isLastCard: boolean | null
   }
-  const [drag, setDrag] = useState<dragProp>({
+  const defaultDragState = {
     current: null,
     prev: null,
-  })
+    isFirstCard: null,
+    isLastCard: null
+  }
+  const [drag, setDrag] = useState<dragProp>(defaultDragState)
   const handleDragEnd = useCallback(() => {
     setDrag((prevDrag) => {
       setCardClick({ cardIndex: prevDrag.current, divClickedOrigin: false })
       setItemXid(questions[prevDrag.current ?? 0].xid)
-      return {
-        current: null,
-        prev: null,
-      }
+      return defaultDragState
     })
   }, [questions])
+  const handleDragChange = (nextIndex: number, index: number | null) => {
+    setDrag(() => {
+      const dragCurrent = nextIndex
+      const isLastCard = dragCurrent >= questions.length - 1
+      const isFirstCard = dragCurrent === 0
+      return {
+        current: nextIndex,
+        prev: index,
+        isLastCard,
+        isFirstCard
+      }
+    })
+  }
   const handleDragging = useCallback((event: any) => {
     const move = (index: number, direction: "up" | "down") => {
       const nextIndex = direction === "up" ? index - 1 : index + 1
       if (nextIndex >= 0 && nextIndex < questions.length && index !== drag.prev) {
         const temp = swap([...questions], index, nextIndex)
         setQuestions(temp)
-        setDrag({ current: nextIndex, prev: index })
+        handleDragChange(nextIndex, index)
       }
     }
 
-    if (drag.current != null && drag.current != drag.prev) {
-      const isLastCard = drag.current >= questions.length - 1
-      const isFirstCard = drag.current === 0
-      const yCoordinate = event.clientY
-      if (yCoordinate <= 0) {
-        return
-      }
-      if (!isLastCard) {
-        const nextY = getLayoutY(cardRefs.current[drag.current + 1]) + 12
-        if (yCoordinate > nextY) {
-          move(drag.current, "down")
-        }
-      }
-      if (!isFirstCard) {
-        const prevY = getLayoutY(cardRefs.current[drag.current - 1]) + 12
-        if (yCoordinate < prevY) {
-          move(drag.current, "up")
-        }
-      }
-      setDragY(yCoordinate - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
+    if (drag.current == null || drag.current == drag.prev) {
+      return
     }
+
+    const yCoordinate = event.clientY
+    if (yCoordinate <= 0) {
+      return
+    }
+    if (!drag.isLastCard) {
+      const nextY = getLayoutY(cardRefs.current[drag.current + 1]) + 12
+      if (yCoordinate > nextY) {
+        move(drag.current, "down")
+      }
+    }
+    if (!drag.isFirstCard) {
+      const prevY = getLayoutY(cardRefs.current[drag.current - 1]) + 12
+      if (yCoordinate < prevY) {
+        move(drag.current, "up")
+      }
+    }
+    setDragY(yCoordinate - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
   }, [drag, questions])
 
   useEffect(() => {
     if (drag.current != null) {
-      window.addEventListener('mouseup', handleDragEnd, { passive: true })
-      window.addEventListener('mousemove', handleDragging, { passive: true })
+      window.addEventListener('mouseup', handleDragEnd)
+      window.addEventListener('mousemove', handleDragging)
     }
     return () => {
       window.removeEventListener('mouseup', handleDragEnd)
@@ -456,9 +472,6 @@ const Page: React.FC<Props> = (props) => {
   }
   // #endregion
 
-  //#region content
-
-  //#endregion
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -479,7 +492,7 @@ const Page: React.FC<Props> = (props) => {
                 <div className='relative'>
                   <div
                     style={{ top: dragY }}
-                    className='absolute z-20 w-full opacity-50'
+                    className='absolute z-20 w-full opacity-50 transition-all duration-[5ms]'
                   >
                     <CardContainer selected={currentlyDraggedItem.xid == itemXid}>
                       <div className='pt-6 pb-2 px-6 '>
@@ -579,7 +592,7 @@ const Page: React.FC<Props> = (props) => {
                     handleDragStart={(event) => {
                       event.preventDefault()
                       setCardClick({ cardIndex: null, divClickedOrigin: false })
-                      setDrag({ current: i, prev: null })
+                      handleDragChange(i, null)
                       setCurrentlyDraggedItem(row)
                       setDragY(event.clientY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
                     }}
