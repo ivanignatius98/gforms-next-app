@@ -64,7 +64,7 @@ const CardContainer = ({ children,
       ref={cardRef}
       onClick={onClick}
       style={{
-        opacity: currentlyDragged ? 0.5 : 1,
+        opacity: currentlyDragged ? 0 : 1,
         ...(currentlyDragged ? { height: selected ? 200 : 100 } : {})
       }}
       className={'bg-white w-full shadow-md rounded-md relative flex flex-col mb-4' + containerClass}
@@ -114,47 +114,8 @@ const Page: React.FC<Props> = (props) => {
     description: "",
     minHeight: "100vh",
   })
-  // const [questions, setQuestions] = useState<Question[]>([{...defaultQuestion, xid: uuidv4()}]);
 
-  const [questions, setQuestions] = useState<Question[]>([
-    {
-      ...defaultQuestion,
-      title: "Question A",
-      xid: "xid0",
-      answerOptions: [
-        { value: 'Option 1', error: false, image: '', previewImage: '' },
-        { value: 'Option 2', error: false, image: '', previewImage: '' },
-      ]
-    },
-    {
-      ...defaultQuestion,
-      title: "Question B",
-      xid: "xid1",
-      answerOptions: [
-        { value: 'Option 1', error: false, image: '', previewImage: '' },
-        { value: 'Option 2', error: false, image: '', previewImage: '' },
-      ]
-    },
-    {
-      ...defaultQuestion,
-      title: "QuestionC",
-      xid: "xid2",
-      answerOptions: [
-        { value: 'Option 1', error: false, image: '', previewImage: '' },
-        { value: 'Option 2', error: false, image: '', previewImage: '' },
-      ]
-    },
-
-    {
-      ...defaultQuestion,
-      title: "QuestionD",
-      xid: "xid3",
-      answerOptions: [
-        { value: 'Option 1', error: false, image: '', previewImage: '' },
-        { value: 'Option 2', error: false, image: '', previewImage: '' },
-      ]
-    }
-  ]);
+  const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
   const [cardClick, setCardClick] = useState<ClickState>({
     cardIndex: 0,
     divClickedOrigin: true
