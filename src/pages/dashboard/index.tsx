@@ -277,9 +277,10 @@ const Page: React.FC<Props> = (props) => {
   const removeQuestion = () => {
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
-      if (cardIndex) {
-        const newIndex = cardIndex == 0 && questions.length > 1 ? cardIndex : cardIndex - 1
+      if (cardIndex != null && questions.length > 1) {
         prevQuestion.splice(cardIndex, 1)
+
+        const newIndex = cardIndex == 0 ? cardIndex : cardIndex - 1
         setItemXid(prevQuestion[newIndex].xid)
         setCardClick({ cardIndex: newIndex, divClickedOrigin: true })
       }
