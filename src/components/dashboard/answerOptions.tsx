@@ -162,7 +162,16 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
     useEffect(() => {
         inputRefs.current = inputRefs.current.slice(0, answerOptions.length)
     }, [answerOptions])
-
+    const handleKeyDown = (event: any, index: number) => {
+        const { key = "" } = event
+        if (key === 'Enter') {
+            addAnswerOption()
+        } else if (key === "Backspace" || key === "Delete") {
+            if (memoizedAnswerOptions[index].value.length === 0) {
+                deleteItem(index)
+            }
+        }
+    }
     const memoizedAnswerOptions = useMemo(() => answerOptions, [answerOptions]);
     return (
         <>
@@ -211,6 +220,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                                     }
                                 }}
                                 placeholder={`Option ${index + 1}`}
+                                onKeyDown={(e) => handleKeyDown(e, index)}
                             />
                         </div>
                         <div className={classNames(item.persistError ? "flex" : 'hidden group-hover:flex group-focus-within:flex')}>

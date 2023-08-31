@@ -7,6 +7,7 @@ type Props = {
   value: string,
   name?: string,
   onChange?: (e: React.ChangeEvent<any>) => void,
+  onKeyDown?: (e: React.ChangeEvent<any>) => void,
   onFocus?: () => void,
   onBlur?: (e: React.ChangeEvent<any>) => void,
   containerClass?: string,
@@ -46,6 +47,7 @@ const Input: React.FC<Props> = ({ showOnHover = false, underline = true, showFoo
           placeholder={props.placeholder}
           value={value}
           className={'outline-none my-1 w-full ' + props.className}
+          onKeyDown={(event) => { props.onKeyDown?.(event) }}
           onChange={(event) => { props.onChange?.(event) }}
           onFocus={(event) => {
             setIsShowing(true)
