@@ -297,7 +297,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                 <div className='relative'>
                     <div
                         style={{ top: dragY }}
-                        className='absolute z-20 w-full opacity-50 transition-all duration-[5ms] '
+                        className='absolute z-20 w-full opacity-50'
                     >
                         <div
                             style={{ width: "calc(100% + 16px)" }}

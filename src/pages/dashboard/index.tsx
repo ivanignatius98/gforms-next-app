@@ -492,7 +492,7 @@ const Page: React.FC<Props> = (props) => {
                 <div className='relative'>
                   <div
                     style={{ top: dragY }}
-                    className='absolute z-20 w-full opacity-50 transition-all duration-[5ms]'
+                    className='absolute z-20 w-full opacity-50'
                   >
                     <CardContainer selected={currentlyDraggedItem.xid == itemXid}>
                       <div className='pt-6 pb-2 px-6 '>
