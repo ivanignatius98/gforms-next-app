@@ -9,6 +9,7 @@ interface WrapperProp {
   move: (index: number, nextIndex: number) => void
   cardRefs: MutableRefObject<HTMLDivElement[]> | null
   layoutRef: RefObject<HTMLDivElement> | null
+  staticCard?: boolean | null
 }
 interface dragProp {
   current: number | null
@@ -23,7 +24,8 @@ const DragWrapper = ({
   onDragEnd,
   cardRefs,
   move,
-  layoutRef
+  layoutRef,
+  staticCard = false,
 }: WrapperProp) => {
   const [dragY, setDragY] = useState(y);
 
@@ -90,7 +92,16 @@ const DragWrapper = ({
       }
     }
 
-    setDragY(yCoordinate - (getLayoutY(layoutRef?.current as HTMLDivElement) ?? 0) - 16)
+
+    if (staticCard) {
+      const cardHeight = 48
+      const newCoord = yCoordinate - (getLayoutY(layoutRef?.current as HTMLDivElement) ?? 0) - 16
+      if (newCoord > 0 && newCoord < (cardHeight * (cardRefs.current.length - 1))) {
+        setDragY(newCoord)
+      }
+    } else {
+      setDragY(yCoordinate - (getLayoutY(layoutRef?.current as HTMLDivElement) ?? 0) - 16)
+    }
     // setDragY(yCoordinate - 150);
   }, [cardRefs, drag, move]);
 
