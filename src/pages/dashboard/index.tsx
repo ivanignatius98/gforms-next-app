@@ -351,6 +351,11 @@ const Page: React.FC<Props> = (props) => {
   // const rerenderRef = useRef<number>(0)
   // rerenderRef.current += 1
   // console.log("rerender", rerenderRef.current)
+  // useEffect(() => {
+  // for (let i = 0; i < 10; i++) {
+  //   addQuestions()
+  // }
+  // }, [])
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -633,7 +638,6 @@ const Toolbar = ({
   const toolbarRef = useRef<HTMLDivElement>(null)
   const [sidebarY, setSidebarY] = useState(0)
   const repositionToolbar = useCallback((currY: number, scrollOrigin?: boolean) => {
-    console.log(layoutRef && (!currentlyDragging || scrollOrigin))
     if (layoutRef && (!currentlyDragging || scrollOrigin)) {
       const { innerHeight } = window;
       const navSize = 105
@@ -641,7 +645,6 @@ const Toolbar = ({
       const layoutY = layoutRef.current ? getLayoutY(layoutRef.current) : 0
       const topPosition = navSize + 40 - layoutY
       const bottomPosition = (layoutY * -1) + (innerHeight - (toolbarHeight ?? 0) - 16)
-
       const sidePosition = currY - layoutY
 
       let finalPos = sidePosition
@@ -652,7 +655,7 @@ const Toolbar = ({
       }
       setSidebarY(finalPos)
     }
-  }, [layoutRef, currentlyDragging])
+  }, [layoutRef, currentlyDragging, toolbarRef])
 
   const getY = () => {
     if (cardIndex == null || !headerRef || !cardRefs)
@@ -673,11 +676,8 @@ const Toolbar = ({
     // clean up code
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
-  }, [])
-
-  useEffect(() => {
-    repositionToolbar(getY())
   }, [cardIndex])
+
   return (
     <div
       ref={toolbarRef}
