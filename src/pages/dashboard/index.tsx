@@ -23,6 +23,7 @@ import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } fr
 import { classNames, debounce, getLayoutY, swap } from '@helpers'
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
 import { Question, OptionChoices } from '@interfaces/question.interface';
+import DragWrapper from '@modules/Drag';
 // #endregion
 
 //#region card content
@@ -121,7 +122,7 @@ const Page: React.FC<Props> = (props) => {
     divClickedOrigin: true
   });
 
-  const [itemXid, setItemXid] = useState(questions[0].xid)
+  const [itemXid, setItemXid] = useState<string | null | undefined>(null)
   const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<Question | null>(null)
   const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
@@ -320,109 +321,16 @@ const Page: React.FC<Props> = (props) => {
   ]
 
   //#region dragging behavior
-  interface dragProp {
-    current: number | null
-    prev: number | null
-    isFirstCard: boolean | null
-    isLastCard: boolean | null
+  const handleDragEnd = (endIndex: number) => {
+    setCurrentlyDraggedItem(null)
+    setCardClick({ cardIndex: endIndex, divClickedOrigin: false })
+    setItemXid(questions[endIndex ?? 0].xid)
   }
-  const defaultDragState = {
-    current: null,
-    prev: null,
-    isFirstCard: null,
-    isLastCard: null
+  const moveQuestions = (index: number, nextIndex: number) => {
+    const temp = swap([...questions], index, nextIndex)
+    setQuestions(temp)
   }
-  const [drag, setDrag] = useState<dragProp>(defaultDragState)
-  const handleDragEnd = useCallback(() => {
-    setDrag((prevDrag) => {
-      setCardClick({ cardIndex: prevDrag.current, divClickedOrigin: false })
-      setItemXid(questions[prevDrag.current ?? 0].xid)
-      return defaultDragState
-    })
-  }, [questions])
-  const handleDragChange = (nextIndex: number, index: number | null) => {
-    setDrag(() => {
-      const dragCurrent = nextIndex
-      const isLastCard = dragCurrent >= questions.length - 1
-      const isFirstCard = dragCurrent === 0
-      return {
-        current: nextIndex,
-        prev: index,
-        isLastCard,
-        isFirstCard
-      }
-    })
-  }
-  const handleDragging = useCallback((event: any) => {
-    const move = (index: number, direction: "up" | "down") => {
-      const nextIndex = direction === "up" ? index - 1 : index + 1
-      if (nextIndex >= 0 && nextIndex < questions.length && index !== drag.prev) {
-        const temp = swap([...questions], index, nextIndex)
-        setQuestions(temp)
-        handleDragChange(nextIndex, index)
-      }
-    }
-
-    if (drag.current == null || drag.current == drag.prev) {
-      return
-    }
-
-    const yCoordinate = event.clientY
-    if (yCoordinate <= 0) {
-      return
-    }
-    if (!drag.isLastCard) {
-      const nextY = getLayoutY(cardRefs.current[drag.current + 1]) + 12
-      if (yCoordinate > nextY) {
-        move(drag.current, "down")
-      }
-    }
-    if (!drag.isFirstCard) {
-      const prevY = getLayoutY(cardRefs.current[drag.current - 1]) + 12
-      if (yCoordinate < prevY) {
-        move(drag.current, "up")
-      }
-    }
-    setDragY(yCoordinate - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
-  }, [drag, questions])
-
-  useEffect(() => {
-    if (drag.current != null) {
-      window.addEventListener('mouseup', handleDragEnd)
-      window.addEventListener('mousemove', handleDragging)
-    }
-    return () => {
-      window.removeEventListener('mouseup', handleDragEnd)
-      window.removeEventListener('mousemove', handleDragging)
-    }
-  }, [drag, handleDragEnd, handleDragging])
-
-  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-    if (drag.current == null) {
-      return;
-    }
-    const y = event.clientY;
-    const windowHeight = window.innerHeight;
-    const offset = windowHeight - y;
-    const bottomBreakpoint = 150;
-    const getScrollSpeed = (yOffset: number) => {
-      const scrollSpeed = 20;
-      if (yOffset < (bottomBreakpoint / 2)) {
-        return 50;
-      }
-      if (yOffset < scrollSpeed) {
-        return 100;
-      }
-      return scrollSpeed;
-    }
-    const lastCardRect = getLayoutY(cardRefs.current[questions.length - 1])
-    if (y - offset < lastCardRect && offset < bottomBreakpoint) {
-      window.scrollTo(0, window.pageYOffset + getScrollSpeed(offset))
-    } else if (y < bottomBreakpoint) {
-      window.scrollTo(0, window.pageYOffset - getScrollSpeed(y))
-    }
-  }
-  //#endregion
+  // //#endregion
   //#region map more options
   interface contents {
     content: Item
@@ -471,7 +379,7 @@ const Page: React.FC<Props> = (props) => {
     }
   }
   // #endregion
-
+  console.log("rerender")
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -485,59 +393,63 @@ const Page: React.FC<Props> = (props) => {
             }}
           >
             <div className='min-w-[300px] sm:w-[770px] pb-16'
-              style={{ minHeight: state.minHeight, cursor: drag.current != null ? "move" : "auto" }}
-              onMouseMove={handleMouseMove}
+              style={{
+                minHeight: state.minHeight,
+                cursor: currentlyDraggedItem != null ? "move" : "auto"
+              }}
             >
-              {drag.current != null && currentlyDraggedItem != null && (
-                <div className='relative'>
-                  <div
-                    style={{ top: dragY }}
-                    className='absolute z-20 w-full opacity-50'
-                  >
-                    <CardContainer selected={currentlyDraggedItem.xid == itemXid}>
-                      <div className='pt-6 pb-2 px-6 '>
-                        <div className='flex flex-wrap items-start'>
-                          <div className="flex-grow max-w-full ml-2 mr-1">
-                            <Input
-                              value={currentlyDraggedItem.title}
-                              containerClass=' bg-gray-100'
-                              className="text-base p-3 bg-gray-100 cursor-move"
-                              placeholder="Question"
-                            />
-                          </div>
-                          <div className='mx-1 cursor-move'>
-                            <MenuIcon icon={<MdOutlineImage />} />
-                          </div>
-                          <div className="w-60">
-                            <Select value={currentlyDraggedItem.type} />
-                          </div>
+              {currentlyDraggedItem != null && (
+                <DragWrapper
+                  layoutRef={layoutRef}
+                  cardRefs={cardRefs}
+                  draggedItem={currentlyDraggedItem}
+                  y={dragY}
+                  onDragEnd={handleDragEnd}
+                  move={moveQuestions}
+                >
+                  <CardContainer selected={currentlyDraggedItem.xid == itemXid} >
+                    <div className='pt-6 pb-2 px-6 '>
+                      <div className='flex flex-wrap items-start'>
+                        <div className="flex-grow max-w-full ml-2 mr-1">
+                          <Input
+                            value={currentlyDraggedItem.title}
+                            containerClass=' bg-gray-100'
+                            className="text-base p-3 bg-gray-100 cursor-move"
+                            placeholder="Question"
+                          />
                         </div>
-                        <div className='flex justify-center items-center h-12'>
-                          <IoEllipsisHorizontalSharp size={18} style={{ color: "darkgray" }} />
+                        <div className='mx-1 cursor-move'>
+                          <MenuIcon icon={<MdOutlineImage />} />
                         </div>
-                        <div className={classNames(drag.current == cardClick.cardIndex ? "flex" : "hidden", 'flex justify-end items-center border-t-[1.5px] pt-2')}>
-                          <MenuIcon
-                            additionalClass='mx-[1px]'
-                            icon={<MdContentCopy />}
-                          />
-                          <MenuIcon
-                            additionalClass='mx-[1px]'
-                            icon={<FiTrash2 />}
-                          />
-                          <div className='border-l-[1.5px] h-8 mx-2'></div>
-                          <span className='text-sm ml-2 mr-3'>Required</span>
-                          <Toggle
-                            handleChange={() => { }}
-                            value={currentlyDraggedItem.required}
-                          />
-                          <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
-                            <BiDotsVerticalRounded size={24} color="#5f6368" />
-                          </button>
+                        <div className="w-60">
+                          <Select value={currentlyDraggedItem.type} />
                         </div>
                       </div>
-                    </CardContainer>
-                  </div>
-                </div>
+                      <div className='flex justify-center items-center h-12'>
+                        <IoEllipsisHorizontalSharp size={18} style={{ color: "darkgray" }} />
+                      </div>
+                      <div className={classNames(currentlyDraggedItem.xid == itemXid ? "flex" : "hidden", 'flex justify-end items-center border-t-[1.5px] pt-2')}>
+                        <MenuIcon
+                          additionalClass='mx-[1px]'
+                          icon={<MdContentCopy />}
+                        />
+                        <MenuIcon
+                          additionalClass='mx-[1px]'
+                          icon={<FiTrash2 />}
+                        />
+                        <div className='border-l-[1.5px] h-8 mx-2'></div>
+                        <span className='text-sm ml-2 mr-3'>Required</span>
+                        <Toggle
+                          handleChange={() => { }}
+                          value={currentlyDraggedItem.required}
+                        />
+                        <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
+                          <BiDotsVerticalRounded size={24} color="#5f6368" />
+                        </button>
+                      </div>
+                    </div>
+                  </CardContainer>
+                </DragWrapper>
               )}
               <div className='relative hidden form:block'>
                 <Toolbar
@@ -588,12 +500,12 @@ const Page: React.FC<Props> = (props) => {
                       }
                     }}
                     key={i}
-                    currentlyDragged={drag.current == i}
+                    currentlyDragged={currentlyDraggedItem ? row.xid == currentlyDraggedItem.xid : false}
                     handleDragStart={(event) => {
                       event.preventDefault()
                       setCardClick({ cardIndex: null, divClickedOrigin: false })
-                      handleDragChange(i, null)
-                      setCurrentlyDraggedItem(row)
+                      // handleDragChange(i, null)
+                      setCurrentlyDraggedItem({ ...row, index: i })
                       setDragY(event.clientY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
                     }}
                   >
