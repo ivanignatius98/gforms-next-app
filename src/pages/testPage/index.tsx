@@ -37,14 +37,9 @@ import React, { useMemo, useCallback, useState, useEffect } from "react";
 // };
 
 const App = () => {
-  const [dragY, setDragY] = useState(0);
-  const [draggedItem, setDraggedItem] = useState(null);
   console.log("RERENDER")
   return (
     <Layout>
-      <DragWrapper y={dragY} draggedItem={draggedItem}>
-        test
-      </DragWrapper>
       <button
         style={{
           height: 200,
@@ -53,8 +48,6 @@ const App = () => {
           zIndex: 200,
         }}
         onMouseDown={(e) => {
-          setDraggedItem(1);
-          setDragY(e.clientY);
         }}
       >
         test
