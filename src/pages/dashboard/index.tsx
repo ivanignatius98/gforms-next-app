@@ -1,5 +1,5 @@
 //#region imports
-import { useState, useRef, useEffect, Ref, useCallback } from 'react';
+import { useState, useRef, useEffect, Ref, useCallback, useMemo, RefObject, MutableRefObject } from 'react';
 import { connect } from 'react-redux'
 import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
@@ -58,6 +58,29 @@ const CardContainer = ({ children,
   const handleMouseLeave = () => {
     setIsHovered(false);
   };
+  // Use useMemo to create a memoized version of the button component
+  const buttonComponent = useMemo(() => {
+    return (
+      <button
+        className={classNames(
+          selected || isHovered ? "flex" : "hidden",
+          "absolute top-0 w-full justify-center items-center cursor-move"
+        )}
+        onMouseDown={handleDragStart}
+        style={{
+          userSelect: "none",
+        }}
+      >
+        <IconContext.Provider value={{ style: { display: 'flex' } }}>
+          <div>
+            <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
+            <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
+          </div>
+        </IconContext.Provider>
+      </button>
+    );
+  }, [isHovered, handleDragStart, selected]);
+
   return (
     <div
       onMouseEnter={handleMouseEnter}
@@ -71,22 +94,8 @@ const CardContainer = ({ children,
       className={'bg-white w-full shadow-md rounded-md relative flex flex-col mb-4' + containerClass}
     >
       {topHeader ?
-        <div className=' bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-[9px] w-full'></div> :
-        <button
-          className="absolute top-0 w-full justify-center items-center cursor-move"
-          onMouseDown={handleDragStart}
-          style={{
-            userSelect: "none",
-            display: isHovered || selected ? "flex" : "none"
-          }}
-        >
-          <IconContext.Provider value={{ style: { display: 'flex' } }}>
-            <div>
-              <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
-              <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
-            </div>
-          </IconContext.Provider>
-        </button>
+        <div className='bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-[9px] w-full'></div> :
+        buttonComponent // Render the memoized button component
       }
       {selected &&
         <div
@@ -124,7 +133,6 @@ const Page: React.FC<Props> = (props) => {
 
   const [itemXid, setItemXid] = useState<string | null | undefined>(null)
   const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<Question | null>(null)
-  const [sidebarY, setSidebarY] = useState(0)
   const [dragY, setDragY] = useState(0)
   const handleChange = (e: React.ChangeEvent<any>) => {
     setState((prevState) => {
@@ -137,30 +145,10 @@ const Page: React.FC<Props> = (props) => {
   }
 
   const layoutRef = useRef<HTMLDivElement>(null)
-  const toolbarRef = useRef<HTMLDivElement>(null)
   const cardRefs = useRef<HTMLDivElement[]>([])
   const inputRefs = useRef<HTMLInputElement[]>([])
   const headerRef = useRef<HTMLDivElement>(null)
   const headerInputRef = useRef<HTMLInputElement>(null)
-
-  const repositionToolbar = useCallback((currY: number) => {
-    const { innerHeight } = window;
-    const navSize = 105
-    const toolbarHeight = toolbarRef.current?.getBoundingClientRect().height ?? 0
-    const layoutY = getLayoutY(layoutRef.current as HTMLDivElement) ?? 0
-    const topPosition = navSize + 16 - layoutY
-    const bottomPosition = (layoutY * -1) + (innerHeight - (toolbarHeight ?? 0) - 16)
-
-    const sidePosition = currY - layoutY
-
-    let finalPos = sidePosition
-    if (currY <= navSize) {
-      finalPos = topPosition
-    } else if (bottomPosition < sidePosition) {
-      finalPos = bottomPosition
-    }
-    setSidebarY(finalPos)
-  }, [])
 
   const [viewportWidth, setViewportWidth] = useState<number | null>(null);
   // selected index change
@@ -174,27 +162,8 @@ const Page: React.FC<Props> = (props) => {
           inputRefs?.current[cardIndex].focus()
         }
       }
-      if ((viewportWidth ?? 0) > hideToolbarBreakpoint) {
-        const getY = () => {
-          if (cardIndex == null)
-            return 0
-          const curr = cardIndex == -1 ? headerRef.current : cardRefs?.current[cardIndex]
-          return getLayoutY(curr as HTMLDivElement)
-        }
-        setTimeout(() => repositionToolbar(getY()), 0)
-        // scroll behavior
-        const onScroll = () => {
-          const repositionToolbarDebounced = debounce(repositionToolbar, 50)
-          const y = getY()
-          repositionToolbarDebounced(y)
-        };
-        // clean up code
-        window.removeEventListener('scroll', onScroll);
-        window.addEventListener('scroll', onScroll, { passive: true });
-        return () => window.removeEventListener('scroll', onScroll);
-      }
     }
-  }, [cardClick, repositionToolbar])
+  }, [cardClick])
 
   useEffect(() => {
     cardRefs.current = cardRefs.current.slice(0, questions.length)
@@ -379,7 +348,9 @@ const Page: React.FC<Props> = (props) => {
     }
   }
   // #endregion
-  console.log("rerender")
+  // const rerenderRef = useRef<number>(0)
+  // rerenderRef.current += 1
+  // console.log("rerender", rerenderRef.current)
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -453,10 +424,13 @@ const Page: React.FC<Props> = (props) => {
               )}
               <div className='relative hidden form:block'>
                 <Toolbar
+                  currentlyDragging={currentlyDraggedItem != null}
                   viewportWidth={viewportWidth ?? 100}
                   menus={menus}
-                  toolbarRef={toolbarRef}
-                  sidebarY={sidebarY}
+                  cardIndex={cardClick.cardIndex}
+                  layoutRef={layoutRef}
+                  cardRefs={cardRefs}
+                  headerRef={headerRef}
                 />
               </div>
               <CardContainer
@@ -487,8 +461,7 @@ const Page: React.FC<Props> = (props) => {
                 </div>
               </CardContainer>
               {questions.map((row: Question, i: number) => {
-                // const selected = i == cardClick.cardIndex
-                const selected = itemXid == row.xid
+                const selected = cardClick.cardIndex != -1 && itemXid == row.xid
                 const textPreview = row.required || row.title === ""
                 return (
                   <CardContainer
@@ -620,11 +593,17 @@ const Page: React.FC<Props> = (props) => {
 
 interface ToolbarProps {
   menus: any[],
-  toolbarRef?: Ref<HTMLDivElement>,
-  sidebarY?: number,
   viewportWidth?: number
+  cardIndex: number | null
+  layoutRef: RefObject<HTMLDivElement> | null
+  headerRef: RefObject<HTMLDivElement> | null
+  cardRefs: MutableRefObject<HTMLDivElement[]> | null
+  currentlyDragging: boolean
 }
-const BottomToolbar = ({ menus }: ToolbarProps) => {
+interface MenuProps {
+  menus: any[]
+}
+const BottomToolbar = ({ menus }: MenuProps) => {
   return (
     <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md bottom-0 mx-5'>
       {menus.map((row, i) =>
@@ -642,12 +621,68 @@ const BottomToolbar = ({ menus }: ToolbarProps) => {
     </div>
   )
 }
-const Toolbar = ({ toolbarRef, sidebarY, menus, viewportWidth = 100 }: ToolbarProps) => {
+const Toolbar = ({
+  cardIndex,
+  layoutRef,
+  headerRef,
+  cardRefs,
+  menus,
+  viewportWidth = 100,
+  currentlyDragging = false
+}: ToolbarProps) => {
+  const toolbarRef = useRef<HTMLDivElement>(null)
+  const [sidebarY, setSidebarY] = useState(0)
+  const repositionToolbar = useCallback((currY: number, scrollOrigin?: boolean) => {
+    console.log(layoutRef && (!currentlyDragging || scrollOrigin))
+    if (layoutRef && (!currentlyDragging || scrollOrigin)) {
+      const { innerHeight } = window;
+      const navSize = 105
+      const toolbarHeight = toolbarRef.current?.getBoundingClientRect().height ?? 0
+      const layoutY = layoutRef.current ? getLayoutY(layoutRef.current) : 0
+      const topPosition = navSize + 40 - layoutY
+      const bottomPosition = (layoutY * -1) + (innerHeight - (toolbarHeight ?? 0) - 16)
+
+      const sidePosition = currY - layoutY
+
+      let finalPos = sidePosition
+      if (currY <= navSize) {
+        finalPos = topPosition
+      } else if (bottomPosition < sidePosition) {
+        finalPos = bottomPosition
+      }
+      setSidebarY(finalPos)
+    }
+  }, [layoutRef, currentlyDragging])
+
+  const getY = () => {
+    if (cardIndex == null || !headerRef || !cardRefs)
+      return 0
+    const curr = cardIndex == -1 ? headerRef?.current : cardRefs?.current[cardIndex]
+    return getLayoutY(curr)
+  }
+
+  useEffect(() => {
+    repositionToolbar(getY())
+
+    // scroll behavior
+    const onScroll = () => {
+      const repositionToolbarDebounced = debounce(repositionToolbar, 150)
+      const y = getY()
+      repositionToolbarDebounced(y, true)
+    };
+    // clean up code
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [])
+
+  useEffect(() => {
+    repositionToolbar(getY())
+  }, [cardIndex])
   return (
     <div
       ref={toolbarRef}
       style={{ top: sidebarY, zIndex: 1 }}
-      className='items-center  transition-all duration-500 flex flex-col shadow-md bg-white rounded-md absolute -right-16 px-[2px] py-1'>
+      className='items-center  transition-all duration-300 flex flex-col shadow-md bg-white rounded-md absolute -right-16 px-[2px] py-1'>
       {menus.map((row, i) =>
         <div key={i} className='m-[6px]' onClick={row.onClick}>
           <MenuIcon

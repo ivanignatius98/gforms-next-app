@@ -95,10 +95,10 @@ const DragWrapper = ({
   }, [cardRefs, drag, move]);
 
   const handleDragEnd = () => {
-    setDrag((prevDrag) => {
-      onDragEnd(prevDrag.current ?? 0)
-      return defaultDragState
-    })
+    onDragEnd(drag.current ?? 0)
+    setTimeout(() => {
+      setDrag(defaultDragState)
+    }, 10);
   }
   useEffect(() => {
     if (draggedItem != null) {
