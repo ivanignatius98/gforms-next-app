@@ -11,6 +11,7 @@ import Tooltip from '@modules/Tooltip'
 import { classNames, getLayoutY, swap } from '@helpers';
 import Select from '@modules/Select'
 import { Item } from '@interfaces/dropdown.interface';
+import DragWrapper from '@modules/Drag';
 
 interface Icon {
     type: string
@@ -172,167 +173,64 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
             }
         }
     }
-    const cardHeight = 48
-    //#region dragging behavior
-    interface dragProp {
-        current: number | null
-        prev: number | null
-        isFirstCard: boolean | null
-        isLastCard: boolean | null
-    }
-    const defaultDragState = {
-        current: null,
-        prev: null,
-        isFirstCard: null,
-        isLastCard: null
-    }
     const layoutRef = useRef<HTMLDivElement>(null)
     const optionsRef = useRef<HTMLDivElement[]>([])
-    const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<OptionChoices | null>(null)
+    const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<OptionChoices & { index: number } | null>(null)
     const [dragY, setDragY] = useState(0)
-    const [drag, setDrag] = useState<dragProp>(defaultDragState)
-    const handleDragEnd = useCallback(() => {
-        setDrag((prevDrag) => {
-            // seFtCardClick({ cardIndex: prevDrag.current, divClickedOrigin: false })
-            // setItemXid(questions[prevDraFg.current ?? 0].xid)
-            return defaultDragState
-        })
-    }, [answerOptions])
-    const handleDragChange = (nextIndex: number, index: number | null) => {
-        setDrag(() => {
-            const dragCurrent = nextIndex
-            const isLastCard = dragCurrent >= answerOptions.length - 1
-            const isFirstCard = dragCurrent === 0
-            return {
-                current: nextIndex,
-                prev: index,
-                isLastCard,
-                isFirstCard
-            }
-        })
+
+    const moveOptions = (index: number, nextIndex: number) => {
+        const temp = swap([...answerOptions], index, nextIndex)
+        setAnswerOptions(temp)
     }
-    const handleDragging = useCallback((event: any) => {
-        const move = (index: number, direction: "up" | "down") => {
-            const nextIndex = direction === "up" ? index - 1 : index + 1
-            if (nextIndex >= 0 && nextIndex < answerOptions.length && index !== drag.prev) {
-                const temp = swap([...answerOptions], index, nextIndex)
-                setAnswerOptions(temp)
-                handleDragChange(nextIndex, index)
-            }
-        }
-
-        if (drag.current == null || drag.current == drag.prev) {
-            return
-        }
-
-        const yCoordinate = event.clientY
-        if (yCoordinate <= 0) {
-            return
-        }
-        if (!drag.isLastCard) {
-            const nextY = getLayoutY(optionsRef.current[drag.current + 1]) + 18
-            if (yCoordinate > nextY) {
-                move(drag.current, "down")
-            }
-        }
-        if (!drag.isFirstCard) {
-            const prevY = getLayoutY(optionsRef.current[drag.current - 1]) + 24
-            if (yCoordinate < prevY) {
-                move(drag.current, "up")
-            }
-        }
-
-        const newCoord = yCoordinate - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16
-        if (newCoord > 0 && newCoord < (cardHeight * (memoizedAnswerOptions.length - 1))) {
-            setDragY(newCoord)
-        }
-    }, [drag, answerOptions])
-
-    useEffect(() => {
-        if (drag.current != null) {
-            window.addEventListener('mouseup', handleDragEnd, { passive: true })
-            window.addEventListener('mousemove', handleDragging, { passive: true })
-        }
-        return () => {
-            window.removeEventListener('mouseup', handleDragEnd)
-            window.removeEventListener('mousemove', handleDragging)
-        }
-    }, [drag, handleDragEnd, handleDragging])
-
-    function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
-        if (drag.current == null) {
-            return;
-        }
-        const y = event.clientY;
-        const windowHeight = window.innerHeight;
-        const offset = windowHeight - y;
-        const bottomBreakpoint = 150;
-        const getScrollSpeed = (yOffset: number) => {
-            const scrollSpeed = 20;
-            if (yOffset < (bottomBreakpoint / 2)) {
-                return 50;
-            }
-            if (yOffset < scrollSpeed) {
-                return 100;
-            }
-            return scrollSpeed;
-        }
-        const lastCardRect = getLayoutY(optionsRef.current[answerOptions.length - 1])
-        if (y - offset < lastCardRect && offset < bottomBreakpoint) {
-            window.scrollTo(0, window.scrollY + getScrollSpeed(offset))
-        } else if (y < bottomBreakpoint) {
-            window.scrollTo(0, window.scrollY - getScrollSpeed(y))
-        }
-    }
-    //#endregion
-
     const memoizedAnswerOptions = useMemo(() => answerOptions, [answerOptions]);
     return (
         <div
             ref={layoutRef}
-            style={{ cursor: drag.current != null ? "move" : "auto" }}
-            onMouseMove={handleMouseMove}
+            style={{ cursor: currentlyDraggedItem != null ? "move" : "auto" }}
         >
-            {drag.current != null && currentlyDraggedItem != null && (
-                <div className='relative'>
+            {currentlyDraggedItem != null && (
+                <DragWrapper
+                    layoutRef={layoutRef}
+                    cardRefs={optionsRef}
+                    draggedItem={currentlyDraggedItem}
+                    y={dragY}
+                    onDragEnd={() => setCurrentlyDraggedItem(null)}
+                    move={moveOptions}
+                    staticCard
+                >
                     <div
-                        style={{ top: dragY }}
-                        className='absolute z-20 w-full opacity-50'
+                        style={{ width: "calc(100% + 16px)" }}
+                        className='block absolute -left-4 bg-white shadow-md rounded-sm pl-4'
                     >
-                        <div
-                            style={{ width: "calc(100% + 16px)" }}
-                            className='block absolute -left-4 bg-white shadow-md rounded-sm pl-4'
-                        >
-                            <div className='h-12 flex items-center relative'>
-                                <div className='block absolute -left-4 transform rotate-90 cursor-move'>
-                                    <IconContext.Provider value={{ style: { display: 'flex' } }}>
-                                        <div>
-                                            <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
-                                            <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
-                                        </div>
-                                    </IconContext.Provider>
-                                </div>
-                                <div className='mr-2'>
-                                    <OptionIcon type={type} />
-                                </div>
-                                <div className="flex-grow max-w-full">
-                                    <Input
-                                        containerClass='text-sm'
-                                        value={currentlyDraggedItem.value}
-                                        readOnly
-                                        alwaysHighlight={false}
-                                    />
-                                </div>
-                                <div className='visible'>
-                                    <MenuIcon icon={<MdOutlineImage />} />
-                                </div>
-                                <div className={classNames(answerOptions.length > 1 ? "" : "invisible")}>
-                                    <MenuIcon icon={<MdClose />} />
-                                </div>
+                        <div className='h-12 flex items-center relative'>
+                            <div className='block absolute -left-4 transform rotate-90 cursor-move'>
+                                <IconContext.Provider value={{ style: { display: 'flex' } }}>
+                                    <div>
+                                        <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
+                                        <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
+                                    </div>
+                                </IconContext.Provider>
+                            </div>
+                            <div className='mr-2'>
+                                <OptionIcon type={type} />
+                            </div>
+                            <div className="flex-grow max-w-full">
+                                <Input
+                                    containerClass='text-sm'
+                                    value={currentlyDraggedItem.value}
+                                    readOnly
+                                    alwaysHighlight={false}
+                                />
+                            </div>
+                            <div className='visible'>
+                                <MenuIcon icon={<MdOutlineImage />} />
+                            </div>
+                            <div className={classNames(answerOptions.length > 1 ? "" : "invisible")}>
+                                <MenuIcon icon={<MdClose />} />
                             </div>
                         </div>
                     </div>
-                </div>
+                </DragWrapper>
             )}
             {memoizedAnswerOptions.map((item: OptionChoices, index: number) => (
                 <div
@@ -342,16 +240,15 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                         selected ? "group" : "",
                         'ml-[-1.5rem] mr-[-1.5rem]'
                     )}
-                    style={{ opacity: drag.current == index ? 0 : 1, }}
+                    style={{ opacity: currentlyDraggedItem?.index == index ? 0 : 1 }}
                 >
                     <div className='h-12 flex items-center px-6 relative'>
                         <div
                             className='hidden group-hover:block absolute left-2 transform rotate-90 cursor-move'
                             onMouseDown={(event) => {
                                 event.preventDefault()
-                                setCurrentlyDraggedItem(item)
-                                handleDragChange(index, null)
                                 setDragY(event.clientY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 24)
+                                setCurrentlyDraggedItem({ ...item, index })
                             }}
                         >
                             <IconContext.Provider value={{ style: { display: 'flex' } }}>
