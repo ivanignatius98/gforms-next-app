@@ -20,7 +20,7 @@ import { FiTrash2 } from 'react-icons/fi'
 import { BiDotsVerticalRounded } from 'react-icons/bi';
 
 import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
-import { classNames, debounce, getLayoutY, swap } from '@helpers'
+import { classNames, debounce, getLayoutY, swap, getYCoordFromEvent, isTouchEvent } from '@helpers'
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
 import { Question, OptionChoices } from '@interfaces/question.interface';
 import DragWrapper from '@modules/Drag';
@@ -67,6 +67,7 @@ const CardContainer = ({ children,
           "absolute top-0 w-full justify-center items-center cursor-move"
         )}
         onMouseDown={handleDragStart}
+        onTouchStart={handleDragStart}
         style={{
           userSelect: "none",
         }}
@@ -480,11 +481,13 @@ const Page: React.FC<Props> = (props) => {
                     key={i}
                     currentlyDragged={currentlyDraggedItem ? row.xid == currentlyDraggedItem.xid : false}
                     handleDragStart={(event) => {
-                      event.preventDefault()
+                      if (!isTouchEvent(event)) {
+                        event.preventDefault()
+                      }
                       setCardClick({ cardIndex: null, divClickedOrigin: false })
-                      // handleDragChange(i, null)
                       setCurrentlyDraggedItem({ ...row, index: i })
-                      setDragY(event.clientY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
+                      const eventY = getYCoordFromEvent(event)
+                      setDragY(eventY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
                     }}
                   >
                     <div className={classNames(selected ? "p-6 pb-2" : "p-6")}>
@@ -610,7 +613,7 @@ interface MenuProps {
 }
 const BottomToolbar = ({ menus }: MenuProps) => {
   return (
-    <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md bottom-0 mx-5'>
+    <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md bottom-0 mx-5 z-20'>
       {menus.map((row, i) =>
         <div key={i} className='justify-center flex flex-1'
           onClick={row.bottomOnClick ? row.bottomOnClick : row.onClick}

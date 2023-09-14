@@ -28,3 +28,10 @@ export const swap = (arr: any[], index1: number, index2: number) => {
 export const classNames = (...classes: string[]) => {
   return classes.filter(Boolean).join(' ')
 }
+
+export const isTouchEvent = (event: any) => {
+  return event.touches && event.touches.length > 0
+}
+export const getYCoordFromEvent = (event: any) => {
+  return isTouchEvent(event) ? event.touches[0].clientY : event.clientY
+}

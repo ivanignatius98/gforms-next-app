@@ -1,5 +1,5 @@
 import { getLayoutY } from "@helpers";
-import { useMemo, useCallback, useState, useEffect, MutableRefObject, Ref, RefObject } from "react";
+import React, { useMemo, useCallback, useState, useEffect, MutableRefObject, Ref, RefObject } from "react";
 
 interface WrapperProp {
   y: number | null
@@ -60,9 +60,19 @@ const DragWrapper = ({
       handleDragChange(draggedItem.index, null)
     }
   }, [draggedItem]);
-
+  const getYCoordFromEvent = (event: any) => {
+    let yCoordinate = 0
+    if (event.touches && event.touches.length > 0) {
+      // It's a touchmove event
+      yCoordinate = event.touches[0].clientY;
+    } else {
+      // It's a mousemove event
+      yCoordinate = event.clientY;
+    }
+    return yCoordinate
+  }
   const handleDragging = useCallback((event: any) => {
-    const yCoordinate = event.clientY; // Add scrollY to adjust for scrolling
+    const yCoordinate = getYCoordFromEvent(event)
     if (yCoordinate <= 0) {
       return;
     }
@@ -115,19 +125,23 @@ const DragWrapper = ({
     if (draggedItem != null) {
       window.addEventListener('mousemove', handleDragging)
       window.addEventListener('mouseup', handleDragEnd)
+      window.addEventListener('touchmove', handleDragging)
+      window.addEventListener('touchend', handleDragEnd)
     }
     return () => {
       window.removeEventListener('mousemove', handleDragging)
       window.removeEventListener('mouseup', handleDragEnd)
+      window.removeEventListener('touchmove', handleDragging)
+      window.removeEventListener('touchend', handleDragEnd)
     }
 
   }, [handleDragging, draggedItem])
 
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement> | React.TouchEvent<HTMLDivElement>) => {
     if (drag.current == null) {
       return;
     }
-    const y = event.clientY;
+    const y = getYCoordFromEvent(event)
     const windowHeight = window.innerHeight;
     const offset = windowHeight - y;
     const bottomBreakpoint = 150;
@@ -149,7 +163,11 @@ const DragWrapper = ({
     }
   }
   return (
-    <div className='relative' onMouseMove={handleMouseMove}>
+    <div
+      className='relative'
+      onMouseMove={handleMouseMove}
+      onTouchMove={handleMouseMove}
+    >
       <div
         style={{ top: dragY ?? 0 }}
         className='absolute z-20 w-full opacity-50'
