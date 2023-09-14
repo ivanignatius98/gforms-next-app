@@ -8,6 +8,7 @@ import MenuIcon from '@modules/MenuIcon'
 import DropdownButton from '@modules/DropdownButton'
 import Toggle from '@modules/Toggle'
 import AnswerOptions from '@components/dashboard/answerOptions'
+import QuestionItem from '@components/dashboard/questionItem'
 import { v4 as uuidv4 } from 'uuid';
 
 import { MdOutlineSmartDisplay, MdOutlineImage, MdContentCopy, } from 'react-icons/md'
@@ -206,6 +207,7 @@ const Page: React.FC<Props> = (props) => {
 
   //#region question
 
+  const questionFormValue = useRef<Question[]>(null)
   const setQuestionValue = (payload: any, index: number) => {
     setQuestions(prevState => {
       const temp = [...prevState]
@@ -300,63 +302,8 @@ const Page: React.FC<Props> = (props) => {
     const temp = swap([...questions], index, nextIndex)
     setQuestions(temp)
   }
-  // //#endregion
-  //#region map more options
-  interface contents {
-    content: Item
-  }
-  interface SelectItems {
-    header?: string
-    items: contents[]
-  }
-
-  const handleTypeChange = (event: Item, index: number) => {
-    if (index != null && index >= 0) {
-      const validOptions = additionalOptionsMap[event.value]
-      const tempArr: Item[] = moreOptionsArr.filter((item) => validOptions.includes(item.value));
-      const tempGroup: SelectItems[] = []
-      let optionsHeight = 8 + (tempArr[0]?.group == 0 ? 20 : 0)
-      let groupCount = 1
-      let prevGroup = 0
-      tempArr.forEach(({ group = 0, ...item }) => {
-        const itemObject = {
-          content: item
-        }
-        if (!tempGroup[group]) {
-          tempGroup[group] = {
-            items: [itemObject],
-            header: group == 0 ? "Show" : ""
-          }
-        } else {
-          tempGroup[group].items.push(itemObject)
-        }
-        if (prevGroup != group) {
-          groupCount++
-          prevGroup = group
-        }
-        optionsHeight += 44
-      })
-      optionsHeight += (groupCount * 16)
-
-      setQuestionValue({
-        moreOptionValues: [],
-        type: event,
-        moreOptionsData: {
-          items: tempGroup,
-          optionsHeight
-        }
-      }, index)
-    }
-  }
-  // #endregion
-  // const rerenderRef = useRef<number>(0)
-  // rerenderRef.current += 1
-  // console.log("rerender", rerenderRef.current)
-  // useEffect(() => {
-  // for (let i = 0; i < 10; i++) {
-  //   addQuestions()
-  // }
-  // }, [])
+  //#endregion
+  console.log("RERENDER")
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -490,102 +437,17 @@ const Page: React.FC<Props> = (props) => {
                       setDragY(eventY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
                     }}
                   >
-                    <div className={classNames(selected ? "p-6 pb-2" : "p-6")}>
-                      <div className='flex flex-wrap items-start'>
-                        <div className={classNames(textPreview && !selected ? "hidden" : "flex-grow w-[300px] max-w-full")}>
-                          <Input
-                            alwaysHighlight
-                            inputRef={(el: any) => inputRefs.current[i] = el}
-                            showFooter={selected}
-                            containerClass={classNames(selected ? "bg-gray-100" : "bg-none mb-[2px]")}
-                            className={classNames(selected ? "p-3" : "", "bg-inherit text-base")}
-                            name="question"
-                            value={row.title}
-                            onChange={(e) => setQuestionValue({ title: e.target.value }, i)}
-                            placeholder="Question"
-                          />
-                        </div>
-                        {textPreview && !selected && (
-                          <div className='my-[2px] mb-1 flex'>
-                            <div className='text-base'>{row.title || "Question"}</div>
-                            {row.required && <div className='ml-1 text-red-500'>*</div>}
-                          </div>
-                        )}
-                        {selected && (
-                          <>
-                            <div className='mx-3 z-0'>
-                              <MenuIcon icon={<MdOutlineImage />} />
-                            </div>
-                            <div className="w-60">
-                              <Select
-                                value={row.type}
-                                onChange={(newValue) => { handleTypeChange(newValue, i) }}
-                                options={choicesData}
-                              />
-                            </div>
-                          </>
-                        )}
-                      </div>
-                      {/* Description */}
-                      {row.moreOptionValues?.includes("description") &&
-                        <Input
-                          alwaysHighlight
-                          showFooter={selected}
-                          containerClass="bg-none my-2"
-                          className="bg-inherit text-sm"
-                          name="description"
-                          value={row.description}
-                          onChange={(e) => setQuestionValue({ description: e.target.value }, i)}
-                          placeholder={`Description`}
-                        />
-                      }
-                      {/* Content */}
-                      <AnswerOptions
-                        selected={selected}
-                        questionProps={row}
-                        optionsValue={row.answerOptions}
-                        setOptionsValue={(newValue: OptionChoices[]) => {
-                          setQuestionValue({ answerOptions: newValue }, i)
-                        }}
-                        otherOptionValue={row.otherOption}
-                        setOtherOptionValue={(newValue: boolean) => {
-                          setQuestionValue({ otherOption: newValue }, i)
-                        }}
-                      />
-                      {/* Footer */}
-                      <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2 ')}>
-                        <MenuIcon
-                          title="Duplicate"
-                          onClick={duplicateQuestion}
-                          additionalClass='mx-[1px]'
-                          icon={<MdContentCopy />}
-                        />
-                        <MenuIcon
-                          title="Delete"
-                          onClick={removeQuestion}
-                          additionalClass='mx-[1px]'
-                          icon={<FiTrash2 />}
-                        />
-                        <div className=' border-l-[1.5px] h-8 mx-2'></div>
-                        <span className='text-sm ml-2 mr-3'>Required</span>
-                        <Toggle
-                          value={row.required}
-                          handleChange={(checked: boolean) => setQuestionValue({ required: checked }, i)}
-                        />
-                        <DropdownButton
-                          value={row.moreOptionValues}
-                          onChange={(newVal) => setQuestionValue({ moreOptionValues: newVal }, i)}
-                          optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
-                          dropdownItemData={row.moreOptionsData?.items ?? []}
-                          cardRef={cardRefs?.current[i]}
-                          selected={selected}
-                        >
-                          <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
-                            <BiDotsVerticalRounded size={24} color="#5f6368" />
-                          </button>
-                        </DropdownButton>
-                      </div>
-                    </div>
+                    <QuestionItem
+                      selected={selected}
+                      textPreview={textPreview}
+                      inputRef={(el: any) => inputRefs.current[i] = el}
+                      i={i}
+                      row={row}
+                      setQuestionValue={setQuestionValue}
+                      duplicateQuestion={duplicateQuestion}
+                      removeQuestion={removeQuestion}
+                      cardRefs={cardRefs}
+                    />
                   </CardContainer>)
               }
               )}
