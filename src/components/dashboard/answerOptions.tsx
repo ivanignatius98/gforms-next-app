@@ -156,8 +156,8 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
         const prevProps = [...answerOptions]
         const newProps = prevProps.slice()
         newProps.splice(index, 1)
-        setAnswerOptions([...newProps])
-        setTimeout(() => inputRefs.current[index - 1 > 0 ? index - 1 : 0].focus(), 10);
+        inputRefs.current[index - 1 > 0 ? index - 1 : 0].focus()
+        setTimeout(() => setAnswerOptions([...newProps]), 10);
     }
     const otherType = type != 'dropdown'
     useEffect(() => {
