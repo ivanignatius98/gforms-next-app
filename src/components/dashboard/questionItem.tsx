@@ -11,7 +11,7 @@ import { FiTrash2 } from "react-icons/fi"
 import Toggle from "@modules/Toggle"
 import DropdownButton from "@modules/DropdownButton"
 import { BiDotsVerticalRounded } from "react-icons/bi"
-import { MutableRefObject, Ref, useState } from "react"
+import { MutableRefObject, Ref, useEffect, useState } from "react"
 
 interface QuestionProps {
   selected: boolean
@@ -19,10 +19,10 @@ interface QuestionProps {
   inputRef?: Ref<HTMLInputElement>
   i: number
   row: Question
-  setQuestionValue: (payload: any, index: number) => void
   duplicateQuestion: () => void
   removeQuestion: () => void
   cardRefs: MutableRefObject<HTMLDivElement[]> | null
+  onChange: (payload: any, index: number) => void
 }
 const Component = ({
   selected,
@@ -30,10 +30,10 @@ const Component = ({
   inputRef,
   i,
   row,
-  setQuestionValue,
   duplicateQuestion,
   removeQuestion,
-  cardRefs
+  cardRefs,
+  onChange
 }: QuestionProps) => {
 
   const [questionRow, setQuestionRow] = useState<Question>(row)
@@ -43,6 +43,9 @@ const Component = ({
       return { ...prevState, ...payload }
     })
   }
+
+  useEffect(() => { onChange(questionRow, i) }, [questionRow])
+
   //#region map more options
   interface contents {
     content: Item
@@ -145,14 +148,14 @@ const Component = ({
       {/* Content */}
       <AnswerOptions
         selected={selected}
-        questionProps={row}
-        optionsValue={row.answerOptions}
+        questionProps={questionRow}
+        optionsValue={questionRow.answerOptions}
         setOptionsValue={(newValue: OptionChoices[]) => {
-          setQuestionValue({ answerOptions: newValue }, i)
+          handleValueChange({ answerOptions: newValue })
         }}
-        otherOptionValue={row.otherOption}
+        otherOptionValue={questionRow.otherOption}
         setOtherOptionValue={(newValue: boolean) => {
-          setQuestionValue({ otherOption: newValue }, i)
+          handleValueChange({ otherOption: newValue })
         }}
       />
       {/* Footer */}

@@ -207,14 +207,6 @@ const Page: React.FC<Props> = (props) => {
 
   //#region question
 
-  const questionFormValue = useRef<Question[]>(null)
-  const setQuestionValue = (payload: any, index: number) => {
-    setQuestions(prevState => {
-      const temp = [...prevState]
-      temp[index] = { ...temp[index], ...payload }
-      return temp;
-    })
-  }
   const addQuestions = () => {
     setQuestions((prevQuestion) => {
       const { cardIndex } = { ...cardClick }
@@ -271,12 +263,11 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Import questions",
       icon: <TbFileImport />,
-      onClick: () => console.log(questions)
+      onClick: () => console.log(questionChanges.current)
     },
     {
       title: "Add title and description",
       icon: <AiOutlineFontSize />,
-      onClick: () => console.log(itemXid)
     },
     {
       title: "Add image",
@@ -303,7 +294,9 @@ const Page: React.FC<Props> = (props) => {
     setQuestions(temp)
   }
   //#endregion
-  console.log("RERENDER")
+
+  const questionChanges = useRef<Question[]>([])
+  // console.log("RERENDER")
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -443,10 +436,12 @@ const Page: React.FC<Props> = (props) => {
                       inputRef={(el: any) => inputRefs.current[i] = el}
                       i={i}
                       row={row}
-                      setQuestionValue={setQuestionValue}
                       duplicateQuestion={duplicateQuestion}
                       removeQuestion={removeQuestion}
                       cardRefs={cardRefs}
+                      onChange={(e, i) => {
+                        questionChanges.current[i] = e
+                      }}
                     />
                   </CardContainer>)
               }
@@ -455,8 +450,7 @@ const Page: React.FC<Props> = (props) => {
           </div>
           <BottomToolbar menus={menus} />
         </>
-      )
-      }
+      )}
     </Layout>
   )
 }
