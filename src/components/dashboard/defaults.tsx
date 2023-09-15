@@ -168,5 +168,6 @@ export const defaultQuestion: Question = {
     ],
     optionsHeight: 192
   },
-  required: false
+  required: false,
+  description: ""
 }

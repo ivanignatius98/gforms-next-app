@@ -38,6 +38,11 @@ const Component = ({
 
   const [questionRow, setQuestionRow] = useState<Question>(row)
 
+  const handleValueChange = (payload: any) => {
+    setQuestionRow((prevState) => {
+      return { ...prevState, ...payload }
+    })
+  }
   //#region map more options
   interface contents {
     content: Item
@@ -98,15 +103,15 @@ const Component = ({
             containerClass={classNames(selected ? "bg-gray-100" : "bg-none mb-[2px]")}
             className={classNames(selected ? "p-3" : "", "bg-inherit text-base")}
             name="question"
-            value={row.title}
-            onChange={(e) => setQuestionValue({ title: e.target.value }, i)}
+            value={questionRow.title}
+            onChange={(e) => handleValueChange({ title: e.target.value })}
             placeholder="Question"
           />
         </div>
         {textPreview && !selected && (
           <div className='my-[2px] mb-1 flex'>
-            <div className='text-base'>{row.title || "Question"}</div>
-            {row.required && <div className='ml-1 text-red-500'>*</div>}
+            <div className='text-base'>{questionRow.title || "Question"}</div>
+            {questionRow.required && <div className='ml-1 text-red-500'>*</div>}
           </div>
         )}
         {selected && (
@@ -125,15 +130,15 @@ const Component = ({
         )}
       </div>
       {/* Description */}
-      {row.moreOptionValues?.includes("description") &&
+      {questionRow.moreOptionValues?.includes("description") &&
         <Input
           alwaysHighlight
           showFooter={selected}
           containerClass="bg-none my-2"
           className="bg-inherit text-sm"
           name="description"
-          value={row.description}
-          onChange={(e) => setQuestionValue({ description: e.target.value }, i)}
+          value={questionRow.description}
+          onChange={(e) => handleValueChange({ description: e.target.value })}
           placeholder={`Description`}
         />
       }
@@ -167,14 +172,14 @@ const Component = ({
         <div className=' border-l-[1.5px] h-8 mx-2'></div>
         <span className='text-sm ml-2 mr-3'>Required</span>
         <Toggle
-          value={row.required}
-          handleChange={(checked: boolean) => setQuestionValue({ required: checked }, i)}
+          value={questionRow.required}
+          handleChange={(checked: boolean) => handleValueChange({ required: checked })}
         />
         <DropdownButton
-          value={row.moreOptionValues}
-          onChange={(newVal) => setQuestionValue({ moreOptionValues: newVal }, i)}
-          optionsHeight={row.moreOptionsData?.optionsHeight ?? 0}
-          dropdownItemData={row.moreOptionsData?.items ?? []}
+          value={questionRow.moreOptionValues}
+          onChange={(newVal) => handleValueChange({ moreOptionValues: newVal })}
+          optionsHeight={questionRow.moreOptionsData?.optionsHeight ?? 0}
+          dropdownItemData={questionRow.moreOptionsData?.items ?? []}
           cardRef={cardRefs?.current[i]}
           selected={selected}
         >
