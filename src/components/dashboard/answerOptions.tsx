@@ -14,24 +14,24 @@ import { Item } from '@interfaces/dropdown.interface';
 import DragWrapper from '@modules/Drag';
 import { VscTriangleDown } from 'react-icons/vsc';
 
+const iconProps = {
+    size: 21,
+    style: {
+        color: "darkgray"
+    }
+}
 interface Icon {
     type: string
     index?: number
 }
 const OptionIcon = ({ type, index }: Icon) => {
-    const props = {
-        size: 21,
-        style: {
-            color: "darkgray"
-        }
-    }
     let content = <></>
     switch (type) {
         case "multiple_choice":
-            content = <MdRadioButtonUnchecked {...props} />
+            content = <MdRadioButtonUnchecked {...iconProps} />
             break;
         case "checkboxes":
-            content = <MdCheckBoxOutlineBlank {...props} />
+            content = <MdCheckBoxOutlineBlank {...iconProps} />
             break;
         case "dropdown":
             content = <>{index ? index + 1 : 1}</>
@@ -380,55 +380,98 @@ const minNumericOptions: ValueLabel[] = generateNumericOptions(0, 1);
 const maxNumericOptions: ValueLabel[] = generateNumericOptions(2, 10)
 
 const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScaleProps) => {
-    const [min, setMin] = useState(linearValue.min ?? minNumericOptions[1])
-    const [max, setMax] = useState(linearValue.max ?? maxNumericOptions[3])
-    const [minLabel, setMinLabel] = useState(linearValue.minLabel ?? "")
-    const [maxLabel, setMaxLabel] = useState(linearValue.maxLabel ?? "")
-
-    const postIcon =
+    const handleValueChange = (payload: any) => {
+        const updatedValue = { ...linearValue, ...payload };
+        setLinearValue(updatedValue);
+    }
+    const postIcon = (
         <div className='absolute right-4'>
             <VscTriangleDown size={12} color="#5f6368" />
         </div>
+    );
 
+    const renderInput = (key: string, intValue: ValueLabel, value: string, setValue: (val: string) => void) => (
+        <div className="flex text-sm">
+            <div className="flex items-center mr-4 text-gray-400 w-5">{intValue.label}</div>
+            <div className="w-52 h-12 flex items-center">
+                <Input
+                    name={key}
+                    value={value}
+                    onChange={(e) => setValue(e.target.value)}
+                    placeholder="Label (Optional)"
+                />
+            </div>
+        </div>
+    );
+    const renderPreview = () => {
+        // Create a function to generate a range of numbers
+        const generateRange = (start: number, end: number) => {
+            const result = [];
+            for (let i = start; i <= end; i++) {
+                result.push(i);
+            }
+            return result;
+        };
+
+        // Define the range you want to loop through
+        const range = generateRange(parseInt(linearValue.min.value), parseInt(linearValue.max.value)); // Start from 2 and end at 11
+
+        const textDiv = (text: string) =>
+            <p className='min-w-[32px] max-w-[165px] flex-grow break-words text-center'>
+                {text}
+            </p>
+
+        return (
+            <div className='flex items-center w-full justify-center'>
+                {textDiv(linearValue.minLabel)}
+                {range.map((number, index) => (
+                    <div key={index} className='ring-1 flex justify-center flex-grow'>
+                        <div className='min-w-[32px] max-w-[62px] ring-1'>
+                            <div className='h-[42px] flex justify-center items-center'>
+                                {number}
+                            </div>
+                            <div className='h-12 flex justify-center items-center'>
+                                <MdRadioButtonUnchecked {...iconProps} />
+                            </div>
+                        </div>
+                    </div>
+                ))}
+                {textDiv(linearValue.maxLabel)}
+            </div>
+        );
+    }
     return (
-        <>
-            <div className="py-2 flex items-center">
-                <div className="w-[70px] h-12">
-                    <Select
-                        borderless
-                        value={min}
-                        onChange={(val) => setMin(val)}
-                        options={minNumericOptions}
-                        customPostIcon={postIcon}
-                        buttonClass='px-2'
-                    />
+        selected ? (
+            <div className='-mx-2'>
+                <div className="p-2 flex items-center">
+                    <div className="w-[70px] h-12">
+                        <Select
+                            borderless
+                            value={linearValue.min}
+                            onChange={(val) => handleValueChange({ min: val })}
+                            options={minNumericOptions}
+                            customPostIcon={postIcon}
+                            buttonClass='px-2'
+                        />
+                    </div>
+                    <span className='mx-2'>to</span>
+                    <div className="w-[70px] h-12">
+                        <Select
+                            borderless
+                            value={linearValue.max}
+                            onChange={(val) => handleValueChange({ max: val })}
+                            options={maxNumericOptions}
+                            customPostIcon={postIcon}
+                            buttonClass='px-2'
+                        />
+                    </div>
                 </div>
-                <span className='mx-2'>to</span>
-                <div className="w-[70px] h-12">
-                    <Select
-                        borderless
-                        value={max}
-                        onChange={(val) => setMax(val)}
-                        options={maxNumericOptions}
-                        customPostIcon={postIcon}
-                        buttonClass='px-2'
-                    />
-                </div>
-            </div>
-            <div className="flex -mx-2">
-                <div className="flex items-center mr-5 text-gray-400">{min.label}</div>
-                <div className="w-52 h-12 flex items-center">
-                    <Input name="min" value={minLabel} onChange={(e) => { setMinLabel(e.target.value) }} placeholder="Label (Optional)" />
-                </div>
-            </div>
-            <div className="flex -mx-2">
-                <div className="flex items-center mr-5 text-gray-400">{max.label}</div>
-                <div className="w-52 h-12 flex items-center">
-                    <Input name="max" value={maxLabel} onChange={(e) => { setMaxLabel(e.target.value) }} placeholder="Label (Optional)" />
-                </div>
-            </div>
-        </>
-    )
+                {renderInput('min', linearValue.min, linearValue.minLabel, (val) => handleValueChange({ minLabel: val }))}
+                {renderInput('max', linearValue.max, linearValue.maxLabel, (val) => handleValueChange({ maxLabel: val }))}
+            </div>) :
+            // preview card
+            renderPreview()
+    );
 }
 
 interface AnswerProps {
