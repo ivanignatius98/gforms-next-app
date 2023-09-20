@@ -399,6 +399,7 @@ const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScal
                     value={value}
                     onChange={(e) => setValue(e.target.value)}
                     placeholder="Label (Optional)"
+                    alwaysHighlight
                 />
             </div>
         </div>
@@ -425,8 +426,8 @@ const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScal
             <div className='flex items-center w-full justify-center'>
                 {textDiv(linearValue.minLabel)}
                 {range.map((number, index) => (
-                    <div key={index} className='ring-1 flex justify-center flex-grow'>
-                        <div className='min-w-[32px] max-w-[62px] ring-1'>
+                    <div key={index} className='flex justify-center flex-grow'>
+                        <div className='min-w-[32px] max-w-[62px]'>
                             <div className='h-[42px] flex justify-center items-center'>
                                 {number}
                             </div>
