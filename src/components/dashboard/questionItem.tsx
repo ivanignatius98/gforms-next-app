@@ -5,37 +5,30 @@ import { MdContentCopy, MdOutlineImage } from "react-icons/md"
 import { additionalOptionsMap, choicesData, moreOptionsArr } from "./defaults"
 import { Item } from "@interfaces/dropdown.interface"
 import AnswerOptions from '@components/dashboard/answerOptions'
-import { OptionChoices, Question } from "@interfaces/question.interface"
+import { OptionChoices, Question, OptionLinears } from "@interfaces/question.interface"
 import Select from "@modules/Select"
 import { FiTrash2 } from "react-icons/fi"
 import Toggle from "@modules/Toggle"
 import DropdownButton from "@modules/DropdownButton"
 import { BiDotsVerticalRounded } from "react-icons/bi"
-import { MutableRefObject, Ref, useEffect, useState } from "react"
+import { MutableRefObject, Ref, useContext, useEffect, useState } from "react"
+import { QuestionsContext } from '@context/question.context';
 
 interface QuestionProps {
-  selected: boolean
   textPreview: boolean
   inputRef?: Ref<HTMLInputElement>
-  i: number
-  row: Question
   duplicateQuestion: () => void
   removeQuestion: () => void
   cardRefs: MutableRefObject<HTMLDivElement[]> | null
-  onChange: (payload: any, index: number) => void
 }
 const Component = ({
-  selected,
   textPreview,
   inputRef,
-  i,
-  row,
   duplicateQuestion,
   removeQuestion,
-  cardRefs,
-  onChange
+  cardRefs
 }: QuestionProps) => {
-
+  const { selected, row, i } = useContext(QuestionsContext)
   const [questionRow, setQuestionRow] = useState<Question>(row)
 
   const handleValueChange = (payload: any) => {
@@ -43,8 +36,6 @@ const Component = ({
       return { ...prevState, ...payload }
     })
   }
-
-  useEffect(() => { onChange(questionRow, i) }, [questionRow])
 
   //#region map more options
   interface contents {
@@ -156,6 +147,10 @@ const Component = ({
         otherOptionValue={questionRow.otherOption}
         setOtherOptionValue={(newValue: boolean) => {
           handleValueChange({ otherOption: newValue })
+        }}
+        linearValue={questionRow.linearValueOptions}
+        setLinearValue={(newValue: OptionLinears) => {
+          handleValueChange({ linearValueOptions: newValue })
         }}
       />
       {/* Footer */}

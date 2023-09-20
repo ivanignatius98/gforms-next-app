@@ -1,5 +1,5 @@
 //#region imports
-import { useState, useRef, useEffect, Ref, useCallback, useMemo, RefObject, MutableRefObject } from 'react';
+import { useState, useRef, useEffect, Ref, useCallback, useMemo, RefObject, MutableRefObject, createContext } from 'react';
 import { connect } from 'react-redux'
 import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
@@ -25,6 +25,8 @@ import { classNames, debounce, getLayoutY, swap, getYCoordFromEvent, isTouchEven
 import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
 import { Question, OptionChoices } from '@interfaces/question.interface';
 import DragWrapper from '@modules/Drag';
+
+import { QuestionsContext } from '@context/question.context';
 // #endregion
 
 //#region card content
@@ -152,7 +154,7 @@ const Page: React.FC<Props> = (props) => {
   const headerRef = useRef<HTMLDivElement>(null)
   const headerInputRef = useRef<HTMLInputElement>(null)
 
-  const [viewportWidth, setViewportWidth] = useState<number | null>(null);
+  const [viewportWidth, setViewportWidth] = useState<number>(0);
   // selected index change
   useEffect(() => {
     const { cardIndex, divClickedOrigin } = cardClick
@@ -263,7 +265,6 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Import questions",
       icon: <TbFileImport />,
-      onClick: () => console.log(questionChanges.current)
     },
     {
       title: "Add title and description",
@@ -295,8 +296,8 @@ const Page: React.FC<Props> = (props) => {
   }
   //#endregion
 
-  const questionChanges = useRef<Question[]>([])
   // console.log("RERENDER")
+
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -410,40 +411,43 @@ const Page: React.FC<Props> = (props) => {
                 const selected = cardClick.cardIndex != -1 && itemXid == row.xid
                 const textPreview = row.required || row.title === ""
                 return (
-                  <CardContainer
-                    cardRef={(el: any) => cardRefs.current[i] = el}
-                    selected={selected}
-                    onClick={(event) => {
-                      if (!selected) {
-                        handleCardClick(event.target instanceof HTMLDivElement, i, row.xid)
-                      }
-                    }}
+                  <QuestionsContext.Provider
                     key={i}
-                    currentlyDragged={currentlyDraggedItem ? row.xid == currentlyDraggedItem.xid : false}
-                    handleDragStart={(event) => {
-                      if (!isTouchEvent(event)) {
-                        event.preventDefault()
-                      }
-                      setCardClick({ cardIndex: null, divClickedOrigin: false })
-                      setCurrentlyDraggedItem({ ...row, index: i })
-                      const eventY = getYCoordFromEvent(event)
-                      setDragY(eventY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
+                    value={{
+                      selected,
+                      viewportWidth,
+                      row,
+                      i
                     }}
                   >
-                    <QuestionItem
+                    <CardContainer
+                      cardRef={(el: any) => cardRefs.current[i] = el}
                       selected={selected}
-                      textPreview={textPreview}
-                      inputRef={(el: any) => inputRefs.current[i] = el}
-                      i={i}
-                      row={row}
-                      duplicateQuestion={duplicateQuestion}
-                      removeQuestion={removeQuestion}
-                      cardRefs={cardRefs}
-                      onChange={(e, i) => {
-                        questionChanges.current[i] = e
+                      onClick={(event) => {
+                        if (!selected) {
+                          handleCardClick(event.target instanceof HTMLDivElement, i, row.xid)
+                        }
                       }}
-                    />
-                  </CardContainer>)
+                      currentlyDragged={currentlyDraggedItem ? row.xid == currentlyDraggedItem.xid : false}
+                      handleDragStart={(event) => {
+                        if (!isTouchEvent(event)) {
+                          event.preventDefault()
+                        }
+                        setCardClick({ cardIndex: null, divClickedOrigin: false })
+                        setCurrentlyDraggedItem({ ...row, index: i })
+                        const eventY = getYCoordFromEvent(event)
+                        setDragY(eventY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
+                      }}
+                    >
+                      <QuestionItem
+                        textPreview={textPreview}
+                        inputRef={(el: any) => inputRefs.current[i] = el}
+                        duplicateQuestion={duplicateQuestion}
+                        removeQuestion={removeQuestion}
+                        cardRefs={cardRefs}
+                      />
+                    </CardContainer>
+                  </QuestionsContext.Provider>)
               }
               )}
             </div>

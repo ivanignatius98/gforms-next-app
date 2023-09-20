@@ -4,11 +4,11 @@ interface Value {
   value: string
 }
 interface Label {
-  label: string
+  label: JSX.Element | string
 }
-interface ValueLabel extends Value, Label { }
+export interface ValueLabel extends Value, Label { }
 
-interface OptionLinears {
+export interface OptionLinears {
   min: ValueLabel
   max: ValueLabel
   minLabel: string

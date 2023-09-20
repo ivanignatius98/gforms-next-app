@@ -17,7 +17,8 @@ type Props = {
   eachOptionHeight?: number
   containerMargins?: number
   borderless?: boolean
-
+  buttonClass?: string
+  customPostIcon?: JSX.Element
 };
 
 interface ItemMap {
@@ -31,7 +32,9 @@ function Select({
   groupDividerHeight = 16,
   eachOptionHeight = 48,
   containerMargins = 2,
-  borderless = false
+  borderless = false,
+  buttonClass = "",
+  customPostIcon
 }: Props) {
   const [selectY, setSelectY] = useState(0)
   const [mappedOptions, setMappedOptions] = useState<SelectItem[]>([])
@@ -96,9 +99,11 @@ function Select({
 
   const contentPlaceholder = (content: any) => {
     return typeof content === 'object' ? (<>
-      <div className='mx-2'>
-        {content.icon}
-      </div>
+      {content.icon &&
+        <div className='mx-2'>
+          {content.icon}
+        </div>
+      }
       {content.label}
     </>)
       : null;
@@ -149,14 +154,17 @@ function Select({
         style={{ height: eachOptionHeight }}
         className={classNames(
           borderless ? "" : "ring-1 ring-slate-300",
+          buttonClass,
           'relative text-sm items-center flex rounded-sm w-full transition-colors ease-in-out duration-200 active:bg-slate-200')}
       >
         {/* value preview */}
         {value && (<>
           {contentPlaceholder(value)}
-          <div className='absolute right-2'>
-            <VscTriangleDown size={12} color="#5f6368" />
-          </div>
+          {customPostIcon ??
+            <div className='absolute right-2'>
+              <VscTriangleDown size={12} color="#5f6368" />
+            </div>
+          }
         </>)}
       </Listbox.Button>
       <Transition
@@ -193,9 +201,11 @@ function Select({
                       onMouseEnter={() => { setLastActive([i, groupIndex]) }}
                       className={"text-left " + getOptionClass({ active, content, index: i, groupIndex })}
                     >
-                      <div className="pl-2 pr-4">
-                        {content.icon}
-                      </div>
+                      {content.icon &&
+                        <div className="pl-2 pr-4">
+                          {content.icon}
+                        </div>
+                      }
                       {content.label}
                     </button>
                   )}

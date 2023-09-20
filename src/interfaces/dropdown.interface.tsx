@@ -1,6 +1,6 @@
 export interface Content {
   icon?: JSX.Element,
-  label: string
+  label: JSX.Element | string
 }
 export interface Item extends Content {
   value: string

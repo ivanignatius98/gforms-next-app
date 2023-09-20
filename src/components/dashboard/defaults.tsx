@@ -138,14 +138,14 @@ export const choicesData: Item[] = [
 ]
 export const defaultQuestion: Question = {
   title: '',
-  type: choicesData[2],
+  type: choicesData[6],
   answerOptions: [{ value: 'Option 1', error: false, image: '', previewImage: '' }],
   otherOption: false,
   gridRowOptions: [{ value: 'Row 1' }],
   gridColumnOptions: [{ value: 'Column 1' }],
   linearValueOptions: {
-    min: { label: "1", value: "1" },
-    max: { label: "5", value: "5" },
+    min: { label: <div className='ml-2'>1</div>, value: "1" },
+    max: { label: <div className='ml-2'>5</div>, value: "5" },
     minLabel: '',
     maxLabel: ''
   },
