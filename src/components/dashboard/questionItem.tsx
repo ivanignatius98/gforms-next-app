@@ -5,7 +5,7 @@ import { MdContentCopy, MdOutlineImage } from "react-icons/md"
 import { additionalOptionsMap, choicesData, moreOptionsArr } from "./defaults"
 import { Item } from "@interfaces/dropdown.interface"
 import AnswerOptions from '@components/dashboard/answerOptions'
-import { OptionChoices, Question } from "@interfaces/question.interface"
+import { OptionChoices, Question, OptionLinears } from "@interfaces/question.interface"
 import Select from "@modules/Select"
 import { FiTrash2 } from "react-icons/fi"
 import Toggle from "@modules/Toggle"
@@ -156,6 +156,10 @@ const Component = ({
         otherOptionValue={questionRow.otherOption}
         setOtherOptionValue={(newValue: boolean) => {
           handleValueChange({ otherOption: newValue })
+        }}
+        linearValue={questionRow.linearValueOptions}
+        setLinearValue={(newValue: OptionLinears) => {
+          handleValueChange({ linearValueOptions: newValue })
         }}
       />
       {/* Footer */}

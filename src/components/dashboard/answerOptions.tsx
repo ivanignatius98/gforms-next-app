@@ -5,13 +5,14 @@ import { Question } from '@interfaces/question.interface';
 import { MdRadioButtonUnchecked, MdCheckBoxOutlineBlank, MdClose, MdOutlineImage, MdWarning, } from 'react-icons/md'
 import MenuIcon from '@modules/MenuIcon'
 import { IoEllipsisHorizontalSharp } from 'react-icons/io5'
-import { OptionChoices } from '@interfaces/question.interface';
+import { OptionChoices, ValueLabel, OptionLinears } from '@interfaces/question.interface';
 import { IconContext } from 'react-icons';
 import Tooltip from '@modules/Tooltip'
 import { classNames, getLayoutY, swap } from '@helpers';
 import Select from '@modules/Select'
 import { Item } from '@interfaces/dropdown.interface';
 import DragWrapper from '@modules/Drag';
+import { VscTriangleDown } from 'react-icons/vsc';
 
 interface Icon {
     type: string
@@ -130,7 +131,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
     //     setAnswerOptions([...temp])
 
     // }
-    // const removeImage = (index) => {3444444444
+    // const removeImage = (index) => {
     //     const temp = [...answerOptions]
     //     temp[index] = { ...temp[index], ...{ image: '', previewImage: '' } }
     //     // setQuestionValue({ answerOptions: temp })
@@ -357,6 +358,79 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
         </div>
     )
 }
+interface LinearScaleProps {
+    selected: boolean
+    linearValue: OptionLinears
+    setLinearValue: (newValue: OptionLinears) => void
+}
+
+function generateNumericOptions(start: number, end: number): ValueLabel[] {
+    const numericOptions: ValueLabel[] = [];
+
+    for (let i = start; i <= end; i++) {
+        numericOptions.push({
+            value: i.toString(),
+            label: <div className='ml-2'>{i}</div>,
+        });
+    }
+
+    return numericOptions;
+}
+const minNumericOptions: ValueLabel[] = generateNumericOptions(0, 1);
+const maxNumericOptions: ValueLabel[] = generateNumericOptions(2, 10)
+
+const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScaleProps) => {
+    const [min, setMin] = useState(linearValue.min ?? minNumericOptions[1])
+    const [max, setMax] = useState(linearValue.max ?? maxNumericOptions[3])
+    const [minLabel, setMinLabel] = useState(linearValue.minLabel ?? "")
+    const [maxLabel, setMaxLabel] = useState(linearValue.maxLabel ?? "")
+
+    const postIcon =
+        <div className='absolute right-4'>
+            <VscTriangleDown size={12} color="#5f6368" />
+        </div>
+
+    return (
+        <>
+            <div className="py-2 flex items-center">
+                <div className="w-[70px] h-12">
+                    <Select
+                        borderless
+                        value={min}
+                        onChange={(val) => setMin(val)}
+                        options={minNumericOptions}
+                        customPostIcon={postIcon}
+                        buttonClass='px-2'
+                    />
+                </div>
+                <span className='mx-2'>to</span>
+                <div className="w-[70px] h-12">
+                    <Select
+                        borderless
+                        value={max}
+                        onChange={(val) => setMax(val)}
+                        options={maxNumericOptions}
+                        customPostIcon={postIcon}
+                        buttonClass='px-2'
+                    />
+                </div>
+            </div>
+            <div className="flex -mx-2">
+                <div className="flex items-center mr-5 text-gray-400">{min.label}</div>
+                <div className="w-52 h-12 flex items-center">
+                    <Input name="min" value={minLabel} onChange={(e) => { setMinLabel(e.target.value) }} placeholder="Label (Optional)" />
+                </div>
+            </div>
+            <div className="flex -mx-2">
+                <div className="flex items-center mr-5 text-gray-400">{max.label}</div>
+                <div className="w-52 h-12 flex items-center">
+                    <Input name="max" value={maxLabel} onChange={(e) => { setMaxLabel(e.target.value) }} placeholder="Label (Optional)" />
+                </div>
+            </div>
+        </>
+    )
+}
+
 interface AnswerProps {
     questionProps: Question
     selected: boolean
@@ -364,8 +438,19 @@ interface AnswerProps {
     otherOptionValue: boolean
     setOptionsValue: (newValue: OptionChoices[]) => void,
     setOtherOptionValue: (newValue: boolean) => void,
+    linearValue: OptionLinears
+    setLinearValue: (newValue: OptionLinears) => void,
 }
-const AnswerOption = ({ questionProps, selected = false, setOptionsValue, optionsValue, otherOptionValue, setOtherOptionValue }: AnswerProps) => {
+
+const AnswerOption = ({ questionProps,
+    selected = false,
+    setOptionsValue,
+    optionsValue,
+    otherOptionValue,
+    setOtherOptionValue,
+    linearValue,
+    setLinearValue
+}: AnswerProps) => {
     const {
         type,
         moreOptionValues: initialMoreOptions,
@@ -385,6 +470,12 @@ const AnswerOption = ({ questionProps, selected = false, setOptionsValue, option
             setOtherOption={setOtherOptionValue}
             selected={selected}
             goToSection={initialMoreOptions?.includes("go_to_section")}
+        />)
+    } else if (value == 'linear_scale') {
+        content = (<LinearScaleAnswer
+            linearValue={linearValue}
+            setLinearValue={setLinearValue}
+            selected={selected}
         />)
     } else {
         content = (<></>)
