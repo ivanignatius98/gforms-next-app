@@ -154,7 +154,6 @@ const Page: React.FC<Props> = (props) => {
   const headerRef = useRef<HTMLDivElement>(null)
   const headerInputRef = useRef<HTMLInputElement>(null)
 
-  const [viewportWidth, setViewportWidth] = useState<number>(0);
   // selected index change
   useEffect(() => {
     const { cardIndex, divClickedOrigin } = cardClick
@@ -175,36 +174,35 @@ const Page: React.FC<Props> = (props) => {
   }, [questions])
 
   //#region resize behavior
-  useEffect(() => {
-    const handleResize = () => {
-      const newViewportWidth = window.innerWidth;
-      setViewportWidth(newViewportWidth);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
-  useEffect(() => {
-    const containerMarginTop = 12
+  const [hasScrollbar, setHasScrollbar] = useState(false);
+  const handleResize = useCallback(() => {
+    const newViewportWidth = window.innerWidth;
     let newNavHeight = 129
     let bottomToolbarHeight = 48
-    if (viewportWidth) {
-      if (viewportWidth < 640) {
+    if (newViewportWidth) {
+      if (newViewportWidth < 560) {
         newNavHeight = 147
-      } else if (viewportWidth > hideToolbarBreakpoint) {
+      } else if (newViewportWidth > hideToolbarBreakpoint) {
         bottomToolbarHeight = 0
       }
     }
+    if ((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - newNavHeight)) {
+      setHasScrollbar(true)
+    } else if (hasScrollbar) {
+      setHasScrollbar(false)
+    }
 
-    setHasScrollbar((layoutRef?.current?.getBoundingClientRect().height ?? 0) > (window.innerHeight - newNavHeight))
-    setState(prevState => ({
-      ...prevState,
-      minHeight: `calc(100vh - ${newNavHeight + bottomToolbarHeight + containerMarginTop}px)`
-    }));
-  }, [viewportWidth]);
+  }, [hasScrollbar])
 
-  const [hasScrollbar, setHasScrollbar] = useState(false);
+  useEffect(() => {
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [handleResize]);
+  useEffect(() => {
+    handleResize()
+  }, [questions.length, handleResize])
   //#endregion
 
   //#region question
@@ -312,7 +310,6 @@ const Page: React.FC<Props> = (props) => {
           >
             <div className='min-w-[300px] sm:w-[770px] pb-16'
               style={{
-                minHeight: state.minHeight,
                 cursor: currentlyDraggedItem != null ? "move" : "auto"
               }}
             >
@@ -372,7 +369,6 @@ const Page: React.FC<Props> = (props) => {
               <div className='relative hidden form:block'>
                 <Toolbar
                   currentlyDragging={currentlyDraggedItem != null}
-                  viewportWidth={viewportWidth ?? 100}
                   menus={menus}
                   cardIndex={cardClick.cardIndex}
                   layoutRef={layoutRef}
@@ -415,7 +411,6 @@ const Page: React.FC<Props> = (props) => {
                     key={i}
                     value={{
                       selected,
-                      viewportWidth,
                       row,
                       i
                     }}
@@ -461,7 +456,6 @@ const Page: React.FC<Props> = (props) => {
 
 interface ToolbarProps {
   menus: any[],
-  viewportWidth?: number
   cardIndex: number | null
   layoutRef: RefObject<HTMLDivElement> | null
   headerRef: RefObject<HTMLDivElement> | null
@@ -473,19 +467,21 @@ interface MenuProps {
 }
 const BottomToolbar = ({ menus }: MenuProps) => {
   return (
-    <div className='pr-4 form:hidden bg-white sticky items-center flex shadow-lg rounded-md bottom-0 mx-5 z-20'>
-      {menus.map((row, i) =>
-        <div key={i} className='justify-center flex flex-1'
-          onClick={row.bottomOnClick ? row.bottomOnClick : row.onClick}
-        >
-          <MenuIcon
-            orientation="right"
-            additionalClass=""
-            title={row.title}
-            icon={row.icon}
-          />
-        </div>
-      )}
+    <div className='flex justify-center w-full'>
+      <div className='pr-4 form:hidden bg-white fixed items-center flex shadow-lg rounded-md bottom-0 mx-5 z-20 w-[95%]' >
+        {menus.map((row, i) =>
+          <div key={i} className='justify-center flex flex-1'
+            onClick={row.bottomOnClick ? row.bottomOnClick : row.onClick}
+          >
+            <MenuIcon
+              orientation="right"
+              additionalClass=""
+              title={row.title}
+              icon={row.icon}
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -495,7 +491,6 @@ const Toolbar = ({
   headerRef,
   cardRefs,
   menus,
-  viewportWidth = 100,
   currentlyDragging = false
 }: ToolbarProps) => {
   const toolbarRef = useRef<HTMLDivElement>(null)
@@ -540,6 +535,7 @@ const Toolbar = ({
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, [cardIndex])
+  const [toolbarOrientation, setToolbarOrientation] = useState("right")
 
   return (
     <div
@@ -547,13 +543,22 @@ const Toolbar = ({
       style={{ top: sidebarY, zIndex: 1 }}
       className='items-center  transition-all duration-300 flex flex-col shadow-md bg-white rounded-md absolute -right-16 px-[2px] py-1'>
       {menus.map((row, i) =>
-        <div key={i} className='m-[6px]' onClick={row.onClick}>
-          <MenuIcon
-            orientation={
-              viewportWidth < 965 ? "left" :
-                viewportWidth < 1150 ? "bottom" :
-                  "right"
+        <div
+          key={i}
+          className='m-[6px]'
+          onClick={row.onClick}
+          onMouseEnter={() => {
+            console.log(window.innerWidth)
+            if (window.innerWidth < 965) {
+              setToolbarOrientation("left")
+            } else if (window.innerWidth < 1150) {
+              setToolbarOrientation("bottom")
+            } else {
+              setToolbarOrientation("right")
             }
+          }}>
+          <MenuIcon
+            orientation={toolbarOrientation}
             additionalClass="w-8 h-8 p-1"
             title={row.title}
             icon={row.icon}

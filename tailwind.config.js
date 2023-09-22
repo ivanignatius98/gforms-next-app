@@ -6,6 +6,7 @@ module.exports = {
     screens: {
       'form': '930px',
       ...defaultTheme.screens,
+      sm: "560px",
     },
   },
   plugins: [],
