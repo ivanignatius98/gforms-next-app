@@ -129,7 +129,24 @@ const Page: React.FC<Props> = (props) => {
     minHeight: "100vh",
   })
 
-  const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+  // const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+  const [questions, setQuestions] = useState<Question[]>([
+    { ...defaultQuestion, title: "1", xid: uuidv4() },
+    {
+      ...defaultQuestion, title: "2", type: {
+        value: "checkboxes",
+        label: "Checkboxes",
+        group: 1
+      }, xid: uuidv4()
+    },
+    {
+      ...defaultQuestion, title: "3", type: {
+        value: "multiple_choice",
+        label: "Multiple Choice",
+        group: 1
+      }, xid: uuidv4()
+    },
+  ]);
   const [cardClick, setCardClick] = useState<ClickState>({
     cardIndex: 0,
     divClickedOrigin: true
@@ -208,49 +225,46 @@ const Page: React.FC<Props> = (props) => {
   //#region question
 
   const addQuestions = () => {
-    setQuestions((prevQuestion) => {
-      const { cardIndex } = { ...cardClick }
-      const question = { ...defaultQuestion, xid: uuidv4() }
-      let newIdx = 0
-      if (cardIndex != undefined) {
-        prevQuestion.splice(cardIndex + 1, 0, question)
-        newIdx = cardIndex + 1
-      } else {
-        prevQuestion.push(question)
-        newIdx = prevQuestion.length - 1
-      }
-      setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
-      setItemXid(question.xid)
-      return [...prevQuestion]
-    })
+    const prevQuestion = questionRef.current
+    const { cardIndex } = { ...cardClick }
+    const question = { ...defaultQuestion, xid: uuidv4() }
+    let newIdx = 0
+    if (cardIndex != undefined) {
+      prevQuestion.splice(cardIndex + 1, 0, question)
+      newIdx = cardIndex + 1
+    } else {
+      prevQuestion.push(question)
+      newIdx = prevQuestion.length - 1
+    }
+    setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
+    setItemXid(question.xid)
+    setQuestions(prevQuestion)
+    questionRef.current = prevQuestion
   }
   const duplicateQuestion = () => {
-    setQuestions((prevQuestion) => {
-      const { cardIndex } = { ...cardClick }
-      let newIdx = cardIndex
-      if (cardIndex != undefined) {
-        const question = { ...prevQuestion[cardIndex], xid: uuidv4() }
-        prevQuestion.splice(cardIndex + 1, 0, question)
-        setItemXid(question.xid)
-        newIdx = cardIndex + 1
-      }
-      setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
-
-      return [...prevQuestion]
-    })
+    const prevQuestion = questionRef.current
+    const { cardIndex } = { ...cardClick }
+    if (cardIndex != undefined) {
+      const question = { ...prevQuestion[cardIndex], xid: uuidv4() }
+      prevQuestion.splice(cardIndex + 1, 0, question)
+      setItemXid(question.xid)
+      setCardClick({ cardIndex: cardIndex + 1, divClickedOrigin: true })
+    }
+    setQuestions(prevQuestion)
+    questionRef.current = prevQuestion
   }
   const removeQuestion = () => {
-    setQuestions((prevQuestion) => {
-      const { cardIndex } = { ...cardClick }
-      if (cardIndex != null && questions.length > 1) {
-        prevQuestion.splice(cardIndex, 1)
+    const prevQuestion = questionRef.current
+    const { cardIndex } = { ...cardClick }
+    if (cardIndex != null && questions.length > 1) {
+      prevQuestion.splice(cardIndex, 1)
+      const newIndex = cardIndex == 0 ? cardIndex : cardIndex - 1
+      setItemXid(prevQuestion[newIndex].xid)
+      setCardClick({ cardIndex: newIndex, divClickedOrigin: true })
+    }
 
-        const newIndex = cardIndex == 0 ? cardIndex : cardIndex - 1
-        setItemXid(prevQuestion[newIndex].xid)
-        setCardClick({ cardIndex: newIndex, divClickedOrigin: true })
-      }
-      return [...prevQuestion]
-    })
+    questionRef.current = prevQuestion
+    setQuestions(prevQuestion)
   }
   //#endregion
 
@@ -263,14 +277,17 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Import questions",
       icon: <TbFileImport />,
+      onClick: () => console.log(cardClick)
     },
     {
       title: "Add title and description",
       icon: <AiOutlineFontSize />,
+      onClick: () => console.log(questions)
     },
     {
       title: "Add image",
       icon: <MdOutlineImage />,
+      onClick: () => console.log(questionRef.current)
     },
     {
       title: "Add video",
@@ -294,8 +311,11 @@ const Page: React.FC<Props> = (props) => {
   }
   //#endregion
 
+  const questionRef = useRef<Question[]>([])
   // console.log("RERENDER")
-
+  const handleQuestionChange = (val: Question, index: number) => {
+    questionRef.current[index] = val
+  }
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -440,6 +460,7 @@ const Page: React.FC<Props> = (props) => {
                         duplicateQuestion={duplicateQuestion}
                         removeQuestion={removeQuestion}
                         cardRefs={cardRefs}
+                        onChange={handleQuestionChange}
                       />
                     </CardContainer>
                   </QuestionsContext.Provider>)
@@ -548,7 +569,6 @@ const Toolbar = ({
           className='m-[6px]'
           onClick={row.onClick}
           onMouseEnter={() => {
-            console.log(window.innerWidth)
             if (window.innerWidth < 965) {
               setToolbarOrientation("left")
             } else if (window.innerWidth < 1150) {

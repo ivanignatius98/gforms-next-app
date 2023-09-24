@@ -20,17 +20,25 @@ interface QuestionProps {
   duplicateQuestion: () => void
   removeQuestion: () => void
   cardRefs: MutableRefObject<HTMLDivElement[]> | null
+  onChange: (val: Question, index: number) => void
 }
 const Component = ({
   textPreview,
   inputRef,
   duplicateQuestion,
   removeQuestion,
-  cardRefs
+  cardRefs,
+  onChange
 }: QuestionProps) => {
   const { selected, row, i } = useContext(QuestionsContext)
   const [questionRow, setQuestionRow] = useState<Question>(row)
+  useEffect(() => {
+    setQuestionRow(row)
+  }, [row])
 
+  useEffect(() => {
+    onChange(questionRow, i)
+  }, [questionRow, i])
   const handleValueChange = (payload: any) => {
     setQuestionRow((prevState) => {
       return { ...prevState, ...payload }
