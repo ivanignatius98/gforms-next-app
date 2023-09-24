@@ -418,18 +418,20 @@ const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScal
         const range = generateRange(parseInt(linearValue.min.value), parseInt(linearValue.max.value)); // Start from 2 and end at 11
 
         const textDiv = (text: string) =>
-            <p className='min-w-[32px] max-w-[165px] flex-grow break-words text-center'>
+            <p className='min-w-[32px] max-w-[165px] flex-grow break-words sm:text-center'>
                 {text}
             </p>
 
         return (
-            <div className='flex items-center w-full justify-center'>
+            <div className='flex items-start sm:items-center justify-center w-full flex-col sm:flex-row px-1 mt-2'>
                 {textDiv(linearValue.minLabel)}
                 {range.map((number, index) => (
                     <div key={index} className='flex justify-center flex-grow'>
-                        <div className='min-w-[32px] max-w-[62px]'>
+                        <div className='min-w-[32px] max-w-[62px] flex items-center gap-4 pl-7 sm:pl-0 sm:block'>
                             <div className='h-[42px] flex justify-center items-center'>
-                                {number}
+                                <span className='w-4 text-center'>
+                                    {number}
+                                </span>
                             </div>
                             <div className='h-12 flex justify-center items-center'>
                                 <MdRadioButtonUnchecked {...iconProps} />
