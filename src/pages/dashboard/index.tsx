@@ -129,24 +129,8 @@ const Page: React.FC<Props> = (props) => {
     minHeight: "100vh",
   })
 
-  // const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
-  const [questions, setQuestions] = useState<Question[]>([
-    { ...defaultQuestion, title: "1", xid: uuidv4() },
-    {
-      ...defaultQuestion, title: "2", type: {
-        value: "checkboxes",
-        label: "Checkboxes",
-        group: 1
-      }, xid: uuidv4()
-    },
-    {
-      ...defaultQuestion, title: "3", type: {
-        value: "multiple_choice",
-        label: "Multiple Choice",
-        group: 1
-      }, xid: uuidv4()
-    },
-  ]);
+  const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+
   const [cardClick, setCardClick] = useState<ClickState>({
     cardIndex: 0,
     divClickedOrigin: true
