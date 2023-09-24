@@ -145,22 +145,7 @@ const Component = ({
         />
       }
       {/* Content */}
-      <AnswerOptions
-        selected={selected}
-        questionProps={questionRow}
-        optionsValue={questionRow.answerOptions}
-        setOptionsValue={(newValue: OptionChoices[]) => {
-          handleValueChange({ answerOptions: newValue })
-        }}
-        otherOptionValue={questionRow.otherOption}
-        setOtherOptionValue={(newValue: boolean) => {
-          handleValueChange({ otherOption: newValue })
-        }}
-        linearValue={questionRow.linearValueOptions}
-        setLinearValue={(newValue: OptionLinears) => {
-          handleValueChange({ linearValueOptions: newValue })
-        }}
-      />
+      <AnswerOptions setValue={handleValueChange} questionRow={questionRow} />
       {/* Footer */}
       <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2 ')}>
         <MenuIcon

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useRef, useMemo, useCallback, useContext } from 'react'
 import TextAnswer from './textAnswer'
 import Input from '@modules/Input'
 import { Question } from '@interfaces/question.interface';
@@ -13,6 +13,7 @@ import Select from '@modules/Select'
 import { Item } from '@interfaces/dropdown.interface';
 import DragWrapper from '@modules/Drag';
 import { VscTriangleDown } from 'react-icons/vsc';
+import { QuestionsContext } from '@context/question.context';
 
 const iconProps = {
     size: 21,
@@ -86,14 +87,26 @@ const AddOption = ({ type, index, addAnswerOption, setOtherOption, label = 'Add 
 }
 interface ChoiceProps {
     type: string
-    otherOption: boolean
+    otherOption?: boolean
     selected: boolean
-    goToSection: boolean
+    goToSection?: boolean
     answerOptions: OptionChoices[]
     setAnswerOptions: (newValue: OptionChoices[]) => void
-    setOtherOption: (newValue: boolean) => void
+    setOtherOption?: (newValue: boolean) => void
+    imageHandling?: boolean
+    otherTypeHandling?: boolean
 }
-const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, setOtherOption, selected = false, goToSection }: ChoiceProps) => {
+const ChoicesAnswer = ({
+    type,
+    answerOptions,
+    setAnswerOptions,
+    otherOption,
+    setOtherOption = () => { },
+    selected = false,
+    goToSection,
+    imageHandling = false,
+    otherTypeHandling = false
+}: ChoiceProps) => {
     const inputRefs = useRef<HTMLInputElement[]>([])
     const addAnswerOption = () => {
         const prevProps = [...answerOptions]
@@ -160,7 +173,8 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
         inputRefs.current[index - 1 > 0 ? index - 1 : 0].focus()
         setTimeout(() => setAnswerOptions([...newProps]), 10);
     }
-    const otherType = type != 'dropdown'
+    const otherType = otherTypeHandling && type != 'dropdown'
+
     useEffect(() => {
         inputRefs.current = inputRefs.current.slice(0, answerOptions.length)
     }, [answerOptions])
@@ -241,7 +255,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                         selected ? "group" : "",
                         'ml-[-1.5rem] mr-[-1.5rem]'
                     )}
-                    style={{ opacity: currentlyDraggedItem?.index == index ? 0 : 1 }}
+                    style={{ opacity: currentlyDraggedItem?.value == item.value ? 0 : 1 }}
                 >
                     <div className='h-12 flex items-center px-6 relative'>
                         <div
@@ -303,9 +317,9 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                                 </Tooltip>
                             }
                         </div>
-                        <div className='invisible group-hover:visible group-focus-within:visible'>
+                        {imageHandling && <div className='invisible group-hover:visible group-focus-within:visible'>
                             <MenuIcon icon={<MdOutlineImage />} />
-                        </div>
+                        </div>}
                         <div className={classNames(answerOptions.length > 1 && selected ? "" : "invisible")}>
                             <MenuIcon onClick={() => deleteItem(index)} icon={<MdClose />} />
                         </div>
@@ -477,30 +491,61 @@ const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScal
     );
 }
 
-interface AnswerProps {
-    questionProps: Question
+interface GridChoiceProps {
+    type: string
     selected: boolean
-    optionsValue: OptionChoices[]
-    otherOptionValue: boolean
-    setOptionsValue: (newValue: OptionChoices[]) => void,
-    setOtherOptionValue: (newValue: boolean) => void,
-    linearValue: OptionLinears
-    setLinearValue: (newValue: OptionLinears) => void,
+    rowAnswerOptions: OptionChoices[]
+    setRowAnswerOptions: (newValue: OptionChoices[]) => void
+    columnAnswerOptions: OptionChoices[]
+    setColumnAnswerOptions: (newValue: OptionChoices[]) => void
+}
+const GridChoicesAnswer = ({
+    rowAnswerOptions,
+    setRowAnswerOptions,
+    columnAnswerOptions,
+    setColumnAnswerOptions
+}: GridChoiceProps) => {
+    return (
+        <div className='flex mt-4 gap-5'>
+            <div className='flex-1'>
+                <span className='font-semibold'>Rows</span>
+                <ChoicesAnswer
+                    answerOptions={rowAnswerOptions}
+                    setAnswerOptions={setRowAnswerOptions}
+                    selected={true}
+                    type='dropdown'
+                />
+            </div>
+            <div className='flex-1'>
+                <span className='font-semibold'>Rows</span>
+                <ChoicesAnswer
+                    answerOptions={columnAnswerOptions}
+                    setAnswerOptions={setColumnAnswerOptions}
+                    selected={true}
+                    type='multiple_choice'
+                />
+            </div>
+        </div>
+    )
 }
 
-const AnswerOption = ({ questionProps,
-    selected = false,
-    setOptionsValue,
-    optionsValue,
-    otherOptionValue,
-    setOtherOptionValue,
-    linearValue,
-    setLinearValue
+
+
+interface AnswerProps {
+    setValue: (newValue: any) => void
+    questionRow: Question
+}
+
+const AnswerOption = ({
+    setValue,
+    questionRow
 }: AnswerProps) => {
+    const { selected } = useContext(QuestionsContext)
+
     const {
         type,
         moreOptionValues: initialMoreOptions,
-    } = questionProps
+    } = questionRow
 
     const { value } = type
     let content = <></>
@@ -510,17 +555,29 @@ const AnswerOption = ({ questionProps,
     } else if (value == 'multiple_choice' || value == 'checkboxes' || value == 'dropdown') {
         content = (<ChoicesAnswer
             type={value}
-            answerOptions={optionsValue}
-            setAnswerOptions={setOptionsValue}
-            otherOption={otherOptionValue}
-            setOtherOption={setOtherOptionValue}
+            answerOptions={questionRow.answerOptions}
+            setAnswerOptions={(newValue) => setValue({ answerOptions: newValue })}
+            otherOption={questionRow.otherOption}
+            setOtherOption={(newValue) => setValue({ otherOption: newValue })}
             selected={selected}
             goToSection={initialMoreOptions?.includes("go_to_section")}
+            imageHandling
+            otherTypeHandling
         />)
     } else if (value == 'linear_scale') {
         content = (<LinearScaleAnswer
-            linearValue={linearValue}
-            setLinearValue={setLinearValue}
+            linearValue={questionRow.linearValueOptions}
+            setLinearValue={(newValue) => setValue({ linearValueOptions: newValue })}
+            selected={selected}
+        />)
+    } else if (value == 'multiple_choice_grid') {
+        // console.log(gridRowValue)
+        content = (<GridChoicesAnswer
+            type={value}
+            rowAnswerOptions={questionRow.gridRowOptions}
+            setRowAnswerOptions={(newValue) => setValue({ gridRowOptions: newValue })}
+            columnAnswerOptions={questionRow.gridColumnOptions}
+            setColumnAnswerOptions={(newValue) => setValue({ gridColumnOptions: newValue })}
             selected={selected}
         />)
     } else {
