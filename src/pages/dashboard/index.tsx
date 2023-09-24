@@ -239,7 +239,6 @@ const Page: React.FC<Props> = (props) => {
     setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
     setItemXid(question.xid)
     setQuestions(prevQuestion)
-    questionRef.current = prevQuestion
   }
   const duplicateQuestion = () => {
     const prevQuestion = questionRef.current
@@ -251,7 +250,6 @@ const Page: React.FC<Props> = (props) => {
       setCardClick({ cardIndex: cardIndex + 1, divClickedOrigin: true })
     }
     setQuestions(prevQuestion)
-    questionRef.current = prevQuestion
   }
   const removeQuestion = () => {
     const prevQuestion = questionRef.current
@@ -263,7 +261,6 @@ const Page: React.FC<Props> = (props) => {
       setCardClick({ cardIndex: newIndex, divClickedOrigin: true })
     }
 
-    questionRef.current = prevQuestion
     setQuestions(prevQuestion)
   }
   //#endregion
