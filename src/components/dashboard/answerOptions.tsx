@@ -238,9 +238,11 @@ const ChoicesAnswer = ({
                                     alwaysHighlight={false}
                                 />
                             </div>
-                            <div className='visible'>
-                                <MenuIcon icon={<MdOutlineImage />} />
-                            </div>
+                            {imageHandling &&
+                                <div className='visible'>
+                                    <MenuIcon icon={<MdOutlineImage />} />
+                                </div>
+                            }
                             <div className={classNames(answerOptions.length > 1 ? "" : "invisible")}>
                                 <MenuIcon icon={<MdClose />} />
                             </div>

@@ -166,7 +166,9 @@ const Component = ({
           icon={<FiTrash2 />}
         />
         <div className=' border-l-[1.5px] h-8 mx-2'></div>
-        <span className='text-sm ml-2 mr-3 cursor-default select-none' onClick={() => handleValueChange({ required: !questionRow.required })}>Required</span>
+        <span className='text-sm ml-2 mr-3 cursor-default select-none' onClick={() => handleValueChange({ required: !questionRow.required })}>
+          {questionRow.type.value == "multiple_choice_grid" || questionRow.type.value == "checkbox_grid" ? "Require a response in each row" : "Required"}
+        </span>
         <Toggle
           value={questionRow.required}
           handleChange={(checked: boolean) => handleValueChange({ required: checked })}
