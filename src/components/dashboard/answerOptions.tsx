@@ -88,13 +88,13 @@ const AddOption = ({ type, index, addAnswerOption, setOtherOption, label = 'Add 
 interface ChoiceProps {
     type: string
     otherOption?: boolean
-    selected: boolean
     goToSection?: boolean
     answerOptions: OptionChoices[]
     setAnswerOptions: (newValue: OptionChoices[]) => void
     setOtherOption?: (newValue: boolean) => void
     imageHandling?: boolean
     otherTypeHandling?: boolean
+    placeholderPrefix?: string
 }
 const ChoicesAnswer = ({
     type,
@@ -102,15 +102,16 @@ const ChoicesAnswer = ({
     setAnswerOptions,
     otherOption,
     setOtherOption = () => { },
-    selected = false,
     goToSection,
     imageHandling = false,
-    otherTypeHandling = false
+    otherTypeHandling = false,
+    placeholderPrefix = "Option"
 }: ChoiceProps) => {
+    const { selected } = useContext(QuestionsContext)
     const inputRefs = useRef<HTMLInputElement[]>([])
     const addAnswerOption = () => {
         const prevProps = [...answerOptions]
-        const newValue = `Option ${prevProps.length + 1}`
+        const newValue = `${placeholderPrefix} ${prevProps.length + 1}`
         prevProps.push({
             value: newValue,
             image: '',
@@ -373,7 +374,6 @@ const ChoicesAnswer = ({
     )
 }
 interface LinearScaleProps {
-    selected: boolean
     linearValue: OptionLinears
     setLinearValue: (newValue: OptionLinears) => void
 }
@@ -393,7 +393,8 @@ function generateNumericOptions(start: number, end: number): ValueLabel[] {
 const minNumericOptions: ValueLabel[] = generateNumericOptions(0, 1);
 const maxNumericOptions: ValueLabel[] = generateNumericOptions(2, 10)
 
-const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScaleProps) => {
+const LinearScaleAnswer = ({ linearValue, setLinearValue }: LinearScaleProps) => {
+    const { selected } = useContext(QuestionsContext)
     const handleValueChange = (payload: any) => {
         const updatedValue = { ...linearValue, ...payload };
         setLinearValue(updatedValue);
@@ -493,40 +494,75 @@ const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScal
 
 interface GridChoiceProps {
     type: string
-    selected: boolean
     rowAnswerOptions: OptionChoices[]
     setRowAnswerOptions: (newValue: OptionChoices[]) => void
     columnAnswerOptions: OptionChoices[]
     setColumnAnswerOptions: (newValue: OptionChoices[]) => void
 }
 const GridChoicesAnswer = ({
+    type,
     rowAnswerOptions,
     setRowAnswerOptions,
     columnAnswerOptions,
     setColumnAnswerOptions
 }: GridChoiceProps) => {
-    return (
-        <div className='flex mt-4 gap-5'>
+    const { selected } = useContext(QuestionsContext)
+
+    const iconType = new Map([
+        ["multiple_choice_grid", "multiple_choice"],
+        ["checkbox_grid", "checkboxes"]
+    ])
+    console.log(iconType.get(type))
+    return selected ? (
+        <div className='sm:flex mt-4 gap-5'>
             <div className='flex-1'>
                 <span className='font-semibold'>Rows</span>
                 <ChoicesAnswer
                     answerOptions={rowAnswerOptions}
                     setAnswerOptions={setRowAnswerOptions}
-                    selected={true}
                     type='dropdown'
+                    placeholderPrefix="Row"
                 />
             </div>
+            <hr className='mt-1 mb-3 sm:hidden block ' />
             <div className='flex-1'>
-                <span className='font-semibold'>Rows</span>
+                <span className='font-semibold'>Columns</span>
                 <ChoicesAnswer
                     answerOptions={columnAnswerOptions}
                     setAnswerOptions={setColumnAnswerOptions}
-                    selected={true}
-                    type='multiple_choice'
+                    type={iconType.get(type) ?? ""}
+                    placeholderPrefix="Column"
                 />
             </div>
         </div>
-    )
+    ) :
+        (
+            <table className="table-fixed w-full">
+                <tbody>
+                    <tr className='h-[2.5em]'>
+                        <td className=" p-2 pl-0 "> </td>
+                        {columnAnswerOptions.map(({ value }, i) =>
+                            <td key={i} className="overflow-hidden min-w-[48px] max-w-[288px] whitespace-nowrap text-center p-[0.25em] text-ellipsis">
+                                {value}
+                            </td>
+                        )}
+                    </tr>
+                    {rowAnswerOptions.map(({ value }, i) =>
+                        <tr className='h-[2.5em]' key={i}>
+                            <td className="overflow-hidden min-w-[48px] max-w-[288px] whitespace-nowrap p-2 pl-0">{value}</td>
+                            {columnAnswerOptions.map(({ value }, j) =>
+                                <td className="text-center px-4 py-2 min-w-[48px]" key={j}>
+                                    <div className="flex justify-center items-center">
+                                        <div>
+                                            <OptionIcon type={iconType.get(type) ?? ""} />
+                                        </div>
+                                    </div>
+                                </td>
+                            )}
+                        </tr>)}
+                </tbody>
+            </table>
+        )
 }
 
 
@@ -540,8 +576,6 @@ const AnswerOption = ({
     setValue,
     questionRow
 }: AnswerProps) => {
-    const { selected } = useContext(QuestionsContext)
-
     const {
         type,
         moreOptionValues: initialMoreOptions,
@@ -559,7 +593,6 @@ const AnswerOption = ({
             setAnswerOptions={(newValue) => setValue({ answerOptions: newValue })}
             otherOption={questionRow.otherOption}
             setOtherOption={(newValue) => setValue({ otherOption: newValue })}
-            selected={selected}
             goToSection={initialMoreOptions?.includes("go_to_section")}
             imageHandling
             otherTypeHandling
@@ -568,17 +601,14 @@ const AnswerOption = ({
         content = (<LinearScaleAnswer
             linearValue={questionRow.linearValueOptions}
             setLinearValue={(newValue) => setValue({ linearValueOptions: newValue })}
-            selected={selected}
         />)
-    } else if (value == 'multiple_choice_grid') {
-        // console.log(gridRowValue)
+    } else if (value == 'multiple_choice_grid' || value == "checkbox_grid") {
         content = (<GridChoicesAnswer
             type={value}
             rowAnswerOptions={questionRow.gridRowOptions}
             setRowAnswerOptions={(newValue) => setValue({ gridRowOptions: newValue })}
             columnAnswerOptions={questionRow.gridColumnOptions}
             setColumnAnswerOptions={(newValue) => setValue({ gridColumnOptions: newValue })}
-            selected={selected}
         />)
     } else {
         content = (<></>)

@@ -145,7 +145,12 @@ const Component = ({
         />
       }
       {/* Content */}
-      <AnswerOptions setValue={handleValueChange} questionRow={questionRow} />
+      <div className='mt-4'>
+        <AnswerOptions
+          setValue={handleValueChange}
+          questionRow={questionRow}
+        />
+      </div>
       {/* Footer */}
       <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2 ')}>
         <MenuIcon
@@ -161,7 +166,7 @@ const Component = ({
           icon={<FiTrash2 />}
         />
         <div className=' border-l-[1.5px] h-8 mx-2'></div>
-        <span className='text-sm ml-2 mr-3'>Required</span>
+        <span className='text-sm ml-2 mr-3 cursor-default select-none' onClick={() => handleValueChange({ required: !questionRow.required })}>Required</span>
         <Toggle
           value={questionRow.required}
           handleChange={(checked: boolean) => handleValueChange({ required: checked })}
