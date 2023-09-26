@@ -96,7 +96,7 @@ const DragWrapper = ({
       }
     }
     if (!drag.isFirstCard) {
-      const prevY = getLayoutY(cardRefs.current[drag.current - 1]) + 12
+      const prevY = getLayoutY(cardRefs.current[drag.current - 1]) + 16
       if (yCoordinate < prevY) {
         shift(drag.current, "up")
       }

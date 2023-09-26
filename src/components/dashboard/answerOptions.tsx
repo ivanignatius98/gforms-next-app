@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo, useCallback } from 'react'
+import React, { useEffect, useState, useRef, useMemo, useCallback, useContext } from 'react'
 import TextAnswer from './textAnswer'
 import Input from '@modules/Input'
 import { Question } from '@interfaces/question.interface';
@@ -13,6 +13,7 @@ import Select from '@modules/Select'
 import { Item } from '@interfaces/dropdown.interface';
 import DragWrapper from '@modules/Drag';
 import { VscTriangleDown } from 'react-icons/vsc';
+import { QuestionsContext } from '@context/question.context';
 
 const iconProps = {
     size: 21,
@@ -86,18 +87,31 @@ const AddOption = ({ type, index, addAnswerOption, setOtherOption, label = 'Add 
 }
 interface ChoiceProps {
     type: string
-    otherOption: boolean
-    selected: boolean
-    goToSection: boolean
+    otherOption?: boolean
+    goToSection?: boolean
     answerOptions: OptionChoices[]
     setAnswerOptions: (newValue: OptionChoices[]) => void
-    setOtherOption: (newValue: boolean) => void
+    setOtherOption?: (newValue: boolean) => void
+    imageHandling?: boolean
+    otherTypeHandling?: boolean
+    placeholderPrefix?: string
 }
-const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, setOtherOption, selected = false, goToSection }: ChoiceProps) => {
+const ChoicesAnswer = ({
+    type,
+    answerOptions,
+    setAnswerOptions,
+    otherOption,
+    setOtherOption = () => { },
+    goToSection,
+    imageHandling = false,
+    otherTypeHandling = false,
+    placeholderPrefix = "Option"
+}: ChoiceProps) => {
+    const { selected } = useContext(QuestionsContext)
     const inputRefs = useRef<HTMLInputElement[]>([])
     const addAnswerOption = () => {
         const prevProps = [...answerOptions]
-        const newValue = `Option ${prevProps.length + 1}`
+        const newValue = `${placeholderPrefix} ${prevProps.length + 1}`
         prevProps.push({
             value: newValue,
             image: '',
@@ -160,7 +174,8 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
         inputRefs.current[index - 1 > 0 ? index - 1 : 0].focus()
         setTimeout(() => setAnswerOptions([...newProps]), 10);
     }
-    const otherType = type != 'dropdown'
+    const otherType = otherTypeHandling && type != 'dropdown'
+
     useEffect(() => {
         inputRefs.current = inputRefs.current.slice(0, answerOptions.length)
     }, [answerOptions])
@@ -241,7 +256,7 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                         selected ? "group" : "",
                         'ml-[-1.5rem] mr-[-1.5rem]'
                     )}
-                    style={{ opacity: currentlyDraggedItem?.index == index ? 0 : 1 }}
+                    style={{ opacity: currentlyDraggedItem?.value == item.value ? 0 : 1 }}
                 >
                     <div className='h-12 flex items-center px-6 relative'>
                         <div
@@ -303,9 +318,9 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
                                 </Tooltip>
                             }
                         </div>
-                        <div className='invisible group-hover:visible group-focus-within:visible'>
+                        {imageHandling && <div className='invisible group-hover:visible group-focus-within:visible'>
                             <MenuIcon icon={<MdOutlineImage />} />
-                        </div>
+                        </div>}
                         <div className={classNames(answerOptions.length > 1 && selected ? "" : "invisible")}>
                             <MenuIcon onClick={() => deleteItem(index)} icon={<MdClose />} />
                         </div>
@@ -359,7 +374,6 @@ const ChoicesAnswer = ({ type, answerOptions, setAnswerOptions, otherOption, set
     )
 }
 interface LinearScaleProps {
-    selected: boolean
     linearValue: OptionLinears
     setLinearValue: (newValue: OptionLinears) => void
 }
@@ -379,7 +393,8 @@ function generateNumericOptions(start: number, end: number): ValueLabel[] {
 const minNumericOptions: ValueLabel[] = generateNumericOptions(0, 1);
 const maxNumericOptions: ValueLabel[] = generateNumericOptions(2, 10)
 
-const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScaleProps) => {
+const LinearScaleAnswer = ({ linearValue, setLinearValue }: LinearScaleProps) => {
+    const { selected } = useContext(QuestionsContext)
     const handleValueChange = (payload: any) => {
         const updatedValue = { ...linearValue, ...payload };
         setLinearValue(updatedValue);
@@ -477,30 +492,94 @@ const LinearScaleAnswer = ({ linearValue, setLinearValue, selected }: LinearScal
     );
 }
 
-interface AnswerProps {
-    questionProps: Question
-    selected: boolean
-    optionsValue: OptionChoices[]
-    otherOptionValue: boolean
-    setOptionsValue: (newValue: OptionChoices[]) => void,
-    setOtherOptionValue: (newValue: boolean) => void,
-    linearValue: OptionLinears
-    setLinearValue: (newValue: OptionLinears) => void,
+interface GridChoiceProps {
+    type: string
+    rowAnswerOptions: OptionChoices[]
+    setRowAnswerOptions: (newValue: OptionChoices[]) => void
+    columnAnswerOptions: OptionChoices[]
+    setColumnAnswerOptions: (newValue: OptionChoices[]) => void
+}
+const GridChoicesAnswer = ({
+    type,
+    rowAnswerOptions,
+    setRowAnswerOptions,
+    columnAnswerOptions,
+    setColumnAnswerOptions
+}: GridChoiceProps) => {
+    const { selected } = useContext(QuestionsContext)
+
+    const iconType = new Map([
+        ["multiple_choice_grid", "multiple_choice"],
+        ["checkbox_grid", "checkboxes"]
+    ])
+    console.log(iconType.get(type))
+    return selected ? (
+        <div className='sm:flex mt-4 gap-5'>
+            <div className='flex-1'>
+                <span className='font-semibold'>Rows</span>
+                <ChoicesAnswer
+                    answerOptions={rowAnswerOptions}
+                    setAnswerOptions={setRowAnswerOptions}
+                    type='dropdown'
+                    placeholderPrefix="Row"
+                />
+            </div>
+            <hr className='mt-1 mb-3 sm:hidden block ' />
+            <div className='flex-1'>
+                <span className='font-semibold'>Columns</span>
+                <ChoicesAnswer
+                    answerOptions={columnAnswerOptions}
+                    setAnswerOptions={setColumnAnswerOptions}
+                    type={iconType.get(type) ?? ""}
+                    placeholderPrefix="Column"
+                />
+            </div>
+        </div>
+    ) :
+        (
+            <table className="table-fixed w-full">
+                <tbody>
+                    <tr className='h-[2.5em]'>
+                        <td className=" p-2 pl-0 "> </td>
+                        {columnAnswerOptions.map(({ value }, i) =>
+                            <td key={i} className="overflow-hidden min-w-[48px] max-w-[288px] whitespace-nowrap text-center p-[0.25em] text-ellipsis">
+                                {value}
+                            </td>
+                        )}
+                    </tr>
+                    {rowAnswerOptions.map(({ value }, i) =>
+                        <tr className='h-[2.5em]' key={i}>
+                            <td className="overflow-hidden min-w-[48px] max-w-[288px] whitespace-nowrap p-2 pl-0">{value}</td>
+                            {columnAnswerOptions.map(({ value }, j) =>
+                                <td className="text-center px-4 py-2 min-w-[48px]" key={j}>
+                                    <div className="flex justify-center items-center">
+                                        <div>
+                                            <OptionIcon type={iconType.get(type) ?? ""} />
+                                        </div>
+                                    </div>
+                                </td>
+                            )}
+                        </tr>)}
+                </tbody>
+            </table>
+        )
 }
 
-const AnswerOption = ({ questionProps,
-    selected = false,
-    setOptionsValue,
-    optionsValue,
-    otherOptionValue,
-    setOtherOptionValue,
-    linearValue,
-    setLinearValue
+
+
+interface AnswerProps {
+    setValue: (newValue: any) => void
+    questionRow: Question
+}
+
+const AnswerOption = ({
+    setValue,
+    questionRow
 }: AnswerProps) => {
     const {
         type,
         moreOptionValues: initialMoreOptions,
-    } = questionProps
+    } = questionRow
 
     const { value } = type
     let content = <></>
@@ -510,18 +589,26 @@ const AnswerOption = ({ questionProps,
     } else if (value == 'multiple_choice' || value == 'checkboxes' || value == 'dropdown') {
         content = (<ChoicesAnswer
             type={value}
-            answerOptions={optionsValue}
-            setAnswerOptions={setOptionsValue}
-            otherOption={otherOptionValue}
-            setOtherOption={setOtherOptionValue}
-            selected={selected}
+            answerOptions={questionRow.answerOptions}
+            setAnswerOptions={(newValue) => setValue({ answerOptions: newValue })}
+            otherOption={questionRow.otherOption}
+            setOtherOption={(newValue) => setValue({ otherOption: newValue })}
             goToSection={initialMoreOptions?.includes("go_to_section")}
+            imageHandling
+            otherTypeHandling
         />)
     } else if (value == 'linear_scale') {
         content = (<LinearScaleAnswer
-            linearValue={linearValue}
-            setLinearValue={setLinearValue}
-            selected={selected}
+            linearValue={questionRow.linearValueOptions}
+            setLinearValue={(newValue) => setValue({ linearValueOptions: newValue })}
+        />)
+    } else if (value == 'multiple_choice_grid' || value == "checkbox_grid") {
+        content = (<GridChoicesAnswer
+            type={value}
+            rowAnswerOptions={questionRow.gridRowOptions}
+            setRowAnswerOptions={(newValue) => setValue({ gridRowOptions: newValue })}
+            columnAnswerOptions={questionRow.gridColumnOptions}
+            setColumnAnswerOptions={(newValue) => setValue({ gridColumnOptions: newValue })}
         />)
     } else {
         content = (<></>)
