@@ -514,7 +514,6 @@ const GridChoicesAnswer = ({
         ["multiple_choice_grid", "multiple_choice"],
         ["checkbox_grid", "checkboxes"]
     ])
-    console.log(iconType.get(type))
     return selected ? (
         <div className='sm:flex mt-4 gap-5'>
             <div className='flex-1'>
