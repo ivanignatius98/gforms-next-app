@@ -43,6 +43,7 @@ interface ContainerProps {
   selected: boolean,
   currentlyDragged?: boolean,
   cardRef?: Ref<HTMLDivElement>
+  sectionHeader?: JSX.Element | null
 };
 const CardContainer = ({ children,
   currentlyDragged = false,
@@ -52,6 +53,7 @@ const CardContainer = ({ children,
   containerClass = "",
   selected = false,
   topHeader = false,
+  sectionHeader = null,
   ...props
 }: ContainerProps) => {
   const [isHovered, setIsHovered] = useState(false);
@@ -84,7 +86,7 @@ const CardContainer = ({ children,
       </button>
     );
   }, [isHovered, handleDragStart, selected]);
-
+  const topleft = !sectionHeader ? "rounded-tl-md" : ""
   return (
     <div
       onMouseEnter={handleMouseEnter}
@@ -95,19 +97,23 @@ const CardContainer = ({ children,
         opacity: currentlyDragged ? 0 : 1,
         ...(currentlyDragged ? { height: selected ? 200 : 100 } : {})
       }}
-      className={'bg-white w-full shadow-md rounded-md relative flex flex-col mb-4' + containerClass}
+      className={'w-full flex flex-col mb-4' + containerClass}
     >
-      {topHeader ?
-        <div className='bg-purple-500 flex left-0 absolute rounded-tl-md rounded-tr-md top-0 h-[9px] w-full'></div> :
-        buttonComponent // Render the memoized button component
-      }
-      {selected &&
-        <div
-          className={(topHeader ? "rounded-bl-md" : "rounded-bl-md rounded-tl-md") + ' bg-blue-600 flex left-0 absolute bottom-0 w-[6px]'}
-          style={{ height: `calc(100% ${topHeader ? " - 9px" : ""})` }}>
-        </div>}
-      {children}
-    </div >
+      {sectionHeader}
+      {/* <SectionHat count={sections.findIndex(section => section.xid === questionRef.current[i].xid) + 1} /> */}
+      <div className='bg-white relative shadow-md rounded-md'>
+        {topHeader ?
+          <div className={`bg-purple-500 flex left-0 absolute ${topleft} rounded-tr-md top-0 h-[9px] w-full`}></div> :
+          (!sectionHeader ? buttonComponent : null) // Render the memoized button component
+        }
+        {selected &&
+          <div
+            className={(topHeader ? "rounded-bl-md" : `rounded-bl-md ${topleft}`) + ' bg-blue-600 flex left-0 absolute bottom-0 w-[6px]'}
+            style={{ height: `calc(100% ${topHeader ? " - 9px" : ""})` }}>
+          </div>}
+        {children}
+      </div>
+    </div>
   )
 }
 //#endregion
@@ -129,6 +135,7 @@ const Page: React.FC<Props> = (props) => {
     minHeight: "100vh",
   })
 
+  // const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
   const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
 
   const [cardClick, setCardClick] = useState<ClickState>({
@@ -163,7 +170,9 @@ const Page: React.FC<Props> = (props) => {
         if (cardIndex == -1) {
           headerInputRef?.current?.focus()
         } else {
-          inputRefs?.current[cardIndex].focus()
+          if (inputRefs?.current[cardIndex]) {
+            inputRefs?.current[cardIndex].focus()
+          }
         }
       }
     }
@@ -224,6 +233,43 @@ const Page: React.FC<Props> = (props) => {
     setItemXid(question.xid)
     setQuestions(prevQuestion)
   }
+  const addSection = () => {
+    const prevQuestion = questionRef.current
+    const { cardIndex } = { ...cardClick }
+    const xid = uuidv4()
+    const question = { ...defaultQuestion, xid, type: { value: "section_header", label: "" }, title: "Untitled Section", description: "" }
+    let newIdx = 0
+    if (cardIndex != undefined) {
+      prevQuestion.splice(cardIndex + 1, 0, question)
+      newIdx = cardIndex + 1
+    } else {
+      prevQuestion.push(question)
+      newIdx = prevQuestion.length - 1
+    }
+    setCardClick({ cardIndex: newIdx, divClickedOrigin: true })
+    setItemXid(question.xid)
+
+    // where to put sections order
+    interface ExtractedDataItem {
+      value: string;
+      xid: string;
+    }
+    const extractedData: ExtractedDataItem[] = [];
+
+    let sectionIndex = 1
+    prevQuestion.forEach((item) => {
+      if (item.type.value == "section_header") {
+        extractedData.push({
+          value: item.title,
+          xid: item.xid,
+        })
+        item.sectionCounter = sectionIndex + 1
+        sectionIndex++
+      }
+    });
+    setSections([defaultSection, ...extractedData])
+    setQuestions(prevQuestion)
+  }
   const duplicateQuestion = () => {
     const prevQuestion = questionRef.current
     const { cardIndex } = { ...cardClick }
@@ -273,10 +319,12 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Add video",
       icon: <MdOutlineSmartDisplay />,
+      onClick: () => console.log(sections)
     },
     {
       title: "Add section",
       icon: <TiEqualsOutline />,
+      onClick: addSection
     }
   ]
 
@@ -287,16 +335,34 @@ const Page: React.FC<Props> = (props) => {
     setItemXid(questions[endIndex ?? 0].xid)
   }
   const moveQuestions = (index: number, nextIndex: number) => {
-    const temp = swap([...questions], index, nextIndex)
+    const temp = swap(questionRef.current, index, nextIndex)
     setQuestions(temp)
   }
   //#endregion
 
-  const questionRef = useRef<Question[]>([])
+  const questionRef = useRef<Question[]>(questions)
   // console.log("RERENDER")
   const handleQuestionChange = (val: Question, index: number) => {
     questionRef.current[index] = val
+    if (val.type.value == "section_header") {
+      setSections((prevValue) => {
+        const idx = prevValue.findIndex(section => section.xid === val.xid)
+        prevValue[idx] = { ...prevValue[idx], value: val.title }
+        return prevValue
+      })
+    }
   }
+
+  //#region sections
+  interface sectionItem {
+    xid: string
+    value: string
+  }
+  const defaultSection = { xid: "fb9cd07f-1b9f-4973-8662-9ad4f49252ee", value: "Form Title" }
+  const [sections, setSections] = useState<sectionItem[]>([defaultSection])
+  const showSections = sections.length > 1
+
+  //#endregion
   return (
     <Layout>
       {props.tabIndex == 0 && (
@@ -384,6 +450,7 @@ const Page: React.FC<Props> = (props) => {
                   handleCardClick(event.target instanceof HTMLDivElement, -1)
                 }}
                 selected={-1 == cardClick.cardIndex}
+                sectionHeader={showSections ? <SectionHat length={sections.length} /> : null}
               >
                 <div className='py-4 px-6'>
                   <Input
@@ -407,13 +474,15 @@ const Page: React.FC<Props> = (props) => {
               {questions.map((row: Question, i: number) => {
                 const selected = cardClick.cardIndex != -1 && itemXid == row.xid
                 const textPreview = row.required || row.title === ""
+                const isSectionHeader = showSections && row.type.value == "section_header"
                 return (
                   <QuestionsContext.Provider
                     key={i}
                     value={{
                       selected,
                       row,
-                      i
+                      i,
+                      isSectionHeader
                     }}
                   >
                     <CardContainer
@@ -430,19 +499,25 @@ const Page: React.FC<Props> = (props) => {
                           event.preventDefault()
                         }
                         setCardClick({ cardIndex: null, divClickedOrigin: false })
-                        setCurrentlyDraggedItem({ ...row, index: i })
+                        setCurrentlyDraggedItem({ ...questionRef.current[i], index: i })
                         const eventY = getYCoordFromEvent(event)
                         setDragY(eventY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
                       }}
+                      sectionHeader={(isSectionHeader) ?
+                        <SectionHat length={sections.length} count={row.sectionCounter} />
+                        : null
+                      }
                     >
-                      <QuestionItem
-                        textPreview={textPreview}
-                        inputRef={(el: any) => inputRefs.current[i] = el}
-                        duplicateQuestion={duplicateQuestion}
-                        removeQuestion={removeQuestion}
-                        cardRefs={cardRefs}
-                        onChange={handleQuestionChange}
-                      />
+                      <>
+                        <QuestionItem
+                          textPreview={textPreview}
+                          inputRef={(el: any) => inputRefs.current[i] = el}
+                          duplicateQuestion={duplicateQuestion}
+                          removeQuestion={removeQuestion}
+                          cardRefs={cardRefs}
+                          onChange={handleQuestionChange}
+                        />
+                      </>
                     </CardContainer>
                   </QuestionsContext.Provider>)
               }
@@ -455,7 +530,15 @@ const Page: React.FC<Props> = (props) => {
     </Layout>
   )
 }
-
+const SectionHat = ({ count = 1, length = 1 }) => {
+  return (
+    <div className='flex rounded-tl-md rounded-tr-md'>
+      <div className='text-white text-sm px-4 py-2 bg-purple-500 rounded-t-md'>
+        Section {count} of {length}
+      </div>
+    </div>
+  )
+}
 interface ToolbarProps {
   menus: any[],
   cardIndex: number | null
