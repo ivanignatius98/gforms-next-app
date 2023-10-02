@@ -5,9 +5,7 @@ import Layout from '@layouts/DefaultLayout';
 import Input from '@modules/Input'
 import Select from '@modules/Select'
 import MenuIcon from '@modules/MenuIcon'
-import DropdownButton from '@modules/DropdownButton'
 import Toggle from '@modules/Toggle'
-import AnswerOptions from '@components/dashboard/answerOptions'
 import QuestionItem from '@components/dashboard/questionItem'
 import { v4 as uuidv4 } from 'uuid';
 
@@ -20,10 +18,9 @@ import { IconContext } from 'react-icons';
 import { FiTrash2 } from 'react-icons/fi'
 import { BiDotsVerticalRounded } from 'react-icons/bi';
 
-import { defaultQuestion, choicesData, additionalOptionsMap, moreOptionsArr } from '@components/dashboard/defaults'
+import { defaultQuestion } from '@components/dashboard/defaults'
 import { classNames, debounce, getLayoutY, swap, getYCoordFromEvent, isTouchEvent } from '@helpers'
-import { DropdownItemsList, Item, Content, ListItem } from '@interfaces/dropdown.interface';
-import { Question, OptionChoices } from '@interfaces/question.interface';
+import { Question,  SectionItem } from '@interfaces/question.interface';
 import DragWrapper from '@modules/Drag';
 
 import { QuestionsContext } from '@context/question.context';
@@ -97,10 +94,9 @@ const CardContainer = ({ children,
         opacity: currentlyDragged ? 0 : 1,
         ...(currentlyDragged ? { height: selected ? 200 : 100 } : {})
       }}
-      className={'w-full flex flex-col mb-4' + containerClass}
+      className={'w-full flex flex-col' + containerClass}
     >
       {sectionHeader}
-      {/* <SectionHat count={sections.findIndex(section => section.xid === questionRef.current[i].xid) + 1} /> */}
       <div className='bg-white relative shadow-md rounded-md'>
         {topHeader ?
           <div className={`bg-purple-500 flex left-0 absolute ${topleft} rounded-tr-md top-0 h-[9px] w-full`}></div> :
@@ -250,11 +246,7 @@ const Page: React.FC<Props> = (props) => {
     setItemXid(question.xid)
 
     // where to put sections order
-    interface ExtractedDataItem {
-      value: string;
-      xid: string;
-    }
-    const extractedData: ExtractedDataItem[] = [];
+    const extractedData: SectionItem[] = [];
 
     let sectionIndex = 1
     prevQuestion.forEach((item) => {
@@ -354,13 +346,34 @@ const Page: React.FC<Props> = (props) => {
   }
 
   //#region sections
-  interface sectionItem {
-    xid: string
-    value: string
-  }
   const defaultSection = { xid: "fb9cd07f-1b9f-4973-8662-9ad4f49252ee", value: "Form Title" }
-  const [sections, setSections] = useState<sectionItem[]>([defaultSection])
+  const [sections, setSections] = useState<SectionItem[]>([defaultSection])
   const showSections = sections.length > 1
+
+  const sectionOptions = useMemo(() => {
+    const labelContainer = (label: string) => {
+      return <div className='px-2'>{label}</div>
+    }
+    // Transform sections array into desired format
+    const mapped = sections.map((section, i) => ({
+      value: section.xid,
+      label: labelContainer(`Go to section ${i + 1} (${section.value})`),
+      group: 0
+    }));
+    return [
+      {
+        value: "continue",
+        label: labelContainer("Continue to next section"),
+        group: 0
+      },
+      ...mapped,
+      {
+        value: "submit",
+        label: labelContainer("Submit Form"),
+        group: 0
+      }
+    ]
+  }, [sections])
 
   //#endregion
   return (
@@ -485,30 +498,30 @@ const Page: React.FC<Props> = (props) => {
                       isSectionHeader
                     }}
                   >
-                    <CardContainer
-                      cardRef={(el: any) => cardRefs.current[i] = el}
-                      selected={selected}
-                      onClick={(event) => {
-                        if (!selected) {
-                          handleCardClick(event.target instanceof HTMLDivElement, i, row.xid)
+                    <div className='my-4'>
+                      <CardContainer
+                        cardRef={(el: any) => cardRefs.current[i] = el}
+                        selected={selected}
+                        onClick={(event) => {
+                          if (!selected) {
+                            handleCardClick(event.target instanceof HTMLDivElement, i, row.xid)
+                          }
+                        }}
+                        currentlyDragged={currentlyDraggedItem ? row.xid == currentlyDraggedItem.xid : false}
+                        handleDragStart={(event) => {
+                          if (!isTouchEvent(event)) {
+                            event.preventDefault()
+                          }
+                          setCardClick({ cardIndex: null, divClickedOrigin: false })
+                          setCurrentlyDraggedItem({ ...questionRef.current[i], index: i })
+                          const eventY = getYCoordFromEvent(event)
+                          setDragY(eventY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
+                        }}
+                        sectionHeader={(isSectionHeader) ?
+                          <SectionHat length={sections.length} count={row.sectionCounter} />
+                          : null
                         }
-                      }}
-                      currentlyDragged={currentlyDraggedItem ? row.xid == currentlyDraggedItem.xid : false}
-                      handleDragStart={(event) => {
-                        if (!isTouchEvent(event)) {
-                          event.preventDefault()
-                        }
-                        setCardClick({ cardIndex: null, divClickedOrigin: false })
-                        setCurrentlyDraggedItem({ ...questionRef.current[i], index: i })
-                        const eventY = getYCoordFromEvent(event)
-                        setDragY(eventY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
-                      }}
-                      sectionHeader={(isSectionHeader) ?
-                        <SectionHat length={sections.length} count={row.sectionCounter} />
-                        : null
-                      }
-                    >
-                      <>
+                      >
                         <QuestionItem
                           textPreview={textPreview}
                           inputRef={(el: any) => inputRefs.current[i] = el}
@@ -516,9 +529,34 @@ const Page: React.FC<Props> = (props) => {
                           removeQuestion={removeQuestion}
                           cardRefs={cardRefs}
                           onChange={handleQuestionChange}
+                          sections={sections}
                         />
-                      </>
-                    </CardContainer>
+                      </CardContainer>
+                      {isSectionHeader ?
+                        <div className=' h-24 '>
+                          <div className="flex text-sm items-center my-2 ">
+                            <span className='ml-4'>
+                              {`After Section ${row.sectionCounter}`}
+                            </span>
+                            <div className='w-96'>
+                              <Select
+                                borderless
+                                buttonClass="px-2"
+                                value={row.nextSection ?? sectionOptions[0]}
+                                onChange={(newValue) => {
+                                  setQuestions((prevQ) => {
+                                    const prev = [...prevQ]
+                                    prev[i].nextSection = newValue
+                                    return prev
+                                  })
+                                }}
+                                options={sectionOptions}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        : null}
+                    </div>
                   </QuestionsContext.Provider>)
               }
               )}

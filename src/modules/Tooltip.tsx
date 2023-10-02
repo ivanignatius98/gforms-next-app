@@ -52,7 +52,6 @@ const Tooltip: React.FC<Props> = ({
       onMouseEnter={handleShow}
       onMouseLeave={handleHide}
       onClick={handleHide}
-      style={{ zIndex: 1 }}
     >
       {children}
       {show ?

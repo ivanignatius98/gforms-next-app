@@ -83,8 +83,11 @@ export default function Dropdown({ children, transition, scrollOffset, setOpen, 
                           className={"text-left " + getOptionClass({ active, content, index: i, groupIndex })}
                           onClick={() => { onClick() }}
                         >
-                          <div className="pl-2 pr-4">
-                            {content.icon}
+                          <div className='pl-2'>
+                            {content.icon ?
+                              <div className="pr-4">
+                                {content.icon}
+                              </div> : null}
                           </div>
                           {content.label}
                         </button>
