@@ -20,7 +20,7 @@ import { BiDotsVerticalRounded } from 'react-icons/bi';
 
 import { defaultQuestion } from '@components/dashboard/defaults'
 import { classNames, debounce, getLayoutY, swap, getYCoordFromEvent, isTouchEvent } from '@helpers'
-import { Question,  SectionItem } from '@interfaces/question.interface';
+import { Question, SectionItem } from '@interfaces/question.interface';
 import DragWrapper from '@modules/Drag';
 
 import { QuestionsContext } from '@context/question.context';
@@ -131,7 +131,6 @@ const Page: React.FC<Props> = (props) => {
     minHeight: "100vh",
   })
 
-  // const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
   const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
 
   const [cardClick, setCardClick] = useState<ClickState>({
@@ -335,7 +334,6 @@ const Page: React.FC<Props> = (props) => {
   const questionRef = useRef<Question[]>(questions)
   // console.log("RERENDER")
   const handleQuestionChange = (val: Question, index: number) => {
-    questionRef.current[index] = val
     if (val.type.value == "section_header") {
       setSections((prevValue) => {
         const idx = prevValue.findIndex(section => section.xid === val.xid)
@@ -343,6 +341,7 @@ const Page: React.FC<Props> = (props) => {
         return prevValue
       })
     }
+    questionRef.current[index] = val
   }
 
   //#region sections
@@ -375,6 +374,34 @@ const Page: React.FC<Props> = (props) => {
     ]
   }, [sections])
 
+  const collapseSection = (index: number, collapse: boolean) => {
+    setQuestions(() => {
+      const curr = questionRef.current
+      const affected = []
+      if (index < curr.length && index > 0) {
+        if (curr[index].type.value != "section_header") {
+          for (let i = index; i >= 0; i--) {
+            curr[i].collapsed = !collapse
+            affected.push(curr[i])
+            if (curr[i].type.value == "section_header") {
+              break;
+            }
+          }
+        } else {
+          curr[index].collapsed = !collapse
+        }
+
+        for (let i = index + 1; i < curr.length; i++) {
+          if (curr[i].type.value == "section_header") {
+            break;
+          }
+          curr[i].collapsed = !collapse
+          affected.push(curr[i])
+        }
+      }
+      return [...curr]
+    })
+  }
   //#endregion
   return (
     <Layout>
@@ -491,20 +518,42 @@ const Page: React.FC<Props> = (props) => {
                 return (
                   <QuestionsContext.Provider
                     key={i}
-                    value={{
-                      selected,
-                      row,
-                      i,
-                      isSectionHeader
-                    }}
+                    value={{ selected, row, i, isSectionHeader }}
                   >
                     <div className='my-4'>
+                      {isSectionHeader ?
+                        <div className='h-24'>
+                          <div className="flex text-sm items-center my-2 ">
+                            <span className='ml-4'>
+                              {`After Section ${row.sectionCounter - 1}`}
+                            </span>
+                            <div className='w-96'>
+                              <Select
+                                borderless
+                                buttonClass="px-2"
+                                value={row.nextSection ?? sectionOptions[0]}
+                                onChange={(newValue) => {
+                                  setQuestions((prevQ) => {
+                                    const prev = [...prevQ]
+                                    prev[i].nextSection = newValue
+                                    return prev
+                                  })
+                                }}
+                                options={sectionOptions}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                        : null}
                       <CardContainer
                         cardRef={(el: any) => cardRefs.current[i] = el}
                         selected={selected}
                         onClick={(event) => {
                           if (!selected) {
                             handleCardClick(event.target instanceof HTMLDivElement, i, row.xid)
+                          }
+                          if (event.target instanceof HTMLDivElement) {
+                            collapseSection(i, true)
                           }
                         }}
                         currentlyDragged={currentlyDraggedItem ? row.xid == currentlyDraggedItem.xid : false}
@@ -530,32 +579,9 @@ const Page: React.FC<Props> = (props) => {
                           cardRefs={cardRefs}
                           onChange={handleQuestionChange}
                           sections={sections}
+                          onCollapse={collapseSection}
                         />
                       </CardContainer>
-                      {isSectionHeader ?
-                        <div className=' h-24 '>
-                          <div className="flex text-sm items-center my-2 ">
-                            <span className='ml-4'>
-                              {`After Section ${row.sectionCounter}`}
-                            </span>
-                            <div className='w-96'>
-                              <Select
-                                borderless
-                                buttonClass="px-2"
-                                value={row.nextSection ?? sectionOptions[0]}
-                                onChange={(newValue) => {
-                                  setQuestions((prevQ) => {
-                                    const prev = [...prevQ]
-                                    prev[i].nextSection = newValue
-                                    return prev
-                                  })
-                                }}
-                                options={sectionOptions}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                        : null}
                     </div>
                   </QuestionsContext.Provider>)
               }

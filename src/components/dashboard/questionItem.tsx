@@ -25,6 +25,7 @@ interface QuestionProps {
   cardRefs: MutableRefObject<HTMLDivElement[]> | null
   onChange: (val: Question, index: number) => void
   sections: SectionItem[]
+  onCollapse: (index: number, val: boolean) => void
 }
 const Component = ({
   textPreview,
@@ -32,7 +33,8 @@ const Component = ({
   duplicateQuestion,
   removeQuestion,
   cardRefs,
-  onChange
+  onChange,
+  onCollapse
 }: QuestionProps) => {
   const { selected, row, i, isSectionHeader } = useContext(QuestionsContext)
   const [questionRow, setQuestionRow] = useState<Question>(row)
@@ -178,10 +180,12 @@ const Component = ({
               />
             </div>
             <MenuIcon
-              title={`${questionRow.collapsed ? "Collapse" : "Expand"} Section`}
-              onClick={() => handleValueChange({ collapsed: !questionRow.collapsed })}
+              title={`${questionRow.collapsed ? "Expand" : "Collapse"} Section`}
+              onClick={() => {
+                onCollapse(i, questionRow.collapsed)
+              }}
               additionalClass='mx-[1px]'
-              icon={questionRow.collapsed ? <BiCollapseVertical /> : <BiExpandVertical />}
+              icon={questionRow.collapsed ? <BiExpandVertical /> : <BiCollapseVertical />}
             />
             <React.Fragment>
               <Tooltip
@@ -214,98 +218,110 @@ const Component = ({
           />
         </div>
       </> :
-        <div className={classNames(selected ? "p-6 pb-2" : "p-6")}>
-          <div className='flex flex-wrap items-start'>
-            <div className={classNames(textPreview && !selected ? "hidden" : "flex-grow w-[300px] max-w-full")}>
-              <Input
-                alwaysHighlight
-                inputRef={inputRef}
-                showFooter={selected}
-                containerClass={classNames(selected ? "bg-gray-100" : "bg-none mb-[2px]")}
-                className={classNames(selected ? "p-3" : "", "bg-inherit text-base")}
-                name="question"
-                value={questionRow.title}
-                onChange={(e) => handleValueChange({ title: e.target.value })}
-                placeholder="Question"
-              />
-            </div>
-            {textPreview && !selected && (
-              <div className='my-[2px] mb-1 flex'>
-                <div className='text-base'>{questionRow.title || "Question"}</div>
-                {questionRow.required && <div className='ml-1 text-red-500'>*</div>}
+        <div
+          className={classNames(selected ? "p-6 pb-2" : "p-6")}
+        >
+          {questionRow.collapsed ?
+            <div className='flex flex-wrap items-start'>
+              <div className={classNames("flex-grow w-[300px] max-w-full text-gray-500")}>
+                {questionRow.title || "Question"}
               </div>
-            )}
-            {selected && (
-              <>
-                <div className='mx-3 z-0'>
-                  <MenuIcon icon={<MdOutlineImage />} />
-                </div>
-                <div className="w-60">
-                  <Select
-                    value={questionRow.type}
-                    onChange={(newValue) => handleTypeChange(newValue)}
-                    options={choicesData}
+            </div>
+            :
+            <>
+              <div className='flex flex-wrap items-start'>
+                <div className={classNames(textPreview && !selected ? "hidden" : "flex-grow w-[300px] max-w-full")}>
+                  <Input
+                    alwaysHighlight
+                    inputRef={inputRef}
+                    showFooter={selected}
+                    containerClass={classNames(selected ? "bg-gray-100" : "bg-none mb-[2px]")}
+                    className={classNames(selected ? "p-3" : "", "bg-inherit text-base")}
+                    name="question"
+                    value={questionRow.title}
+                    onChange={(e) => handleValueChange({ title: e.target.value })}
+                    placeholder="Question"
                   />
                 </div>
-              </>
-            )}
-          </div>
-          {/* Description */}
-          {questionRow.moreOptionValues?.includes("description") &&
-            <Input
-              alwaysHighlight
-              showFooter={selected}
-              containerClass="bg-none my-2"
-              className="bg-inherit text-sm"
-              name="description"
-              value={questionRow.description}
-              onChange={(e) => handleValueChange({ description: e.target.value })}
-              placeholder={`Description`}
-            />
-          }
-          {/* Content */}
-          <div className='mt-4'>
-            <AnswerOptions
-              setValue={handleValueChange}
-              questionRow={questionRow}
-            />
-          </div>
-          {/* Footer */}
-          <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2 ')}>
-            <MenuIcon
-              title="Duplicate"
-              onClick={duplicateQuestion}
-              additionalClass='mx-[1px]'
-              icon={<MdContentCopy />}
-            />
-            <MenuIcon
-              title="Delete"
-              onClick={removeQuestion}
-              additionalClass='mx-[1px]'
-              icon={<FiTrash2 />}
-            />
-            <div className=' border-l-[1.5px] h-8 mx-2'></div>
-            <span className='text-sm ml-2 mr-3 cursor-default select-none' onClick={() => handleValueChange({ required: !questionRow.required })}>
-              {questionRow.type.value == "multiple_choice_grid" || questionRow.type.value == "checkbox_grid" ? "Require a response in each row" : "Required"}
-            </span>
-            <Toggle
-              value={questionRow.required}
-              handleChange={(checked: boolean) => handleValueChange({ required: checked })}
-            />
-            <DropdownButton
-              value={questionRow.moreOptionValues}
-              onChange={(newVal) => handleValueChange({ moreOptionValues: newVal })}
-              optionsHeight={questionRow.moreOptionsData?.optionsHeight ?? 0}
-              dropdownItemData={questionRow.moreOptionsData?.items ?? []}
-              cardRef={cardRefs?.current[i]}
-              selected={selected}
-            >
-              <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
-                <BiDotsVerticalRounded size={24} color="#5f6368" />
-              </button>
-            </DropdownButton>
-          </div>
-        </div>}
+                {textPreview && !selected && (
+                  <div className='my-[2px] mb-1 flex'>
+                    <div className='text-base'>{questionRow.title || "Question"}</div>
+                    {questionRow.required && <div className='ml-1 text-red-500'>*</div>}
+                  </div>
+                )}
+                {selected && (
+                  <>
+                    <div className='mx-3 z-0'>
+                      <MenuIcon icon={<MdOutlineImage />} />
+                    </div>
+                    <div className="w-60">
+                      <Select
+                        value={questionRow.type}
+                        onChange={(newValue) => handleTypeChange(newValue)}
+                        options={choicesData}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              {/* Description */}
+              {questionRow.moreOptionValues?.includes("description") &&
+                <Input
+                  alwaysHighlight
+                  showFooter={selected}
+                  containerClass="bg-none my-2"
+                  className="bg-inherit text-sm"
+                  name="description"
+                  value={questionRow.description}
+                  onChange={(e) => handleValueChange({ description: e.target.value })}
+                  placeholder={`Description`}
+                />
+              }
+              {/* Content */}
+              <div className='mt-4'>
+                <AnswerOptions
+                  setValue={handleValueChange}
+                  questionRow={questionRow}
+                />
+              </div>
+              {/* Footer */}
+              <div className={classNames(selected ? "flex" : "hidden", 'justify-end items-center border-t-[1.5px] mt-4 pt-2 ')}>
+                <MenuIcon
+                  title="Duplicate"
+                  onClick={duplicateQuestion}
+                  additionalClass='mx-[1px]'
+                  icon={<MdContentCopy />}
+                />
+                <MenuIcon
+                  title="Delete"
+                  onClick={removeQuestion}
+                  additionalClass='mx-[1px]'
+                  icon={<FiTrash2 />}
+                />
+                <div className=' border-l-[1.5px] h-8 mx-2'></div>
+                <span className='text-sm ml-2 mr-3 cursor-default select-none' onClick={() => handleValueChange({ required: !questionRow.required })}>
+                  {questionRow.type.value == "multiple_choice_grid" || questionRow.type.value == "checkbox_grid" ? "Require a response in each row" : "Required"}
+                </span>
+                <Toggle
+                  value={questionRow.required}
+                  handleChange={(checked: boolean) => handleValueChange({ required: checked })}
+                />
+                <DropdownButton
+                  value={questionRow.moreOptionValues}
+                  onChange={(newVal) => handleValueChange({ moreOptionValues: newVal })}
+                  optionsHeight={questionRow.moreOptionsData?.optionsHeight ?? 0}
+                  dropdownItemData={questionRow.moreOptionsData?.items ?? []}
+                  cardRef={cardRefs?.current[i]}
+                  selected={selected}
+                >
+                  <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
+                    <BiDotsVerticalRounded size={24} color="#5f6368" />
+                  </button>
+                </DropdownButton>
+              </div>
+            </>}
+        </div>
+      }
     </>
   )
 }
