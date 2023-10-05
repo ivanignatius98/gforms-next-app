@@ -36,3 +36,8 @@ export interface Question {
   moreOptionValues: string[]
   [key: string]: any
 }
+
+export interface SectionItem {
+  xid: string
+  value: string
+}
