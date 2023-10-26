@@ -35,3 +35,9 @@ export const isTouchEvent = (event: any) => {
 export const getYCoordFromEvent = (event: any) => {
   return isTouchEvent(event) ? event.touches[0].clientY : event.clientY
 }
+
+export const separateSingleRowFromArray = (array: any, index: number) => {
+  const data = [...array]
+  const [separated] = data.splice(index, 1)
+  return { separated, data }
+}

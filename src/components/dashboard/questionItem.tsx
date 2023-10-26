@@ -36,7 +36,7 @@ const Component = ({
   onChange,
   onCollapse
 }: QuestionProps) => {
-  const { selected, row, i, isSectionHeader } = useContext(QuestionsContext)
+  const { selected, row, i, isSectionHeader, setMoveModalOpen } = useContext(QuestionsContext)
   const [questionRow, setQuestionRow] = useState<Question>(row)
   useEffect(() => {
     setQuestionRow(row)
@@ -107,7 +107,7 @@ const Component = ({
           label: "Duplicate Section"
         }
       }, {
-        onClick: () => { console.log("TEST2") },
+        onClick: () => { setMoveModalOpen(true) },
         content: {
           label: "Move Section"
         }
@@ -169,7 +169,7 @@ const Component = ({
       {isSectionHeader ? <>
         <div className='py-4 pl-6 pr-4 z-0'>
           <div className="flex">
-            <div className=" flex-grow">
+            <div className="flex-grow">
               <Input
                 containerClass='my-1'
                 className="text-md"
