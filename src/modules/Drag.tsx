@@ -1,4 +1,4 @@
-import { getLayoutY } from "@helpers";
+import { getLayoutY, getYCoordFromEvent } from "@helpers";
 import React, { useMemo, useCallback, useState, useEffect, MutableRefObject, Ref, RefObject } from "react";
 
 interface WrapperProp {
@@ -9,7 +9,6 @@ interface WrapperProp {
   move: (index: number, nextIndex: number) => void
   cardRefs: MutableRefObject<HTMLDivElement[]> | null
   layoutRef: RefObject<HTMLDivElement> | null
-  staticCard?: boolean | null
 }
 interface dragProp {
   current: number | null
@@ -25,7 +24,6 @@ const DragWrapper = ({
   cardRefs,
   move,
   layoutRef,
-  staticCard = false,
 }: WrapperProp) => {
   const [dragY, setDragY] = useState(y);
 
@@ -39,7 +37,6 @@ const DragWrapper = ({
     isLastCard: null
   }
   const [drag, setDrag] = useState<dragProp>(defaultDragState)
-
 
   const handleDragChange = (nextIndex: number, index: number | null) => {
     setDrag(() => {
@@ -60,17 +57,6 @@ const DragWrapper = ({
       handleDragChange(draggedItem.index, null)
     }
   }, [draggedItem]);
-  const getYCoordFromEvent = (event: any) => {
-    let yCoordinate = 0
-    if (event.touches && event.touches.length > 0) {
-      // It's a touchmove event
-      yCoordinate = event.touches[0].clientY;
-    } else {
-      // It's a mousemove event
-      yCoordinate = event.clientY;
-    }
-    return yCoordinate
-  }
   const handleDragging = useCallback((event: any) => {
     const yCoordinate = getYCoordFromEvent(event)
     if (yCoordinate <= 0) {
@@ -101,18 +87,7 @@ const DragWrapper = ({
         shift(drag.current, "up")
       }
     }
-
-
-    if (staticCard) {
-      const cardHeight = 48
-      const newCoord = yCoordinate - (getLayoutY(layoutRef?.current as HTMLDivElement) ?? 0) - 16
-      if (newCoord > 0 && newCoord < (cardHeight * (cardRefs.current.length - 1))) {
-        setDragY(newCoord)
-      }
-    } else {
-      setDragY(yCoordinate - (getLayoutY(layoutRef?.current as HTMLDivElement) ?? 0) - 16)
-    }
-    // setDragY(yCoordinate - 150);
+    setDragY(yCoordinate - (getLayoutY(layoutRef?.current as HTMLDivElement) ?? 0) - 16)
   }, [cardRefs, drag, move]);
 
   const handleDragEnd = () => {

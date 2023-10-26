@@ -8,10 +8,10 @@ import { IoEllipsisHorizontalSharp } from 'react-icons/io5'
 import { OptionChoices, ValueLabel, OptionLinears } from '@interfaces/question.interface';
 import { IconContext } from 'react-icons';
 import Tooltip from '@modules/Tooltip'
-import { classNames, getLayoutY, swap } from '@helpers';
+import { classNames, getLayoutY, separateSingleRowFromArray, swap } from '@helpers';
 import Select from '@modules/Select'
 import { Item } from '@interfaces/dropdown.interface';
-import DragWrapper from '@modules/Drag';
+import StaticDragWrapper from '@modules/StaticDrag';
 import { VscTriangleDown } from 'react-icons/vsc';
 import { QuestionsContext } from '@context/question.context';
 
@@ -178,6 +178,7 @@ const ChoicesAnswer = ({
 
     useEffect(() => {
         inputRefs.current = inputRefs.current.slice(0, answerOptions.length)
+        optionsRef.current = optionsRef.current.slice(0, answerOptions.length)
     }, [answerOptions])
     const handleKeyDown = (event: any, index: number) => {
         const { key = "" } = event
@@ -194,9 +195,18 @@ const ChoicesAnswer = ({
     const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<OptionChoices & { index: number } | null>(null)
     const [dragY, setDragY] = useState(0)
 
-    const moveOptions = (index: number, nextIndex: number) => {
-        const temp = swap([...answerOptions], index, nextIndex)
-        setAnswerOptions(temp)
+    interface DragData {
+        separated: OptionChoices | null,
+        data: OptionChoices[]
+    }
+    const answerRef = useRef<DragData>({ separated: null, data: [] })
+
+    const moveOptions = (newIndex: number) => {
+        if (answerOptions.length > 1 && answerRef.current.separated != null) {
+            const newData = [...answerRef.current.data];
+            newData.splice(newIndex, 0, answerRef.current.separated);
+            setAnswerOptions(newData)
+        }
     }
     const memoizedAnswerOptions = useMemo(() => answerOptions, [answerOptions]);
     return (
@@ -205,18 +215,16 @@ const ChoicesAnswer = ({
             style={{ cursor: currentlyDraggedItem != null ? "move" : "auto" }}
         >
             {currentlyDraggedItem != null && (
-                <DragWrapper
-                    layoutRef={layoutRef}
+                <StaticDragWrapper
                     cardRefs={optionsRef}
                     draggedItem={currentlyDraggedItem}
                     y={dragY}
                     onDragEnd={() => setCurrentlyDraggedItem(null)}
-                    move={moveOptions}
-                    staticCard
+                    move={(newIndex: number) => moveOptions(newIndex)}
                 >
                     <div
-                        style={{ width: "calc(100% + 16px)" }}
-                        className='block absolute -left-4 bg-white shadow-md rounded-sm pl-4'
+                        style={{ width: "calc(100% - 32px)" }}
+                        className='block absolute -left-4 bg-white shadow-md rounded-sm pl-4 pointer-events-none'
                     >
                         <div className='h-12 flex items-center relative'>
                             <div className='block absolute -left-4 transform rotate-90 cursor-move'>
@@ -248,7 +256,7 @@ const ChoicesAnswer = ({
                             </div>
                         </div>
                     </div>
-                </DragWrapper>
+                </StaticDragWrapper>
             )}
             {memoizedAnswerOptions.map((item: OptionChoices, index: number) => (
                 <div
@@ -265,8 +273,9 @@ const ChoicesAnswer = ({
                             className='hidden group-hover:block absolute left-2 transform rotate-90 cursor-move'
                             onMouseDown={(event) => {
                                 event.preventDefault()
-                                setDragY(event.clientY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 24)
+                                setDragY(event.clientY - 24)
                                 setCurrentlyDraggedItem({ ...item, index })
+                                answerRef.current = separateSingleRowFromArray(memoizedAnswerOptions, index)
                             }}
                         >
                             <IconContext.Provider value={{ style: { display: 'flex' } }}>

@@ -16,14 +16,16 @@ import { AiOutlineFontSize } from 'react-icons/ai'
 import { TiEqualsOutline } from 'react-icons/ti'
 import { IconContext } from 'react-icons';
 import { FiTrash2 } from 'react-icons/fi'
-import { BiDotsVerticalRounded } from 'react-icons/bi';
+import { BiDotsVerticalRounded, BiChevronUp, BiChevronDown } from 'react-icons/bi';
 
 import { defaultQuestion } from '@components/dashboard/defaults'
-import { classNames, debounce, getLayoutY, swap, getYCoordFromEvent, isTouchEvent } from '@helpers'
+import { classNames, debounce, getLayoutY, swap, getYCoordFromEvent, isTouchEvent, separateSingleRowFromArray } from '@helpers'
 import { Question, SectionItem } from '@interfaces/question.interface';
 import DragWrapper from '@modules/Drag';
+import StaticDragWrapper from '@modules/StaticDrag';
 
 import { QuestionsContext } from '@context/question.context';
+import Modal from '@modules/Modal';
 // #endregion
 
 //#region card content
@@ -305,7 +307,7 @@ const Page: React.FC<Props> = (props) => {
     {
       title: "Add image",
       icon: <MdOutlineImage />,
-      onClick: () => console.log(questionRef.current)
+      onClick: () => { }
     },
     {
       title: "Add video",
@@ -332,7 +334,6 @@ const Page: React.FC<Props> = (props) => {
   //#endregion
 
   const questionRef = useRef<Question[]>(questions)
-  // console.log("RERENDER")
   const handleQuestionChange = (val: Question, index: number) => {
     if (val.type.value == "section_header") {
       setSections((prevValue) => {
@@ -402,11 +403,39 @@ const Page: React.FC<Props> = (props) => {
       return [...curr]
     })
   }
+  const [moveModalOpen, setMoveModalOpen] = useState<Boolean>(false)
+  interface SectionData {
+    separated: SectionItem | null,
+    data: SectionItem[]
+  }
+  const sectionRef = useRef<SectionData>({ separated: null, data: [] })
+  const handleSectionChange = (nextIndex: number) => {
+    if (sections.length > 1) {
+      setSections((prev) => {
+        if (sectionRef.current.separated == null)
+          return prev
+
+        const newData = [...sectionRef.current.data];
+        // Use splice on the copied array to insert the separated item at the specified index
+        newData.splice(nextIndex, 0, sectionRef.current.separated);
+        return newData
+      })
+    }
+  }
   //#endregion
   return (
     <Layout>
       {props.tabIndex == 0 && (
         <>
+          <MoveSections
+            moveModalOpen={moveModalOpen}
+            setMoveModalOpen={setMoveModalOpen}
+            items={sections}
+            onItemsChange={handleSectionChange}
+            startDrag={(index: number) => {
+              sectionRef.current = separateSingleRowFromArray(sections, index)
+            }}
+          />
           <div
             className="flex justify-center mt-3"
             ref={layoutRef}
@@ -518,7 +547,7 @@ const Page: React.FC<Props> = (props) => {
                 return (
                   <QuestionsContext.Provider
                     key={i}
-                    value={{ selected, row, i, isSectionHeader }}
+                    value={{ selected, row, i, isSectionHeader, setMoveModalOpen }}
                   >
                     <div className='my-4'>
                       {isSectionHeader ?
@@ -602,6 +631,130 @@ const SectionHat = ({ count = 1, length = 1 }) => {
       </div>
     </div>
   )
+}
+
+const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onItemsChange, startDrag }: any) => {
+  const layoutRef = useRef<HTMLDivElement>(null)
+  const itemsRef = useRef<HTMLDivElement[]>([])
+  useEffect(() => {
+    itemsRef.current = itemsRef.current.slice(0, items.length)
+  }, [items])
+  const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<SectionItem & { index: number } | null>(null)
+  const [dragY, setDragY] = useState(0)
+  return (
+    <Modal isOpen={moveModalOpen} setIsOpen={setMoveModalOpen}>
+      {currentlyDraggedItem != null && (
+        <StaticDragWrapper
+          cardRefs={itemsRef}
+          draggedItem={currentlyDraggedItem}
+          y={dragY}
+          onDragEnd={() => setCurrentlyDraggedItem(null)}
+          move={(newIndex: number) => onItemsChange(newIndex)}
+          manualOffset={48}
+        >
+          <div className="flex min-h-[64px] border-t-[0.5px] border-b-[0.5px] relative z-0 shadow-md pointer-events-none" >
+            <div className={' bg-blue-400 flex left-0 absolute bottom-0 w-1 h-full'}></div>
+            <div className='flex items-center w-[60px] justify-center cursor-move'>
+              <div className='block transform rotate-90'>
+                <IconContext.Provider value={{ style: { display: 'flex' } }}>
+                  <div>
+                    <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
+                    <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
+                  </div>
+                </IconContext.Provider>
+              </div>
+            </div>
+            <div className='flex flex-1 items-center'>
+              <div className='flex-1 '>
+                <div className='text-sm font-medium'>
+                  {currentlyDraggedItem.value}
+                </div>
+                <div className='text-xs text-gray-500'>
+                  Section {currentlyDraggedItem.index + 1} of {items.length}
+                </div>
+              </div>
+              <div className='flex pr-4'>
+                <MenuIcon icon={<BiChevronUp />} />
+                <MenuIcon icon={<BiChevronDown />} />
+              </div>
+            </div>
+          </div>
+        </StaticDragWrapper>)}
+      <div
+        className='flex flex-col items-stretch h-full overflow-auto'
+        ref={layoutRef}
+      >
+        <div className='m-[18px] flex-grow-0'>
+          <h3 className="text-base leading-6 text-gray-900">Reorder sections</h3>
+          <div className="mt-2">
+            <p className="text-xs text-gray-500">
+              Verify the section navigation logic after reordering.
+            </p>
+          </div>
+        </div>
+        <span className='flex-grow-[2] flex-shrink-[2] overflow-y-auto border-t-[0.5px]'>
+          {/* item */}
+          {items.map((row: SectionItem, index: number) =>
+            <div className="flex min-h-[64px] border-t-[0.5px] border-b-[0.5px] relative group"
+              ref={(el: any) => itemsRef.current[index] = el}
+              key={index}
+              style={{ opacity: currentlyDraggedItem?.xid == row.xid ? 0 : 1 }}
+            >
+              <div className={classNames("top-[31px] absolute w-full")}>
+              </div>
+              <div className={' group-hover:bg-blue-400 flex left-0 absolute bottom-0 w-1 h-full'}></div>
+              <div className='flex items-center w-[60px] justify-center cursor-move'
+                onMouseDown={(event) => {
+                  event.preventDefault()
+                  setDragY(event.clientY - 81)
+                  setCurrentlyDraggedItem({ ...row, index })
+                  startDrag(index)
+                }}
+              >
+                <div className='block transform rotate-90'>
+                  <IconContext.Provider value={{ style: { display: 'flex' } }}>
+                    <div>
+                      <IoEllipsisHorizontalSharp size={17} style={{ marginBottom: "-12px", color: "darkgray" }} />
+                      <IoEllipsisHorizontalSharp size={17} style={{ color: "darkgray" }} />
+                    </div>
+                  </IconContext.Provider>
+                </div>
+              </div>
+              <div className='flex flex-1 items-center'>
+                <div className='flex-1 '>
+                  <div className='text-sm font-medium'>
+                    {row.value}
+                  </div>
+                  <div className='text-xs text-gray-500'>
+                    Section {index + 1} of {items.length}
+                  </div>
+                </div>
+                <div className='flex pr-4'>
+                  <MenuIcon icon={<BiChevronUp />} />
+                  <MenuIcon icon={<BiChevronDown />} />
+                </div>
+              </div>
+            </div>
+          )}
+        </span>
+        <div className="p-4 text-right flex-shrink-0 border-t-[0.5px]">
+          <button
+            type="button"
+            className="inline-flex justify-center rounded-md border border-transparent  p-2 text-sm font-medium text-gray-500  hover:bg-gray-50"
+            onClick={() => setMoveModalOpen(false)}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className="inline-flex justify-center rounded-md border border-transparent  p-2 text-sm font-medium text-teal-600 hover:bg-gray-50"
+            onClick={() => setMoveModalOpen(false)}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </Modal>)
 }
 interface ToolbarProps {
   menus: any[],
