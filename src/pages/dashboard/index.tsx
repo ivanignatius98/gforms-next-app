@@ -409,7 +409,7 @@ const Page: React.FC<Props> = (props) => {
     data: SectionItem[]
   }
   const sectionRef = useRef<SectionData>({ separated: null, data: [] })
-  const handleSectionChange = (nextIndex: number) => {
+  const handleSectionDrag = (nextIndex: number) => {
     if (sections.length > 1) {
       setSections((prev) => {
         if (sectionRef.current.separated == null)
@@ -422,6 +422,7 @@ const Page: React.FC<Props> = (props) => {
       })
     }
   }
+
   //#endregion
   return (
     <Layout>
@@ -431,9 +432,14 @@ const Page: React.FC<Props> = (props) => {
             moveModalOpen={moveModalOpen}
             setMoveModalOpen={setMoveModalOpen}
             items={sections}
-            onItemsChange={handleSectionChange}
+            onDragChange={handleSectionDrag}
             startDrag={(index: number) => {
               sectionRef.current = separateSingleRowFromArray(sections, index)
+            }}
+            onMoveItem={(index, nextIndex) => {
+              if (nextIndex >= 0 && nextIndex < sections.length) {
+                setSections((prev) => swap([...prev], index, nextIndex))
+              }
             }}
           />
           <div
@@ -459,7 +465,7 @@ const Page: React.FC<Props> = (props) => {
                   move={moveQuestions}
                 >
                   <CardContainer selected={currentlyDraggedItem.xid == itemXid} >
-                    <div className='pt-6 pb-2 px-6 '>
+                    <div className='pt-6 pb-2 px-6'>
                       <div className='flex flex-wrap items-start'>
                         <div className="flex-grow max-w-full ml-2 mr-1">
                           <Input
@@ -633,27 +639,42 @@ const SectionHat = ({ count = 1, length = 1 }) => {
   )
 }
 
-const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onItemsChange, startDrag }: any) => {
-  const layoutRef = useRef<HTMLDivElement>(null)
+interface MoveSectionProps {
+  moveModalOpen: Boolean
+  setMoveModalOpen: (val: Boolean) => void
+  items: SectionItem[]
+  onDragChange: (nextIndex: number) => void
+  onMoveItem: (index: number, nextIndex: number) => void
+  startDrag: (index: number) => void
+}
+const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onDragChange, startDrag, onMoveItem }: MoveSectionProps) => {
   const itemsRef = useRef<HTMLDivElement[]>([])
   useEffect(() => {
     itemsRef.current = itemsRef.current.slice(0, items.length)
   }, [items])
   const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<SectionItem & { index: number } | null>(null)
   const [dragY, setDragY] = useState(0)
+  const [selectedXid, setSelectedXid] = useState<string | null>(null)
+
   return (
-    <Modal isOpen={moveModalOpen} setIsOpen={setMoveModalOpen}>
+    <Modal
+      isOpen={moveModalOpen}
+      setIsOpen={setMoveModalOpen}
+    >
       {currentlyDraggedItem != null && (
         <StaticDragWrapper
           cardRefs={itemsRef}
           draggedItem={currentlyDraggedItem}
           y={dragY}
-          onDragEnd={() => setCurrentlyDraggedItem(null)}
-          move={(newIndex: number) => onItemsChange(newIndex)}
+          onDragEnd={() => {
+            setCurrentlyDraggedItem(null);
+            setSelectedXid(null)
+          }}
+          move={(newIndex: number) => onDragChange(newIndex)}
           manualOffset={48}
         >
           <div className="flex min-h-[64px] border-t-[0.5px] border-b-[0.5px] relative z-0 shadow-md pointer-events-none" >
-            <div className={' bg-blue-400 flex left-0 absolute bottom-0 w-1 h-full'}></div>
+            <div className=' bg-blue-400 flex left-0 absolute bottom-0 w-1 h-full'></div>
             <div className='flex items-center w-[60px] justify-center cursor-move'>
               <div className='block transform rotate-90'>
                 <IconContext.Provider value={{ style: { display: 'flex' } }}>
@@ -665,7 +686,7 @@ const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onItemsChange, s
               </div>
             </div>
             <div className='flex flex-1 items-center'>
-              <div className='flex-1 '>
+              <div className='flex-1'>
                 <div className='text-sm font-medium'>
                   {currentlyDraggedItem.value}
                 </div>
@@ -680,10 +701,7 @@ const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onItemsChange, s
             </div>
           </div>
         </StaticDragWrapper>)}
-      <div
-        className='flex flex-col items-stretch h-full overflow-auto'
-        ref={layoutRef}
-      >
+      <div className='flex flex-col items-stretch h-full overflow-auto'>
         <div className='m-[18px] flex-grow-0'>
           <h3 className="text-base leading-6 text-gray-900">Reorder sections</h3>
           <div className="mt-2">
@@ -695,14 +713,23 @@ const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onItemsChange, s
         <span className='flex-grow-[2] flex-shrink-[2] overflow-y-auto border-t-[0.5px]'>
           {/* item */}
           {items.map((row: SectionItem, index: number) =>
-            <div className="flex min-h-[64px] border-t-[0.5px] border-b-[0.5px] relative group"
+            <div
+              className={classNames(
+                currentlyDraggedItem?.xid == row.xid ? "opacity-0" : "",
+                "flex min-h-[64px] border-t-[0.5px] border-b-[0.5px] relative group"
+              )}
               ref={(el: any) => itemsRef.current[index] = el}
               key={index}
-              style={{ opacity: currentlyDraggedItem?.xid == row.xid ? 0 : 1 }}
+              onClick={(event) => { if (event.target instanceof HTMLDivElement) setSelectedXid(row.xid) }}
             >
-              <div className={classNames("top-[31px] absolute w-full")}>
+              <div className="top-[31px] absolute w-full">
               </div>
-              <div className={' group-hover:bg-blue-400 flex left-0 absolute bottom-0 w-1 h-full'}></div>
+              <div
+                className={classNames(
+                  "flex left-0 absolute bottom-0 w-1 h-full",
+                  row.xid == selectedXid ? "bg-blue-400" : "group-hover:bg-blue-400"
+                )}
+              ></div>
               <div className='flex items-center w-[60px] justify-center cursor-move'
                 onMouseDown={(event) => {
                   event.preventDefault()
@@ -721,7 +748,7 @@ const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onItemsChange, s
                 </div>
               </div>
               <div className='flex flex-1 items-center'>
-                <div className='flex-1 '>
+                <div className='flex-1'>
                   <div className='text-sm font-medium'>
                     {row.value}
                   </div>
@@ -730,8 +757,22 @@ const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onItemsChange, s
                   </div>
                 </div>
                 <div className='flex pr-4'>
-                  <MenuIcon icon={<BiChevronUp />} />
-                  <MenuIcon icon={<BiChevronDown />} />
+                  <MenuIcon
+                    disabled={index == 0}
+                    icon={<BiChevronUp />}
+                    onClick={() => {
+                      setSelectedXid(row.xid)
+                      onMoveItem(index, index - 1)
+                    }}
+                  />
+                  <MenuIcon
+                    disabled={index == items.length - 1}
+                    icon={<BiChevronDown />}
+                    onClick={() => {
+                      setSelectedXid(row.xid)
+                      onMoveItem(index, index + 1)
+                    }}
+                  />
                 </div>
               </div>
             </div>
