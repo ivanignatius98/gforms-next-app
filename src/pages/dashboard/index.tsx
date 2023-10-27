@@ -673,7 +673,7 @@ const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onDragChange, st
           move={(newIndex: number) => onDragChange(newIndex)}
           manualOffset={48}
         >
-          <div className="flex min-h-[64px] border-t-[0.5px] border-b-[0.5px] relative z-0 shadow-md pointer-events-none" >
+          <div className="flex min-h-[64px] border-t-[0.5px] border-b-[0.5px] relative z-0 shadow-md pointer-events-none bg-white" >
             <div className=' bg-blue-400 flex left-0 absolute bottom-0 w-1 h-full'></div>
             <div className='flex items-center w-[60px] justify-center cursor-move'>
               <div className='block transform rotate-90'>

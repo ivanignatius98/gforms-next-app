@@ -103,7 +103,7 @@ const DragWrapper = ({
   return (
     <div
       style={{ top: dragY ?? 0, width: cardRefs?.current[0].getBoundingClientRect().width }}
-      className='fixed z-20 opacity-75'
+      className='fixed z-20 opacity-50'
     >
       {children}
     </div>
