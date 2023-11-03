@@ -171,3 +171,13 @@ export const defaultQuestion: Question = {
   required: false,
   description: ""
 }
+export const defaultSection = {
+  ...defaultQuestion,
+  type: {
+    value: "section_header",
+    label: ""
+  },
+  title: "Untitled Section",
+  description: "",
+  collapsed: false
+}

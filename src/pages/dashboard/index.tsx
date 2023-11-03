@@ -18,7 +18,7 @@ import { IconContext } from 'react-icons';
 import { FiTrash2 } from 'react-icons/fi'
 import { BiDotsVerticalRounded, BiChevronUp, BiChevronDown } from 'react-icons/bi';
 
-import { defaultQuestion } from '@components/dashboard/defaults'
+import { defaultQuestion, defaultSection } from '@components/dashboard/defaults'
 import { classNames, debounce, getLayoutY, swap, getYCoordFromEvent, isTouchEvent, separateSingleRowFromArray } from '@helpers'
 import { Question, SectionItem } from '@interfaces/question.interface';
 import DragWrapper from '@modules/Drag';
@@ -126,6 +126,10 @@ interface ClickState {
   divClickedOrigin: boolean
 }
 const hideToolbarBreakpoint = 930 //px
+
+
+const defaultSectionValue = { xid: uuidv4(), value: "Form Title" }
+const firstQuestionXid = uuidv4()
 const Page: React.FC<Props> = (props) => {
   const [state, setState] = useState<State>({
     title: "",
@@ -133,14 +137,22 @@ const Page: React.FC<Props> = (props) => {
     minHeight: "100vh",
   })
 
-  const [questions, setQuestions] = useState<Question[]>([defaultQuestion]);
+
+  const [questions, setQuestions] = useState<Question[]>([{
+    ...defaultSection,
+    xid: defaultSectionValue.xid,
+    title: defaultSectionValue.value
+  }, {
+    ...defaultQuestion,
+    xid:firstQuestionXid
+  }]);
 
   const [cardClick, setCardClick] = useState<ClickState>({
     cardIndex: 0,
     divClickedOrigin: true
   });
 
-  const [itemXid, setItemXid] = useState<string | null | undefined>(null)
+  const [itemXid, setItemXid] = useState<string | null | undefined>(firstQuestionXid)
   const [currentlyDraggedItem, setCurrentlyDraggedItem] = useState<Question | null>(null)
   const [dragY, setDragY] = useState(0)
   const handleChange = (e: React.ChangeEvent<any>) => {
@@ -256,11 +268,11 @@ const Page: React.FC<Props> = (props) => {
           value: item.title,
           xid: item.xid,
         })
-        item.sectionCounter = sectionIndex + 1
+        item.sectionCounter = sectionIndex
         sectionIndex++
       }
     });
-    setSections([defaultSection, ...extractedData])
+    setSections([...extractedData])
     setQuestions(prevQuestion)
   }
   const duplicateQuestion = () => {
@@ -346,8 +358,7 @@ const Page: React.FC<Props> = (props) => {
   }
 
   //#region sections
-  const defaultSection = { xid: "fb9cd07f-1b9f-4973-8662-9ad4f49252ee", value: "Form Title" }
-  const [sections, setSections] = useState<SectionItem[]>([defaultSection])
+  const [sections, setSections] = useState<SectionItem[]>([defaultSectionValue])
   const showSections = sections.length > 1
 
   const sectionOptions = useMemo(() => {
@@ -379,7 +390,7 @@ const Page: React.FC<Props> = (props) => {
     setQuestions(() => {
       const curr = questionRef.current
       const affected = []
-      if (index < curr.length && index > 0) {
+      if (index < curr.length) {
         if (curr[index].type.value != "section_header") {
           for (let i = index; i >= 0; i--) {
             curr[i].collapsed = !collapse
@@ -422,6 +433,36 @@ const Page: React.FC<Props> = (props) => {
       })
     }
   }
+  const handleSectionSubmit = (items: SectionItem[]) => {
+    const sectionMap = new Map()
+    let tempArr: Question[] = []
+    let currSection = null
+    for (let row of questionRef.current) {
+      if (row.type.value == "section_header") {
+        if (currSection != null) {
+          sectionMap.set(currSection, tempArr)
+        }
+        // initial
+        currSection = row.xid
+        tempArr = [row]
+        continue
+      }
+
+      tempArr.push(row)
+    }
+    if (tempArr.length > 0) {
+      sectionMap.set(currSection, tempArr)
+    }
+    let arr: Question[] = []
+    let sectionCounter = 1
+    for (let row of items) {
+      const sectionItems = sectionMap.get(row.xid)
+      sectionItems[0].sectionCounter = sectionCounter
+      arr = [...arr, ...sectionItems]
+      sectionCounter++
+    }
+    setQuestions([...arr])
+  }
 
   //#endregion
   return (
@@ -441,6 +482,7 @@ const Page: React.FC<Props> = (props) => {
                 setSections((prev) => swap([...prev], index, nextIndex))
               }
             }}
+            onSubmit={handleSectionSubmit}
           />
           <div
             className="flex justify-center mt-3"
@@ -518,7 +560,7 @@ const Page: React.FC<Props> = (props) => {
                   headerRef={headerRef}
                 />
               </div>
-              <CardContainer
+              {/* <CardContainer
                 cardRef={headerRef}
                 topHeader
                 onClick={(event) => {
@@ -545,22 +587,23 @@ const Page: React.FC<Props> = (props) => {
                     placeholder="Form description"
                   />
                 </div>
-              </CardContainer>
+              </CardContainer> */}
               {questions.map((row: Question, i: number) => {
                 const selected = cardClick.cardIndex != -1 && itemXid == row.xid
                 const textPreview = row.required || row.title === ""
-                const isSectionHeader = showSections && row.type.value == "section_header"
+                const isSectionHeader = row.type.value == "section_header"
+                // const isSectionHeader = showSections && row.type.value == "section_header"
                 return (
                   <QuestionsContext.Provider
                     key={i}
-                    value={{ selected, row, i, isSectionHeader, setMoveModalOpen }}
+                    value={{ selected, row, i, isSectionHeader, setMoveModalOpen, showSections }}
                   >
                     <div className='my-4'>
-                      {isSectionHeader ?
+                      {isSectionHeader && i > 0 ?
                         <div className='h-24'>
                           <div className="flex text-sm items-center my-2 ">
                             <span className='ml-4'>
-                              {`After Section ${row.sectionCounter - 1}`}
+                              {`After Section ${row.sectionCounter}`}
                             </span>
                             <div className='w-96'>
                               <Select
@@ -601,10 +644,11 @@ const Page: React.FC<Props> = (props) => {
                           const eventY = getYCoordFromEvent(event)
                           setDragY(eventY - (getLayoutY(layoutRef.current as HTMLDivElement) ?? 0) - 16)
                         }}
-                        sectionHeader={(isSectionHeader) ?
+                        sectionHeader={(isSectionHeader && showSections) ?
                           <SectionHat length={sections.length} count={row.sectionCounter} />
                           : null
                         }
+                        topHeader={i == 0}
                       >
                         <QuestionItem
                           textPreview={textPreview}
@@ -646,8 +690,16 @@ interface MoveSectionProps {
   onDragChange: (nextIndex: number) => void
   onMoveItem: (index: number, nextIndex: number) => void
   startDrag: (index: number) => void
+  onSubmit: (items: SectionItem[]) => void
 }
-const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onDragChange, startDrag, onMoveItem }: MoveSectionProps) => {
+const MoveSections = ({ moveModalOpen,
+  setMoveModalOpen,
+  items,
+  onDragChange,
+  startDrag,
+  onMoveItem,
+  onSubmit
+}: MoveSectionProps) => {
   const itemsRef = useRef<HTMLDivElement[]>([])
   useEffect(() => {
     itemsRef.current = itemsRef.current.slice(0, items.length)
@@ -789,7 +841,10 @@ const MoveSections = ({ moveModalOpen, setMoveModalOpen, items, onDragChange, st
           <button
             type="button"
             className="inline-flex justify-center rounded-md border border-transparent  p-2 text-sm font-medium text-teal-600 hover:bg-gray-50"
-            onClick={() => setMoveModalOpen(false)}
+            onClick={() => {
+              setMoveModalOpen(false);
+              onSubmit(items)
+            }}
           >
             Save
           </button>
