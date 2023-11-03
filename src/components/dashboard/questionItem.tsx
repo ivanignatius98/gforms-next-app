@@ -36,7 +36,7 @@ const Component = ({
   onChange,
   onCollapse
 }: QuestionProps) => {
-  const { selected, row, i, isSectionHeader, setMoveModalOpen } = useContext(QuestionsContext)
+  const { selected, row, i, isSectionHeader, setMoveModalOpen, showSections } = useContext(QuestionsContext)
   const [questionRow, setQuestionRow] = useState<Question>(row)
   useEffect(() => {
     setQuestionRow(row)
@@ -171,7 +171,7 @@ const Component = ({
           <div className="flex">
             <div className="flex-grow">
               <Input
-                containerClass='my-1'
+                containerClass={classNames(i == 0 ? "text-3xl pb-1" : "", 'my-1')}
                 className="text-md"
                 name="description"
                 value={questionRow.title}
@@ -179,34 +179,35 @@ const Component = ({
                 placeholder="Section Title (Optional)"
               />
             </div>
-            <MenuIcon
-              title={`${questionRow.collapsed ? "Expand" : "Collapse"} Section`}
-              onClick={() => {
-                onCollapse(i, questionRow.collapsed)
-              }}
-              additionalClass='mx-[1px]'
-              icon={questionRow.collapsed ? <BiExpandVertical /> : <BiCollapseVertical />}
-            />
-            <React.Fragment>
-              <Tooltip
-                additionalContainerClass=''
-                orientation="bottom"
-                showPointer={false}
-                show={showTooltip}
-                tooltipText="More"
-              >
-                <Dropdown
-                  {...{ dropdownItemData }}
-                  setOpen={(val) => setShowTooltip(!val)}
-                  optionContainerStyle={{ top: topPosition, left: leftPosition }}
+            {showSections ?
+              <>
+                <MenuIcon
+                  title={`${questionRow.collapsed ? "Expand" : "Collapse"} Section`}
+                  onClick={() => {
+                    onCollapse(i, questionRow.collapsed)
+                  }}
+                  additionalClass='mx-[1px]'
+                  icon={questionRow.collapsed ? <BiExpandVertical /> : <BiCollapseVertical />}
+                />
+                <Tooltip
+                  additionalContainerClass=''
+                  orientation="bottom"
+                  showPointer={false}
+                  show={showTooltip}
+                  tooltipText="More"
                 >
-                  <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
-                    <BiDotsVerticalRounded size={24} color="#5f6368" />
-                  </button>
-                </Dropdown>
-              </Tooltip>
-            </React.Fragment>
-
+                  <Dropdown
+                    {...{ dropdownItemData }}
+                    setOpen={(val) => setShowTooltip(!val)}
+                    optionContainerStyle={{ top: topPosition, left: leftPosition }}
+                  >
+                    <button className="w-12 h-12 flex items-center justify-center hover:bg-slate-100 active:bg-slate-200 rounded-full">
+                      <BiDotsVerticalRounded size={24} color="#5f6368" />
+                    </button>
+                  </Dropdown>
+                </Tooltip>
+              </>
+              : null}
           </div>
           <Input
             containerClass='my-1'

@@ -6,5 +6,6 @@ export const QuestionsContext = createContext({
   row: {} as Question,
   i: 0,
   isSectionHeader: false,
-  setMoveModalOpen: (val: boolean) => { }
+  setMoveModalOpen: (val: boolean) => { },
+  showSections: false
 });
