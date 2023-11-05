@@ -293,7 +293,7 @@ const ChoicesAnswer = ({
                                 inputRef={(el: any) => inputRefs.current[index] = el}
                                 showOnHover
                                 containerClass='text-sm'
-                                autoFocus={answerOptions.length > 1}
+                                // autoFocus={answerOptions.length > 1}
                                 value={item.value}
                                 error={item.error}
                                 alwaysHighlight={true}

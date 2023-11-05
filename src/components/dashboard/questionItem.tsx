@@ -26,6 +26,9 @@ interface QuestionProps {
   onChange: (val: Question, index: number) => void
   sections: SectionItem[]
   onCollapse: (index: number, val: boolean) => void
+  onDeleteSection: (xid: string, index: number) => void
+  onDuplicateSection: (xid: string, index: number) => void
+  onMergeSection: (xid: string, index: number) => void
 }
 const Component = ({
   textPreview,
@@ -34,7 +37,10 @@ const Component = ({
   removeQuestion,
   cardRefs,
   onChange,
-  onCollapse
+  onCollapse,
+  onDeleteSection,
+  onDuplicateSection,
+  onMergeSection
 }: QuestionProps) => {
   const { selected, row, i, isSectionHeader, setMoveModalOpen, showSections } = useContext(QuestionsContext)
   const [questionRow, setQuestionRow] = useState<Question>(row)
@@ -102,7 +108,7 @@ const Component = ({
   const dropdownItemData: DropdownItemsList[] =
     [{
       items: [{
-        onClick: () => { console.log("TEST") },
+        onClick: () => { onDuplicateSection(questionRow.xid, i) },
         content: {
           label: "Duplicate Section"
         }
@@ -112,12 +118,12 @@ const Component = ({
           label: "Move Section"
         }
       }, {
-        onClick: () => { console.log("TEST3") },
+        onClick: () => { onDeleteSection(questionRow.xid, i) },
         content: {
           label: "Delete Section"
         }
       }, {
-        onClick: () => { console.log("TEST4") },
+        onClick: () => { onMergeSection(questionRow.xid, i)},
         content: {
           label: "Merge with above"
         }
