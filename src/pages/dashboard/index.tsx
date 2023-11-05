@@ -144,11 +144,11 @@ const Page: React.FC<Props> = (props) => {
     title: defaultSectionValue.value
   }, {
     ...defaultQuestion,
-    xid:firstQuestionXid
+    xid: firstQuestionXid
   }]);
 
   const [cardClick, setCardClick] = useState<ClickState>({
-    cardIndex: 0,
+    cardIndex: 1,
     divClickedOrigin: true
   });
 
@@ -357,6 +357,8 @@ const Page: React.FC<Props> = (props) => {
     questionRef.current[index] = val
   }
 
+  useEffect(() => { questionRef.current = questions }, [questions])
+
   //#region sections
   const [sections, setSections] = useState<SectionItem[]>([defaultSectionValue])
   const showSections = sections.length > 1
@@ -433,6 +435,38 @@ const Page: React.FC<Props> = (props) => {
       })
     }
   }
+  const getGroupedXid = (xid: string, index: number) => {
+    let sectionLen = 0
+    for (let i = index; i < questionRef.current.length; i++) {
+      const curr = questionRef.current[i]
+      if (curr.type.value == "section_header" && curr.xid != xid) {
+        break
+      }
+      sectionLen++
+    }
+    const restArr = [...questionRef.current]
+    const sectionArr = restArr.splice(index, sectionLen)
+    return { sectionArr, restArr }
+  }
+  const handleSectionDuplicate = (xid: string, index: number) => {
+    const { sectionArr, restArr } = getGroupedXid(xid, index)
+    const newRows = sectionArr.map((obj) => ({
+      ...obj,
+      xid: uuidv4(),
+    }));
+
+    restArr.splice(index, 0, ...[...sectionArr, ...newRows])
+    setQuestions(restArr)
+    setSections((prev) => {
+      const temp = [...prev]
+      const foundindex = sections.findIndex(obj => obj.xid === xid);
+      if (foundindex !== -1) {
+        temp.splice(foundindex, 0, { xid: newRows[0].xid, value: newRows[0].title });
+      }
+      return temp
+    })
+  }
+
   const handleSectionSubmit = (items: SectionItem[]) => {
     const sectionMap = new Map()
     let tempArr: Question[] = []
@@ -463,7 +497,34 @@ const Page: React.FC<Props> = (props) => {
     }
     setQuestions([...arr])
   }
+  const handleSectionDelete = (xid: string, index: number) => {
+    const newArr = getGroupedXid(xid, index).restArr
+    setQuestions(newArr)
+    setSections((prev) => {
+      const temp = [...prev]
+      const indexToDelete = sections.findIndex(obj => obj.xid === xid);
 
+      if (indexToDelete !== -1) {
+        temp.splice(indexToDelete, 1);
+      }
+      return temp
+    })
+  }
+
+  const handleSectionMerge = (xid: string, index: number) => {
+    const newArr = [...questionRef.current]
+    newArr.splice(index, 1)
+    setQuestions(newArr)
+    setSections((prev) => {
+      const temp = [...prev]
+      const indexToDelete = sections.findIndex(obj => obj.xid === xid);
+
+      if (indexToDelete !== -1) {
+        temp.splice(indexToDelete, 1);
+      }
+      return temp
+    })
+  }
   //#endregion
   return (
     <Layout>
@@ -596,7 +657,14 @@ const Page: React.FC<Props> = (props) => {
                 return (
                   <QuestionsContext.Provider
                     key={i}
-                    value={{ selected, row, i, isSectionHeader, setMoveModalOpen, showSections }}
+                    value={{
+                      selected,
+                      row,
+                      i,
+                      isSectionHeader,
+                      setMoveModalOpen,
+                      showSections,
+                    }}
                   >
                     <div className='my-4'>
                       {isSectionHeader && i > 0 ?
@@ -659,6 +727,9 @@ const Page: React.FC<Props> = (props) => {
                           onChange={handleQuestionChange}
                           sections={sections}
                           onCollapse={collapseSection}
+                          onDeleteSection={handleSectionDelete}
+                          onDuplicateSection={handleSectionDuplicate}
+                          onMergeSection={handleSectionMerge}
                         />
                       </CardContainer>
                     </div>
